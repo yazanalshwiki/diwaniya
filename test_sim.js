@@ -1,5 +1,5 @@
 import { createGame } from './src/engine.js';
-for (const type of ['t41','t61','trix','trixc']) {
+for (const type of ['t41','t61','trix','trixc','trixp','trixcp']) {
   for (let g=0; g<30; g++) {
     const e = createGame(type); let steps=0;
     while(!e.over && steps<200000){

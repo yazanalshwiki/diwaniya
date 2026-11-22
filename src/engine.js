@@ -405,9 +405,10 @@ export const TRIX_NAMES = { king: 'شيخ الكبة', queens: 'البنات', d
 const TRIX_PLACES = [200, 150, 100, 50];
 
 export class Trix extends TrickGame {
-  constructor(mode) {
+  constructor(mode, partner = false) {
     super();
     this.type = 'trix';
+    this.partner = !!partner;
     this.mode = mode === 'complex' ? 'complex' : 'classic';
     this.contracts = this.mode === 'complex' ? ['complex', 'trix'] : TRIX_CONTRACTS;
     this.scores = [0, 0, 0, 0];
@@ -432,6 +433,7 @@ export class Trix extends TrickGame {
     this.turn = this.owner;
     this.msg = 'صاحب المملكة يختار اللعبة';
   }
+  teamScores() { return [this.scores[0] + this.scores[2], this.scores[1] + this.scores[3]]; }
   remaining() { return this.contracts.filter((c) => !this.used[this.owner].includes(c)); }
   trixLegal(seat) {
     const out = [];
@@ -566,7 +568,7 @@ export class Trix extends TrickGame {
     if (this.contract === 'diamonds' && all.filter((c) => suit(c) === 'D').length === 13) done = true;
     if (done) this.scoreDeal();
   }
-  scoreDeal() {
+  dealDeltas() {
     const d = [0, 0, 0, 0];
     for (let i = 0; i < 4; i++) {
       const tk = this.taken[i];
@@ -576,12 +578,17 @@ export class Trix extends TrickGame {
         const base = c === 'H13' ? 75 : 25;
         const by = this.doubled[c];
         if (by === undefined) d[i] -= base;
+        else if (this.partner && by % 2 === i % 2) d[i] -= base; // partner/own doubled card eaten by own team: no double, no bonus
         else { d[i] -= base * 2; if (by !== i) d[by] += base; }
       }
       if (this.contract === 'diamonds') d[i] = -10 * tk.filter((c) => suit(c) === 'D').length;
       if (this.contract === 'ltoosh') d[i] = -15 * this.tricksWon[i];
       if (this.contract === 'complex') d[i] += -10 * tk.filter((c) => suit(c) === 'D').length - 15 * this.tricksWon[i];
     }
+    return d;
+  }
+  scoreDeal() {
+    const d = this.contract === 'trix' ? [0, 0, 0, 0] : this.dealDeltas();
     if (this.contract === 'trix') this.finished.forEach((s, idx) => (d[s] = TRIX_PLACES[idx]));
     d.forEach((x, i) => (this.scores[i] += x));
     this.history.push({ n: this.dealNo, owner: this.owner, contract: this.contract, deltas: d, scores: this.scores.slice() });
@@ -591,8 +598,13 @@ export class Trix extends TrickGame {
     if (this.used[this.owner].length === this.contracts.length) this.kingdom++;
     if (this.kingdom === 4) {
       this.over = true; this.phase = 'gameOver';
-      const max = Math.max(...this.scores);
-      this.winners = [0, 1, 2, 3].filter((i) => this.scores[i] === max);
+      if (this.partner) {
+        const t = this.teamScores();
+        this.winners = t[0] === t[1] ? [0, 1, 2, 3] : t[0] > t[1] ? [0, 2] : [1, 3];
+      } else {
+        const max = Math.max(...this.scores);
+        this.winners = [0, 1, 2, 3].filter((i) => this.scores[i] === max);
+      }
       this.msg = 'انتهت اللعبة';
     } else {
       this.phase = 'handEnd';
@@ -609,7 +621,10 @@ export class Trix extends TrickGame {
     }
     return { ...this.baseView(seat), scores: this.scores, kingdom: this.kingdom, owner: this.owner, contract: this.contract,
       used: this.used, board: this.board, doubled: this.doubled, finished: this.finished, dealNo: this.dealNo, actions,
-      takenCounts: this.taken ? this.taken.map((t) => t.length) : [0, 0, 0, 0] };
+      takenCounts: this.taken ? this.taken.map((t) => t.length) : [0, 0, 0, 0],
+      partner: this.partner, teamScores: this.partner ? this.teamScores() : null,
+      live: this.taken && this.contract && this.contract !== 'trix' ? this.dealDeltas() : null,
+      pen: this.taken ? this.taken.map((t) => t.filter((c) => c === 'H13' || rank(c) === 12 || suit(c) === 'D')) : [[], [], [], []] };
   }
   botAction(seat) {
     const hand = this.hands[seat];
@@ -664,7 +679,11 @@ export class Trix extends TrickGame {
       if (this.trick.length === 3) return { type: 'play', card: highest(legal) };
       return { type: 'play', card: lowest(legal) };
     }
-    // void: discard most dangerous
+    // void: discard most dangerous (but never onto a partner who is winning the trick)
+    if (this.partner) {
+      const lw = this.trick.filter((t) => suit(t.card) === led).sort((a, b) => rank(b.card) - rank(a.card))[0];
+      if (lw && lw.seat % 2 === seat % 2) return { type: 'play', card: legal.slice().sort((a, b) => danger(a) - danger(b))[0] };
+    }
     return { type: 'play', card: legal.slice().sort((a, b) => danger(b) - danger(a))[0] };
   }
 }
@@ -674,6 +693,8 @@ export function createGame(type) {
   if (type === 't61') return new Tarneeb61();
   if (type === 'trix') return new Trix();
   if (type === 'trixc') return new Trix('complex');
+  if (type === 'trixp') return new Trix('classic', true);
+  if (type === 'trixcp') return new Trix('complex', true);
   throw new Error('لعبة غير معروفة');
 }
-export const GAME_NAMES = { t41: 'طرنيب ٤١', t61: 'طرنيب ٦١', trix: 'تركس', trixc: 'تركس كمبلكس' };
+export const GAME_NAMES = { t41: 'طرنيب ٤١', t61: 'طرنيب ٦١', trix: 'تركس', trixc: 'تركس كمبلكس', trixp: 'تركس شراكة', trixcp: 'كمبلكس شراكة' };

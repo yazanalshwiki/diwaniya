@@ -302,6 +302,10 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .palette .pimg{width:58px;height:58px}.palette .pimg img{width:56px;height:56px;display:block}.palette .pimg.lk img{opacity:.35;filter:grayscale(.6)}.palette .pimg.lk::after{content:'🔒';position:absolute;bottom:0;right:0;font-size:12px}
 .palette .pem{font-size:30px;width:44px}
 .palette .pph{font-size:14px;padding:8px 12px;border-radius:999px;background:#33384f;white-space:nowrap}
+.xrow{display:flex;gap:2px;align-items:center;margin-top:2px;padding:1px 5px;border-radius:999px;font-size:11px;font-weight:800;direction:ltr;white-space:nowrap}
+.xrow.dbl{background:rgba(160,20,30,.85);color:#fff}.xrow.ate{background:rgba(0,0,0,.65);color:#ddd}
+.xrow .ch{font-style:normal;background:#fff;color:#111;border-radius:4px;padding:0 3px;font-size:11px;line-height:15px}.xrow .ch.rd{color:#d01020}
+.mex{display:flex;gap:4px;flex-wrap:wrap}.mex:empty{display:none}
 </style>
 </head>
 <body>
@@ -394,7 +398,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
   <div class="handwrap" id="gHandWrap"><div class="hand" id="gHand"></div></div>
   <div class="mebar" id="meBar">
     <div class="mp"><div class="av" id="meAv"></div><div class="pnm" id="meName"></div></div>
-    <div class="info"><div class="turnlbl" id="gTurn"></div><div class="pinf" id="meInf" style="align-self:flex-start"></div></div>
+    <div class="info"><div class="turnlbl" id="gTurn"></div><div class="pinf" id="meInf" style="align-self:flex-start"></div><div id="meX" class="mex"></div></div>
     <button class="ib" id="gMic" title="المحادثة الصوتية">🎤</button>
     <button class="ib" id="gEmo" title="إيموجي">😀</button>
     <button class="ib" id="gChat" title="الدردشة">💬<span id="gUnread"></span></button>
@@ -658,6 +662,8 @@ function renderLeaders(list) {
 const GAMES = [
   { g: 'trixc', ic: '🎭', n: 'تركس كمبلكس', d: 'متل جواكر • تدبيل الشيخ والبنات', cards: ['S11', 'D11', 'C11'] },
   { g: 'trix', ic: '👑', n: 'تركس عادي', d: '٥ لعبات بكل مملكة', cards: ['H12', 'H13', 'D12'] },
+  { g: 'trixcp', ic: '🤝', n: 'كمبلكس شراكة', d: 'فريقين • شريكك مقابلك', cards: ['H13', 'S12', 'C12'] },
+  { g: 'trixp', ic: '👥', n: 'تركس شراكة', d: 'فريقين • ٥ لعبات', cards: ['C11', 'H11', 'S11'] },
   { g: 't41', ic: '♥️', n: 'طرنيب ٤١', d: 'سوري • ورقة مكشوفة • شراكة', cards: ['H14', 'D13', 'H11'] },
   { g: 't61', ic: '♠️', n: 'طرنيب ٦١', d: 'مزايدة وطرنيب • فريقين', cards: ['S13', 'S14', 'S12'] },
 ];
@@ -729,7 +735,7 @@ async function share() {
 $('wShare').onclick = share; $('gCode').onclick = share;
 
 const posOf = (seat) => (seat - (room.mySeat >= 0 ? room.mySeat : 0) + 4) % 4;
-const isTeamGame = () => !room.game.startsWith('trix');
+const isTeamGame = () => !room.game.startsWith('trix') || room.game.endsWith('p');
 
 function renderWaiting() {
   $('wGame').textContent = room.gameName;
@@ -777,9 +783,23 @@ function playerInfo(e, i) {
   }
   if (e.type === 'trix') {
     if (e.phase === 'trix') return e.finished.includes(i) ? '#' + (e.finished.indexOf(i) + 1) : '';
-    if (e.phase === 'playing' || e.phase === 'handEnd') return String(e.tricksWon[i]);
+    if (e.phase === 'playing' || e.phase === 'handEnd') return `🃏${e.tricksWon[i]}${e.live && e.live[i] ? ' • ' + (e.live[i] > 0 ? '+' : '') + e.live[i] : ''}`;
   }
   return '';
+}
+function chipC(c) { return `<i class="ch ${'HD'.includes(c[0]) ? 'rd' : ''}">${RN[+c.slice(1)] || c.slice(1)}${SYM[c[0]]}</i>`; }
+function trixExtra(e, i) {
+  if (e.type !== 'trix' || !e.contract || e.contract === 'trix') return '';
+  const dbl = Object.entries(e.doubled || {}).filter(([, s]) => s === i).map(([c]) => c);
+  const pen = (e.pen && e.pen[i]) || [];
+  const cx = e.contract;
+  const showQ = cx === 'queens' || cx === 'complex', showK = cx === 'king' || cx === 'complex', showD = cx === 'diamonds' || cx === 'complex';
+  const big = pen.filter((c) => (showK && c === 'H13') || (showQ && +c.slice(1) === 12));
+  const dn = showD ? pen.filter((c) => c[0] === 'D').length : 0;
+  let h = '';
+  if (dbl.length) h += `<div class="xrow dbl" title="دبّل">✖️2 ${dbl.map(chipC).join('')}</div>`;
+  if (big.length || dn) h += `<div class="xrow ate" title="أكل">🍽️ ${big.map(chipC).join('')}${dn ? `<i class="ch rd">${dn}♦</i>` : ''}</div>`;
+  return h;
 }
 function madeCls(e, i) {
   if (e.type === 't41' && e.bids && e.bids[i] != null && e.phase !== 'bidding' && e.tricksWon[i] >= e.bids[i]) return 'made';
@@ -788,7 +808,7 @@ function madeCls(e, i) {
 }
 function crossHtml(e) {
   const pos = ['b', 'r', 't', 'l'];
-  let vals = [0, 1, 2, 3].map((i) => (e.scores ? e.scores[i] : e.teamScores[i % 2]));
+  let vals = [0, 1, 2, 3].map((i) => (e.teamScores ? e.teamScores[i % 2] : e.scores[i]));
   let center = e.type === 't41' ? 41 : e.type === 't61' ? 61 : `${Math.min(e.kingdom + 1, 4)}/4`;
   const cells = [0, 1, 2, 3].map((i) => `<div class="p ${pos[posOf(i)]} ${i === room.mySeat ? 'me' : ''}">${vals[i]}</div>`).join('');
   return `<div class="bg"></div><div class="bg2"></div>${cells}<div class="c0">${center}</div>`;
@@ -859,7 +879,7 @@ function renderTable() {
       ${fanHtml(e.handCounts[i])}
       <div class="av ${s.bot || s.away ? '' : 'hue'}" style="--h:${hueOf(s.name)}">${avatarHtml(s)}${crown}${s.uid && (room.voice || []).includes(s.uid) ? '<span class="vic">🎙️</span>' : ''}${turn ? `<span class="ring" ${pct != null ? 'data-ring="1"' : ''}></span>${pct != null ? '<b class="secs" data-secs="1"></b>' : ''}` : ''}</div>
       <div class="pnm ${turn && pct != null ? 'tm' : ''}" ${turn && pct != null ? 'data-ring="1"' : ''}>${team}${esc(s.name)}</div>
-      <div class="pinf ${madeCls(e, i)} ${prev && prev.code === room.code && prev.inf[i] !== playerInfo(e, i) && playerInfo(e, i) ? 'pop' : ''}">${playerInfo(e, i)}</div></div>`);
+      <div class="pinf ${madeCls(e, i)} ${prev && prev.code === room.code && prev.inf[i] !== playerInfo(e, i) && playerInfo(e, i) ? 'pop' : ''}">${playerInfo(e, i)}</div>${trixExtra(e, i)}</div>`);
   }
   // only touch the players whose markup really changed (avatars are heavy SVGs)
   const GP = $('gPlayers'), phKey = ph.join('');
@@ -945,15 +965,16 @@ function renderTable() {
     $('meName').classList.toggle('tm', myTurn && pct != null);
     if (myTurn && pct != null) $('meName').setAttribute('data-ring', '1'); else { $('meName').removeAttribute('data-ring'); $('meName').style.removeProperty('--p'); }
     const mi = playerInfo(e, mine);
-    $('meInf').textContent = mi && e.type === 't41' && e.phase !== 'bidding' ? 'أكلات ' + mi : mi;
+    $('meInf').textContent = mi && e.type === 't41' && e.phase !== 'bidding' ? 'أكلات ' + mi : mi && e.type === 'trix' && mi.startsWith('🃏') ? 'أكلاتي ' + mi : mi;
     $('meInf').className = 'pinf ' + madeCls(e, mine);
+    { const mx = trixExtra(e, mine); if ($('meX').__h !== mx) { $('meX').innerHTML = mx; $('meX').__h = mx; } }
     $('meBar').classList.toggle('turn', myTurn);
     $('stage').classList.toggle('myturn', myTurn);
     let lbl = '';
     if (myTurn) lbl = a ? 'دورك — اختر 👆' : e.legal.length ? 'دورك — العب ورقة 👇' : '';
     $('gTurn').textContent = lbl;
   } else {
-    $('meAv').__h = ''; $('meAv').textContent = '👀'; $('meName').textContent = 'متفرج'; $('meInf').textContent = ''; $('gTurn').textContent = 'أنت تتفرج';
+    $('meAv').__h = ''; $('meAv').textContent = '👀'; $('meName').textContent = 'متفرج'; $('meInf').textContent = ''; $('meX').innerHTML = ''; $('meX').__h = ''; $('gTurn').textContent = 'أنت تتفرج';
   }
 
   // hand (only rebuilt when it changes)
@@ -1259,7 +1280,7 @@ function totalsHtml(e) {
   const box = (label, val, mine) => `<div style="flex:1;background:${mine ? '#2a3a7a' : '#1b1b2e'};border:1px solid ${mine ? '#6fb8ff' : '#3a3a55'};border-radius:12px;padding:8px 6px;text-align:center"><div style="font-size:12px;color:#bbb">${label}</div><div style="font-size:24px;font-weight:800;color:var(--gold2);direction:ltr">${val}</div></div>`;
   const ms = room.mySeat;
   let cells;
-  if (e.type === 't61') cells = [0, 1].map((t) => box(`${nm(t)} و ${nm(t + 2)}`, e.teamScores[t], ms >= 0 && ms % 2 === t));
+  if (e.type === 't61' || (e.type === 'trix' && e.partner)) cells = [0, 1].map((t) => box(`${nm(t)} و ${nm(t + 2)}`, e.teamScores[t], ms >= 0 && ms % 2 === t));
   else cells = [0, 1, 2, 3].map((i) => box(nm(i), e.scores[i], i === ms));
   const goal = e.type === 't41' ? 'الهدف 41' : e.type === 't61' ? 'الهدف 61' : `المملكة ${Math.min(e.kingdom + 1, 4)} من 4`;
   return `<div style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px">${goal} • الجولة ${e.history.length + (e.over ? 0 : 1)}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${cells.join('')}</div>`;
