@@ -281,6 +281,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .av svg{position:absolute;inset:0;width:100%;height:100%;border-radius:50%}
 .avm{width:42px;height:42px;border-radius:50%;overflow:hidden;margin:0 auto 2px}.avm svg{width:100%;height:100%;display:block}
 .av{transition:box-shadow .3s}.av .ring,.pnm.tm{transition:filter .3s}.c.fly,.c.collect,.c.ghost{will-change:transform,opacity}.pl{transition:transform .2s}
+.avimg{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}.av .avimg{position:absolute;inset:0}.pf-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}.pf-av{width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--gold);flex:none;background:#333}.pf-av svg{width:100%;height:100%;display:block}.pf-btns{display:flex;flex-direction:column;gap:6px;flex:1}.pf-up{display:block;text-align:center;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#fff;font-weight:700;border-radius:10px;padding:9px;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.4)}.pf-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}.pf-stats div{background:#1b1b2e;border:1px solid #3a3a55;border-radius:12px;padding:8px 2px;text-align:center}.pf-stats b{display:block;color:var(--gold2);font-size:17px}.pf-stats small{font-size:11px;color:var(--muted)}.pf-l{display:block;font-size:13px;color:var(--muted);margin:0 2px 4px}.pf-pass{margin:4px 0 8px}.pf-pass summary{cursor:pointer;color:var(--muted);margin-bottom:8px}
 .rules p{margin:6px 0;line-height:1.7;font-size:14px;color:#ddd}
 .rules h4{margin:12px 0 4px;color:var(--gold2)}
 .conn{position:fixed;bottom:10px;left:10px;background:#5a3b00;color:#ffe2a6;font-size:12px;padding:4px 10px;border-radius:999px;z-index:98}
@@ -623,7 +624,7 @@ function renderMe() {
   $('lName').textContent = me.username; $('lPts').textContent = Number(me.points).toLocaleString('en');
   const xp = me.games * 10 + me.wins * 20, pc = xp % 100;
   $('lLvl').textContent = Math.floor(xp / 100) + 1; $('lXp').style.width = pc + '%'; $('lXpT').textContent = pc + '%';
-  $('lAv').innerHTML = avatarSvg(avIdFor(me.username, me.avatar));
+  $('lAv').innerHTML = avPic({ uid: me.id, ph: me.ph, name: me.username, av: me.avatar });
   $('myStats').textContent = `لعبت ${me.games} • فزت ${me.wins}`;
 }
 function renderLobby() {
@@ -667,7 +668,7 @@ document.querySelectorAll('.bnav button').forEach((b) => (b.onclick = () => {
   if (t === 'Top') sendWs({ t: 'leaders' });
 }));
 $('lMenu').onclick = () => openMenu();
-$('lAv').onclick = () => openAvatars();
+$('lAv').onclick = () => openProfile();
 $('bJoin').onclick = () => { const c = $('jCode').value.trim().toUpperCase(); if (c) sendWs({ t: 'join', code: c }); };
 $('jCode').addEventListener('keydown', (e) => e.key === 'Enter' && $('bJoin').click());
 $('bRef').onclick = () => sendWs({ t: 'lobby' });
@@ -675,7 +676,6 @@ $('bLb').onclick = () => sendWs({ t: 'leaders' });
 
 function renderRoom() {
   if (!room) return;
-  shareAv();
   if (room.status === 'waiting') { closeOverlay(); renderWaiting(); show('waiting'); }
   else { show('table'); renderTable(); }
   if (room.chat.length !== lastChatLen) {
@@ -724,7 +724,7 @@ function renderWaiting() {
     const team = isTeamGame() ? `<span class="tdot t${i % 2}"></span>` : '';
     let inner;
     if (s) {
-      inner = `<div class="avm">${avatarSvg(avIdFor(s.name, s.av))}</div><div class="nm">${team}${s.bot ? '🤖 ' : ''}${esc(s.name)}${s.uid === room.hostId ? ' 👑' : ''}</div>`;
+      inner = `<div class="avm">${avPic(s)}</div><div class="nm">${team}${s.bot ? '🤖 ' : ''}${esc(s.name)}${s.uid === room.hostId ? ' 👑' : ''}</div>`;
       if (room.isHost && s.uid !== me.id) inner += `<button class="small ghost" data-kick="${i}">إزالة</button>`;
     } else {
       inner = `<button class="small" data-sit="${i}">اجلس هنا</button>`;
@@ -749,7 +749,7 @@ function cardHtml(c, cls = '', extra = '') {
 function avatarHtml(s) {
   if (!s) return '';
   if (s.away && !s.bot) return '💤';
-  return avatarSvg(avIdFor(s.name, s.av));
+  return avPic(s);
 }
 function playerInfo(e, i) {
   if (e.type === 't41') { const b = e.bids[i]; return b == null ? '' : `${e.tricksWon[i]}/${b}`; }
@@ -916,7 +916,7 @@ function renderTable() {
     const s = room.seats[mine];
     const pct = myTurn ? ringPct() : null;
     $('meAv').className = 'av hue'; $('meAv').style.setProperty('--h', hueOf(s.name));
-    const meH = avatarSvg(avIdFor(s.name, s.av)) + (myTurn ? `<span class="ring" ${pct != null ? 'data-ring="1"' : ''}></span>${pct != null ? '<b class="secs" data-secs="1"></b>' : ''}` : '');
+    const meH = avPic(s) + (myTurn ? `<span class="ring" ${pct != null ? 'data-ring="1"' : ''}></span>${pct != null ? '<b class="secs" data-secs="1"></b>' : ''}` : '');
     if ($('meAv').__h !== meH) { $('meAv').innerHTML = meH; $('meAv').__h = meH; }
     $('meName').textContent = s.name;
     $('meName').classList.toggle('tm', myTurn && pct != null);
@@ -1450,7 +1450,7 @@ function openLook(which) {
   openModal('look', h + `<div class="row" style="margin-top:12px"><button class="ghost" style="flex:1" data-m="${which === 'tb' ? 'cards' : 'tb'}">${which === 'tb' ? '🃏 شكل الورق' : '🎨 شكل الطاولة'}</button><button class="gold" style="flex:1" onclick="closeOverlay()">تمام</button></div>`);
 }
 function openMenu() {
-  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room ? '' : '<button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 function menuAct(m) {
   if (m === 'home') {
@@ -1460,6 +1460,7 @@ function menuAct(m) {
   } else if (m === 'cards' || m === 'tb') openLook(m);
   else if (m === 'res') { closeOverlay(); showResults(); }
   else if (m === 'av') openAvatars();
+  else if (m === 'prof') openProfile();
   else if (m === 'out') { closeOverlay(); logout(); }
   else if (m === 'rules') openModal('rules', RULES_HTML + '<button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>');
 }
@@ -1495,6 +1496,10 @@ function shareAv() {
   setTimeout(() => room && sendWs({ t: 'react', e: '@av:' + myAv() }), 300 + Math.random() * 500);
 }
 function avIdFor(name, av) { if (me && name === me.username) { const v = (() => { try { return localStorage.getItem('myAv'); } catch { return null; } })(); if (okAv(v)) return v; } if (okAv(av)) return av; if (okAv(avMap[name])) return avMap[name]; let h = 0; for (const ch of String(name || '')) h = (h * 33 + ch.codePointAt(0)) >>> 0; return AVS[h % AVS.length].id; }
+function avPic(o) {
+  if (o && o.ph && o.uid) return `<img class="avimg" src="/p/${o.uid}?v=${o.ph}" alt="">`;
+  return avatarSvg(avIdFor(o ? (o.name || o.username) : '', o ? (o.av || o.avatar) : null));
+}
 function avatarSvg(id) {
   const a = AVS.find((x) => x.id === id) || AVS[0], H = a.hd, k = a.id;
   const sm = `<pattern id="sm${k}" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="#fff"/><path d="M0 2.5h5M2.5 0v5" stroke="#d0142f" stroke-width="1.2"/></pattern>`;
@@ -1526,10 +1531,59 @@ $('modal').addEventListener('click', (ev) => {
   const v = b.dataset.av;
   try { localStorage.setItem('myAv', v); } catch {}
   sendWs({ t: 'avatar', v });
-  if (room) { sendWs({ t: 'react', e: '@av:' + v }); renderRoom(); }
+  if (room) renderRoom();
   if (me) { me.avatar = v; renderMe(); }
   SND.play('pop'); openAvatars();
 });
+
+// ================== Profile ==================
+function openProfile() {
+  if (!me) return;
+  const xp = me.games * 10 + me.wins * 20, lvl = Math.floor(xp / 100) + 1, rate = me.games ? Math.round(me.wins / me.games * 100) : 0;
+  openModal('prof', `<h3>👤 ملفي الشخصي</h3>
+  <div class="pf-top"><div class="pf-av" id="pfAv">${avPic({ uid: me.id, ph: me.ph, name: me.username, av: me.avatar })}</div>
+  <div class="pf-btns"><label class="pf-up">📷 ارفع صورة<input type="file" accept="image/*" id="pfFile" hidden></label>
+  <button class="ghost small" data-m="av">🙂 اختار شخصية</button>${me.ph ? '<button class="ghost small" id="pfDel">🗑️ شيل الصورة</button>' : ''}</div></div>
+  <div class="pf-stats"><div><b>${lvl}</b><small>المستوى</small></div><div><b>${Number(me.points).toLocaleString('en')}</b><small>النقاط 🪙</small></div><div><b>${me.games}</b><small>لعبت</small></div><div><b>${me.wins}</b><small>فزت</small></div><div><b>${rate}%</b><small>نسبة الفوز</small></div></div>
+  <div class="field"><label class="pf-l">اسم اللاعب</label><input id="pfName" value="${esc(me.username)}" maxlength="20"></div>
+  <div class="field"><label class="pf-l">الإيميل (اختياري — لاسترجاع الحساب)</label><input id="pfMail" type="email" dir="ltr" placeholder="name@email.com" value="${esc(me.email || '')}"></div>
+  <details class="pf-pass"><summary>🔒 تغيير كلمة السر</summary><div class="field"><input id="pfOld" type="password" placeholder="كلمة السر الحالية"></div><div class="field"><input id="pfNew" type="password" placeholder="كلمة السر الجديدة"></div></details>
+  <div class="err" id="pfErr"></div>
+  <div class="row"><button class="ghost" style="flex:1" onclick="closeOverlay()">إغلاق</button><button class="gold" style="flex:2" id="pfSave">حفظ</button></div>`);
+  $('pfFile').onchange = (ev) => { const f = ev.target.files[0]; if (f) uploadPhoto(f); };
+  if ($('pfDel')) $('pfDel').onclick = () => saveProfile({ photo: null });
+  $('pfSave').onclick = () => {
+    const b = { username: $('pfName').value.trim(), email: $('pfMail').value.trim() };
+    if ($('pfNew').value) { b.oldPass = $('pfOld').value; b.newPass = $('pfNew').value; }
+    saveProfile(b, true);
+  };
+}
+async function saveProfile(b, close) {
+  try {
+    const r = await fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify(b) });
+    const j = await r.json();
+    if (!r.ok) { if ($('pfErr')) $('pfErr').textContent = j.error || 'صار خطأ'; else toast(j.error || 'صار خطأ'); return false; }
+    if (j.token) { token = j.token; localStorage.setItem('tok', token); }
+    me = j.user; renderMe(); SND.play('good');
+    if (close) { closeOverlay(); toast('انحفظ ملفك ✅'); } else openProfile();
+    return true;
+  } catch { toast('تعذر الاتصال'); return false; }
+}
+function uploadPhoto(file) {
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+    const k = Math.min(img.width, img.height), x = (img.width - k) / 2, y = (img.height - k) / 2;
+    c.getContext('2d').drawImage(img, x, y, k, k, 0, 0, S, S);
+    URL.revokeObjectURL(url);
+    let q = 0.85, d = c.toDataURL('image/jpeg', q);
+    while (d.length > 80000 && q > 0.4) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+    if ($('pfAv')) $('pfAv').innerHTML = `<img class="avimg" src="${d}">`;
+    saveProfile({ photo: d });
+  };
+  img.onerror = () => toast('ما قدرنا نقرا الصورة');
+  img.src = url;
+}
 
 if (token) connect(); else show('auth');
 </script><script>
