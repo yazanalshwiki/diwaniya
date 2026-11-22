@@ -306,6 +306,25 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .xrow.dbl{background:rgba(160,20,30,.85);color:#fff}.xrow.ate{background:rgba(0,0,0,.65);color:#ddd}
 .xrow .ch{font-style:normal;background:#fff;color:#111;border-radius:4px;padding:0 3px;font-size:11px;line-height:15px}.xrow .ch.rd{color:#d01020}
 .mex{display:flex;gap:4px;flex-wrap:wrap}.mex:empty{display:none}
+.mono{display:none}#table.ismono .stage,#table.ismono .handwrap{display:none}#table.ismono .mono{display:flex;flex-direction:column;align-items:center;flex:1;min-height:0;padding:4px;gap:6px;overflow:hidden}
+.mps{display:flex;gap:4px;width:100%;max-width:640px}.mpl{flex:1;display:flex;flex-direction:column;align-items:center;background:#1c1c28;border:2px solid #2e2e40;border-radius:12px;padding:4px 2px;min-width:0;position:relative}
+.mpl .av{width:40px;height:40px;border-radius:50%;border:3px solid var(--pc);overflow:hidden;position:relative}.mpl .av .avimg{width:100%;height:100%}.mpl.turn{border-color:var(--gold2);box-shadow:0 0 12px rgba(255,210,77,.5)}.mpl.out{opacity:.4}
+.mpn{font-size:11px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mpc{font-size:12px;font-weight:800;color:var(--gold2)}
+.mbw{--bs:360px;width:var(--bs);height:var(--bs);flex:0 0 auto}.mboard{position:relative;width:100%;height:100%;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1.35fr repeat(6,1fr) 1.35fr;gap:2px;background:#0b3d2c;border:3px solid #c9a227;border-radius:10px;padding:2px;box-shadow:0 10px 30px rgba(0,0,0,.6);direction:ltr}
+.mc{position:relative;background:#f3ecd6;color:#222;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-size:calc(var(--bs)*.022);line-height:1.1;text-align:center;cursor:pointer;direction:rtl}
+.mc .band{position:absolute;left:0;right:0;top:0;height:22%}.mc.sl .band{top:0;bottom:0;left:auto;right:0;width:22%;height:auto}.mc.sr .band{top:0;bottom:0;right:auto;left:0;width:22%;height:auto}.mc.st .band{top:auto;bottom:0}
+.mc.sb{padding-top:18%}.mc.st{padding-bottom:18%}.mc.sl{padding-right:20%}.mc.sr{padding-left:20%}.mc.corner{padding:0}.mc .mi{font-size:calc(var(--bs)*.03)}.mc .mn{font-weight:800;padding:0 1px;word-break:break-word}.mc .mpr{font-size:calc(var(--bs)*.02);color:#555;font-weight:700}
+.mc .own{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:42%;height:9%;border-radius:4px;background:var(--oc)}.mc.sl .own,.mc.sr .own{bottom:3px}.mc .hs{font-size:calc(var(--bs)*.018);font-style:normal;letter-spacing:-2px}
+.mc.corner{background:#ffe9a8;font-size:calc(var(--bs)*.026)}.mc.corner .mi{font-size:calc(var(--bs)*.05)}
+.mc.canb{outline:3px solid #39d353;animation:pulseb 1s infinite alternate;z-index:2}@keyframes pulseb{to{outline-color:#b6ffbf;transform:scale(1.06)}}
+.mctr{grid-row:2/8;grid-column:2/8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px;background:radial-gradient(circle,#11573f,#0b3d2c);border-radius:6px;direction:rtl;color:#fff}
+.mdice{display:flex;gap:8px;font-size:calc(var(--bs)*.12);line-height:1;color:#fff;text-shadow:0 3px 6px rgba(0,0,0,.5)}.mdice.roll span{animation:droll .5s ease-out}@keyframes droll{0%{transform:rotate(-200deg) scale(.4)}100%{transform:none}}
+.mcard{background:#fff7d6;color:#3a2600;border-radius:10px;padding:5px 10px;font-size:13px;font-weight:800;max-width:95%;text-align:center}.mcard.new{animation:popin .5s}
+.mact{display:flex;flex-direction:column;align-items:center;gap:5px;width:90%}.mbtn{padding:10px 14px;font-size:16px;width:100%}.mbtn2{padding:7px 10px;font-size:13px;width:100%}.mbuy{font-size:14px;text-align:center}.mhint{font-size:12px;color:#b6ffbf;font-weight:800}.mwait{font-size:14px;color:#cfe;font-weight:800}
+.mlog{font-size:11px;color:#d9efe5;text-align:center;line-height:1.4;max-width:95%}.mlog div:first-child{color:#fff;font-weight:800}.mrnd{font-size:10px;color:#9cc}
+.mtoks{position:absolute;inset:2px;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1.35fr repeat(6,1fr) 1.35fr;gap:2px;pointer-events:none}
+.mtok{grid-row:var(--r);grid-column:var(--c);align-self:center;justify-self:center;width:calc(var(--bs)*.06);height:calc(var(--bs)*.06);border-radius:50%;border:2px solid var(--pc);overflow:hidden;background:#222;transform:translate(var(--dx),var(--dy));box-shadow:0 2px 6px rgba(0,0,0,.6);transition:transform .15s}.mtok .avimg{width:100%;height:100%}.mtok.act{border-width:3px;box-shadow:0 0 10px var(--pc);z-index:3}
+.mrank .li{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #333}
 </style>
 </head>
 <body>
@@ -395,6 +414,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
     <div class="felt" id="felt"></div>
     <div id="gPlayers"></div>
   </div>
+  <div id="mono" class="mono"></div>
   <div class="handwrap" id="gHandWrap"><div class="hand" id="gHand"></div></div>
   <div class="mebar" id="meBar">
     <div class="mp"><div class="av" id="meAv"></div><div class="pnm" id="meName"></div></div>
@@ -665,6 +685,7 @@ const GAMES = [
   { g: 'trixcp', ic: '🤝', n: 'كمبلكس شراكة', d: 'فريقين • شريكك مقابلك', cards: ['H13', 'S12', 'C12'] },
   { g: 'trixp', ic: '👥', n: 'تركس شراكة', d: 'فريقين • ٥ لعبات', cards: ['C11', 'H11', 'S11'] },
   { g: 't41', ic: '♥️', n: 'طرنيب ٤١', d: 'سوري • ورقة مكشوفة • شراكة', cards: ['H14', 'D13', 'H11'] },
+  { g: 'mono', ic: '🏙️', n: 'عقارات الديوانية', d: 'زهر • اشتري أحياء وابني • متل مونوبولي', cards: ['D14', 'H14', 'C14'] },
   { g: 't61', ic: '♠️', n: 'طرنيب ٦١', d: 'مزايدة وطرنيب • فريقين', cards: ['S13', 'S14', 'S12'] },
 ];
 let gi = 0;
@@ -857,6 +878,8 @@ function layoutHand() {
 function renderTable() {
   const e = room.engine;
   if (!e) return;
+  if (e.type === 'mono') return renderMono(e);
+  $('table').classList.remove('ismono');
   const mine = room.mySeat;
   $('gTitle').textContent = (room.vip ? '👑 ' : '') + room.gameName; $('table').classList.toggle('vipt', !!room.vip);
   $('gCode').textContent = room.code + ' 🔗';
@@ -1269,7 +1292,7 @@ function showGameOver() {
     <h3>${iWon ? 'مبروك! فزت' : 'انتهت اللعبة'}</h3>
     <p style="text-align:center">الفائز: <b style="color:var(--gold2)">${names}</b></p>
     ${room.mySeat >= 0 ? `<p style="text-align:center;color:var(--muted);font-size:13px">${iWon ? '+30 نقطة' : '−10 نقاط'} للاعبين الحقيقيين</p>` : ''}
-    ${historyTable(e)}
+    ${e.type === 'mono' ? monoRank(e) : historyTable(e)}
     <div class="row" style="margin-top:12px">${btns}</div>`);
   $('modal').dataset.k = 'o' + e.history.length;
   if ($('oRe')) $('oRe').onclick = () => { closeOverlay(); sendWs({ t: 'rematch' }); };
@@ -1294,10 +1317,171 @@ $('gHist').onclick = showResults;
 $('gCross').onclick = showResults;
 $('gLast').onclick = showResults;
 
+// ===== عقارات الديوانية (board game) =====
+const MB = [
+  ['go', 'انطلاق'], ['p', 'حي البلد', 0, 60], ['luck', 'حظ'], ['p', 'حي الرويس', 0, 60], ['tax', 'ضريبة', 100], ['rail', 'محطة القطار', 200], ['p', 'حي الشرفية', 1, 100],
+  ['jail', 'السجن'], ['p', 'حي الصفا', 1, 120], ['util', 'الكهرباء', 150], ['p', 'حي النسيم', 2, 140], ['p', 'حي الفيصلية', 2, 160], ['rail', 'المطار', 200], ['luck', 'حظ'],
+  ['park', 'استراحة'], ['p', 'حي الروضة', 3, 180], ['p', 'حي السلامة', 3, 200], ['luck', 'حظ'], ['p', 'حي الزهراء', 4, 220], ['rail', 'الميناء', 200], ['p', 'حي الحمراء', 4, 240],
+  ['gojail', 'روح عالسجن'], ['p', 'حي الخالدية', 5, 260], ['p', 'حي الشاطئ', 5, 280], ['util', 'المياه', 150], ['tax', 'ضريبة رفاهية', 75], ['p', 'الكورنيش', 6, 350], ['p', 'برج الديوانية', 6, 400],
+];
+const MG_COL = ['#9a6034', '#5ec8f2', '#e2479b', '#f39c12', '#e53935', '#f2d000', '#2f55d4'];
+const MP_COL = ['#ff4d4d', '#3aa0ff', '#39d353', '#ffc93a'];
+const MICON = { go: '✨', luck: '🍀', tax: '🏛️', rail: '🚆', util: '💡', jail: '🚔', park: '☕', gojail: '👮' };
+function mCell(i) { // grid row/col (1..8)
+  if (i <= 7) return [8, 8 - i];
+  if (i <= 14) return [8 - (i - 7), 1];
+  if (i <= 21) return [1, 1 + (i - 14)];
+  return [1 + (i - 21), 8];
+}
+const mono = { shown: null, fx: null, roll: 0, card: 0, key: '' };
+function monoDice(n) { return ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][n] || '🎲'; }
+function monoTokens(e) {
+  const by = {};
+  e.players.forEach((p, s) => { if (p.out) return; const pos = mono.shown ? mono.shown[s] : p.pos; (by[pos] ||= []).push(s); });
+  let h = '';
+  for (const [pos, ss] of Object.entries(by)) {
+    const [r, c] = mCell(+pos);
+    ss.forEach((s, k) => {
+      const dx = (k % 2) * 46 - 23, dy = Math.floor(k / 2) * 46 - 23 + (ss.length <= 2 ? 23 : 0);
+      const seat = room.seats[s];
+      h += `<div class="mtok ${e.turn === s || e.cur === s && e.phase !== 'roll' ? 'act' : ''}" style="--r:${r};--c:${c};--dx:${dx}%;--dy:${dy}%;--pc:${MP_COL[s]}">${seat ? avPic(seat) : ''}</div>`;
+    });
+  }
+  return h;
+}
+function monoAnimate(e) {
+  const fx = e.moveFx;
+  if (!mono.shown || mono.code !== room.code) { mono.shown = e.players.map((p) => p.pos); mono.code = room.code; mono.fx = fx ? fx.id : null; return; }
+  if (fx && fx.id !== mono.fx) {
+    mono.fx = fx.id;
+    const s = fx.seat;
+    if (fx.jump || !fx.steps) { mono.shown[s] = e.players[s].pos; return; }
+    const dir = fx.steps > 0 ? 1 : -1;
+    let k = 0, pos = fx.from;
+    clearInterval(mono.t);
+    mono.shown[s] = pos;
+    mono.t = setInterval(() => {
+      pos = (pos + dir + 28) % 28; k++;
+      mono.shown[s] = pos; SND.play('tick');
+      $('mTok').innerHTML = monoTokens(room.engine);
+      if (k >= Math.abs(fx.steps)) { clearInterval(mono.t); mono.t = null; mono.shown = room.engine.players.map((p) => p.pos); $('mTok').innerHTML = monoTokens(room.engine); }
+    }, 160);
+    return;
+  }
+  if (!mono.t) mono.shown = e.players.map((p) => p.pos);
+}
+function monoCellInfo(e, i) {
+  const b = MB[i];
+  const o = e.owner[i];
+  let t = `<b>${MICON[b[0]] || '🏠'} ${b[1]}</b>`;
+  if (b[0] === 'p' || b[0] === 'rail' || b[0] === 'util') {
+    const price = b[0] === 'p' ? b[3] : b[2];
+    t += `<br>السعر: ${price}`;
+    if (o >= 0) t += `<br>المالك: ${esc(room.seats[o].name)}` + (b[0] === 'p' ? `<br>الإيجار الحالي: ${e.rents[i]}` + (e.level[i] ? `<br>${e.level[i] === 5 ? 'فندق 🏨' : e.level[i] + ' بيت 🏠'}` : '') : '');
+    if (b[0] === 'p') t += `<br><small>كلفة البيت: ${e.houseCost[b[2]]} • اجمع الحيّين بنفس اللون لتبني</small>`;
+  } else if (b[0] === 'tax') t += `<br>بتدفع ${b[2]}`;
+  else if (b[0] === 'go') t += '<br>كل مرة بتمرق بتاخد 200';
+  else if (b[0] === 'luck') t += '<br>اسحب ورقة حظ';
+  else if (b[0] === 'gojail') t += '<br>بتروح عالسجن مباشرة';
+  return t;
+}
+function renderMono(e) {
+  const mine = room.mySeat;
+  $('table').classList.add('ismono');
+  $('gTitle').textContent = (room.vip ? '👑 ' : '') + room.gameName;
+  $('gCode').textContent = room.code + ' 🔗';
+  monoAnimate(e);
+  const a = e.turn === mine && !e.over ? e.actions : null;
+  const myTurn = !!a;
+  const build = a && a.build && a.build.length ? a.build : [];
+  // players strip
+  const ps = e.players.map((p, s) => {
+    const seat = room.seats[s];
+    const turn = (e.turn === s || (e.turn < 0 && e.cur === s)) && !e.over;
+    const pct = e.turn === s ? ringPct() : null;
+    return `<div class="mpl ${turn ? 'turn' : ''} ${p.out ? 'out' : ''} ${s === mine ? 'me' : ''}" data-seat="${s}" style="--pc:${MP_COL[s]}"><div class="av">${seat ? avPic(seat) : ''}${turn && pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="mpn">${esc(seat ? seat.name : '')}</div><div class="mpc">${p.out ? 'أفلس 💀' : '💰' + p.cash}${p.jailed ? ' 🚔' : ''}</div></div>`;
+  }).join('');
+  // board cells
+  let cells = '';
+  MB.forEach((b, i) => {
+    const [r, c] = mCell(i);
+    const side = i < 7 ? 'b' : i < 14 ? 'l' : i < 21 ? 't' : 'r';
+    const corner = i % 7 === 0;
+    const o = e.owner[i];
+    const lv = e.level[i];
+    const band = b[0] === 'p' ? `<i class="band" style="background:${MG_COL[b[2]]}"></i>` : '';
+    const houses = lv ? `<i class="hs">${lv === 5 ? '🏨' : '🏠'.repeat(lv)}</i>` : '';
+    const price = b[0] === 'p' ? b[3] : (b[0] === 'rail' || b[0] === 'util') ? b[2] : b[0] === 'tax' ? '-' + b[2] : '';
+    cells += `<div class="mc s${side} ${corner ? 'corner' : ''} ${build.includes(i) ? 'canb' : ''}" data-mi="${i}" style="grid-row:${r};grid-column:${c};${o >= 0 ? `--oc:${MP_COL[o]}` : ''}">${band}<span class="mi">${MICON[b[0]] || ''}</span><span class="mn">${b[1]}</span>${houses}${o >= 0 ? '<i class="own"></i>' : price !== '' ? `<span class="mpr">${price}</span>` : ''}</div>`;
+  });
+  // center
+  const d = e.dice;
+  const rolled = e.rollId !== mono.roll;
+  let ctr = `<div class="mdice ${rolled ? 'roll' : ''}"><span>${monoDice(d[0])}</span><span>${monoDice(d[1])}</span></div>`;
+  if (e.card) ctr += `<div class="mcard ${e.card.id !== mono.card ? 'new' : ''}">🍀 ${esc(e.card.t)}</div>`;
+  let act = '';
+  if (a && a.roll) {
+    act = `<button class="gold mbtn" data-mact='{"type":"roll"}'>🎲 ارمي الزهر</button>`;
+    if (a.bail) act += `<button class="ghost mbtn2" data-mact='{"type":"bail"}'>🔓 ادفع كفالة ${a.bail}</button>`;
+    if (build.length) act += `<div class="mhint">🏗️ اكبس على حي مضوّي لتبني بيت</div>`;
+  } else if (a && a.buy) {
+    act = `<div class="mbuy">بدك تشتري <b>${MB[a.idx][1]}</b> بـ<b>${a.buy}</b>؟</div><div class="row"><button class="gold mbtn" style="flex:1" data-mact='{"type":"buy"}'>🏠 اشتري</button><button class="ghost mbtn" style="flex:1" data-mact='{"type":"skip"}'>لا</button></div>`;
+  } else if (!e.over) {
+    const w = e.turn >= 0 ? e.turn : e.cur;
+    act = `<div class="mwait">${w >= 0 && room.seats[w] ? 'دور ' + esc(room.seats[w].name) : ''}</div>`;
+  }
+  ctr += `<div class="mact">${act}</div><div class="mlog">${e.log.slice(-3).reverse().map((l) => `<div>${esc(l)}</div>`).join('')}</div><div class="mrnd">الجولة ${Math.min(e.round, e.maxRounds)} من ${e.maxRounds}</div>`;
+  const key = JSON.stringify([ps, cells, ctr]);
+  if (mono.key !== key) {
+    mono.key = key;
+    $('mono').innerHTML = `<div class="mps">${ps}</div><div class="mbw"><div class="mboard">${cells}<div class="mctr">${ctr}</div><div id="mTok" class="mtoks">${monoTokens(e)}</div></div></div>`;
+    fitMono();
+  } else $('mTok').innerHTML = monoTokens(e);
+  if (rolled) { mono.roll = e.rollId; if (e.rollId) SND.play('pop'); }
+  if (e.card && e.card.id !== mono.card) { if (mono.card) SND.play('trump'); mono.card = e.card.id; }
+  // my bar
+  if (mine >= 0) {
+    const s = room.seats[mine];
+    const meH = avPic(s);
+    if ($('meAv').__h !== meH) { $('meAv').innerHTML = meH; $('meAv').__h = meH; }
+    $('meName').textContent = s.name;
+    $('meInf').textContent = '💰 ' + e.players[mine].cash; $('meInf').className = 'pinf';
+    $('meX').innerHTML = ''; $('meX').__h = '';
+    $('meBar').classList.toggle('turn', myTurn);
+    $('gTurn').textContent = myTurn ? (a.buy ? 'دورك — اشتري؟' : 'دورك — ارمي 🎲') : '';
+  } else { $('meAv').__h = ''; $('meAv').textContent = '👀'; $('meName').textContent = 'متفرج'; $('meInf').textContent = ''; $('gTurn').textContent = 'أنت تتفرج'; }
+  if (myTurn && !mono.myTurn) { setTimeout(() => SND.play('turn'), 120); try { navigator.vibrate && navigator.vibrate(60); } catch {} }
+  if (e.over && !mono.over) SND.play(mine >= 0 && e.winners.includes(mine) ? 'win' : 'lose');
+  mono.myTurn = myTurn; mono.over = e.over;
+  if (e.over || room.status === 'finished') showGameOver();
+  else if (overlayKind === 'over') closeOverlay();
+  startTick();
+}
+function fitMono() {
+  const w = $('mono'), bw = w.querySelector('.mbw'); if (!bw) return;
+  const ps = w.querySelector('.mps');
+  const avail = Math.min(w.clientWidth - 8, w.clientHeight - ps.offsetHeight - 10);
+  bw.style.setProperty('--bs', Math.max(260, avail) + 'px');
+}
+addEventListener('resize', () => { if (room && room.engine && room.engine.type === 'mono') fitMono(); });
+function monoRank(e) {
+  const order = [0, 1, 2, 3].sort((x, y) => e.worth[y] - e.worth[x]);
+  return `<div class="mrank">${order.map((s, k) => `<div class="li"><b>${['🥇', '🥈', '🥉', '4️⃣'][k]} ${esc(room.seats[s].name)}</b><span>${e.players[s].out ? 'أفلس 💀' : 'الثروة ' + e.worth[s]}</span></div>`).join('')}</div>`;
+}
+$('mono').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mact]');
+  if (b) { const a = JSON.parse(b.dataset.mact); sendWs({ t: 'act', a }); SND.play('click'); b.disabled = true; return; }
+  const c = ev.target.closest('[data-mi]');
+  if (!c || !room || !room.engine) return;
+  const e = room.engine, i = +c.dataset.mi;
+  if (c.classList.contains('canb')) { sendWs({ t: 'act', a: { type: 'build', idx: i } }); SND.play('bid'); return; }
+  openModal('mcell', `<div style="text-align:center;line-height:1.9">${monoCellInfo(e, i)}</div><button class="gold" style="width:100%;margin-top:12px" onclick="closeOverlay()">تمام</button>`);
+});
+
 // ===== bubbles over players =====
 function seatAnchor(seat) {
   if (seat === room.mySeat) return $('meAv');
-  return document.querySelector(`.pl[data-seat="${seat}"] .av`);
+  return document.querySelector(`#table.ismono .mpl[data-seat="${seat}"] .av`) || document.querySelector(`.pl[data-seat="${seat}"] .av`);
 }
 function bubble(seat, text, emo) {
   if (!room || seat < 0) return;

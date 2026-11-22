@@ -350,6 +350,7 @@ async function handle(ws, m) {
         }
       }
       r.engine = createGame(r.game);
+      if (r.engine.type === 'mono') { r.engine.names = r.seats.map((x) => x.name); r.engine.isHuman = (i) => !r.seats[i].bot; }
       r.status = 'playing';
       r.result = null;
       sysChat(r, 'بدأت اللعبة 🎴 بالتوفيق!');
