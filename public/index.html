@@ -440,8 +440,8 @@ const SND = (() => {
   let smpLoading = false;
   function loadSamples() {
     if (smpLoading) return; smpLoading = true;
-    for (const n of UI_NAMES) fetch(SND_URL + n + '.mp3').then((r) => r.arrayBuffer()).then((b) => new Promise((ok, no) => ctx.decodeAudioData(b, ok, no))).then((buf) => { SMP['ui-' + n] = buf; }).catch(() => {});
-    for (const n of SMP_NAMES) fetch('/snd/' + n + '.mp3').then((r) => r.arrayBuffer()).then((b) => new Promise((ok, no) => ctx.decodeAudioData(b, ok, no))).then((buf) => { SMP[n] = buf; }).catch(() => {});
+    for (const n of UI_NAMES) fetch(SND_URL + n + '.mp3?v=3').then((r) => r.arrayBuffer()).then((b) => new Promise((ok, no) => ctx.decodeAudioData(b, ok, no))).then((buf) => { SMP['ui-' + n] = buf; }).catch(() => {});
+    for (const n of SMP_NAMES) fetch('/snd/' + n + '.mp3?v=3').then((r) => r.arrayBuffer()).then((b) => new Promise((ok, no) => ctx.decodeAudioData(b, ok, no))).then((buf) => { SMP[n] = buf; }).catch(() => {});
   }
   function smp(n, t, vol, rate) {
     const b = SMP[n]; if (!b) return false;
@@ -1663,7 +1663,7 @@ function uploadPhoto(file) {
 if (token) connect(); else show('auth');
 </script><script>
 (()=>{const R=()=>{$("gGrid").innerHTML=GAMES.map((g,i)=>`<button class="gt ${i===gi?"on":""}" data-gi="${i}"><div class="gfan">${g.cards.map(x=>cardHtml(x)).join("")}</div><b>${g.ic} ${g.n}</b><small>${g.d}</small></button>`).join("");$("bCreate").textContent="▶ العب "+GAMES[gi].n};$("gGrid").addEventListener("click",ev=>{const b=ev.target.closest("[data-gi]");if(!b)return;gi=+b.dataset.gi;try{localStorage.setItem("lastGame",GAMES[gi].g)}catch{}R();SND.play("pop")});R()})();
-(()=>{const VO="/snd/",V={};for(const k of ["burn","laugh","cry","angry","scream"])V[k]=VO+k+".mp3";const A={};for(const k in V){A[k]=new Audio(V[k]);A[k].preload="auto"}let un=!1;document.addEventListener("pointerdown",()=>{if(un)return;un=!0;for(const k in A){const a=A[k];a.muted=!0;a.play().then(()=>{a.pause();a.currentTime=0;a.muted=!1}).catch(()=>{a.muted=!1})}},{passive:!0});const p=SND.play.bind(SND);SND.play=n=>{const a=A[n];if(!a)return p(n);if(SND.isMuted())return!0;try{a.currentTime=0;a.volume=1;a.play().catch(()=>{})}catch{}return!0}})();
+(()=>{const VO="/snd/",V={};for(const k of ["burn","laugh","cry","angry","scream"])V[k]=VO+k+".mp3?v=3";const A={};for(const k in V){A[k]=new Audio(V[k]);A[k].preload="auto"}let un=!1;document.addEventListener("pointerdown",()=>{if(un)return;un=!0;for(const k in A){const a=A[k];a.muted=!0;a.play().then(()=>{a.pause();a.currentTime=0;a.muted=!1}).catch(()=>{a.muted=!1})}},{passive:!0});const p=SND.play.bind(SND);SND.play=n=>{const a=A[n];if(!a)return p(n);if(SND.isMuted())return!0;try{a.currentTime=0;a.volume=1;a.play().catch(()=>p(n))}catch{return p(n)}return!0}})();
 </script>
 </body>
 </html>

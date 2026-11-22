@@ -552,7 +552,7 @@ const server = Bun.serve({
     if (url.pathname.startsWith('/snd/')) {
       const b = SND_FILES[url.pathname.slice(5).replace(/\.mp3$/, '')];
       if (!b) return new Response('not found', { status: 404 });
-      return new Response(b, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } });
+      return new Response(b, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=86400' } });
     }
     if (/^\/img\/(av|tb|emo)\/[a-z0-9]+\.webp$/.test(url.pathname)) {
       const f = Bun.file(ROOT + 'public' + url.pathname);
