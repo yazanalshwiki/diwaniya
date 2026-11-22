@@ -285,6 +285,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .st-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.st-head h3{margin:0}.st-tabs{display:flex;gap:6px;margin:10px 0;overflow-x:auto}.st-tabs button{flex:1;white-space:nowrap;padding:9px 8px;font-size:13px;background:#1b1b2e;border:1px solid #3a3a55}.st-tabs button.on{background:var(--gold);color:#3a2600}.st-daily{width:100%;margin:4px 0}.lkb{position:relative}.lkb em{font-style:normal;font-size:12px;font-weight:800;border-radius:999px;padding:2px 10px}.st-on{background:#1f9d4c;color:#fff}.st-own{background:#33384f;color:#cfe3ff}.st-pr{background:#000;color:var(--gold2)}.lkb.lock>div{filter:saturate(.7) brightness(.8)}.lk4{grid-template-columns:repeat(4,1fr)}.fxprev{font-size:34px;line-height:1.2}.st-note{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 0}.vipbox{text-align:center;background:linear-gradient(180deg,#4a3f1c,#1e1a0c);border:2px solid var(--gold2);border-radius:16px;padding:14px}.vipbox .vipc{font-size:54px}.vipbox p{color:#e8dcb5;font-size:13px}.vipbox .lkb{width:100%}.vipopt{display:flex;gap:8px;align-items:center;justify-content:center}.vipopt select{background:#1b1b1b;color:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;font-family:inherit;margin-top:12px}.palette .fxg button.lockfx{opacity:.55;background:#2a2a35}.bnav button.dotd span{position:relative}.bnav button.dotd span::after{content:'';position:absolute;top:-2px;right:-6px;width:10px;height:10px;border-radius:50%;background:#e21b2c}
 .vipt .tbar{background:linear-gradient(180deg,#3a3010,#1c1c1c);border-bottom-color:#c9a227}.vipt .tbar .ttl{color:var(--gold2)}
 @media (max-width:400px){.pl{width:100px}.pl .av{width:58px;height:58px}.pl .av .ring{-webkit-mask:radial-gradient(circle,transparent 32px,#000 33px);mask:radial-gradient(circle,transparent 32px,#000 33px)}.pl .pnm{font-size:12px;max-width:100px;padding:1px 8px}.fan i{width:30px;height:44px}}
+.packs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pack{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 10px;background:linear-gradient(180deg,#2b3fa6,#1d1966);border:2px solid #4b5bd0;border-radius:16px}.pack .pk-c{font-size:30px}.pack b{font-size:20px;color:var(--gold2)}.pack small{color:#cfd6ff;font-size:11px}.pack em{font-style:normal;margin-top:6px;background:var(--gold);color:#3a2600;border-radius:999px;padding:3px 10px;font-weight:800}.pack .pk-b{position:absolute;top:-10px;font-style:normal;font-size:10px;background:#e21b2c;color:#fff;border-radius:999px;padding:1px 8px}.mysr-form{background:#fff;border-radius:14px;padding:10px;color:#111}
 .rules p{margin:6px 0;line-height:1.7;font-size:14px;color:#ddd}
 .rules h4{margin:12px 0 4px;color:var(--gold2)}
 .conn{position:fixed;bottom:10px;left:10px;background:#5a3b00;color:#ffe2a6;font-size:12px;padding:4px 10px;border-radius:999px;z-index:98}
@@ -1474,7 +1475,7 @@ let storeTab = 'cards';
 function openLook(which) { openStore(which === 'tb' ? 'tb' : 'cards'); }
 function openStore(tab) {
   if (tab) storeTab = tab;
-  const T = [['cards', '🃏 الورق'], ['tb', '🎨 الطاولات'], ['fx', '😂 التفاعلات'], ['vip', '👑 VIP']];
+  const T = [['coins', '💳 شحن'], ['cards', '🃏 الورق'], ['tb', '🎨 الطاولات'], ['fx', '😂 التفاعلات'], ['vip', '👑 VIP']];
   const item = (id, inner, n) => {
     const own = ownsItem(id), [k, v] = id.split(':'), on = (k === 'cs' || k === 'bk' || k === 'tb') && look[k] === v;
     const tag = on ? '<em class="st-on">✓ مستعمل</em>' : own ? (k === 'fx' || k === 'vip' ? '<em class="st-own">عندك ✓</em>' : '<em class="st-own">استعمل</em>') : `<em class="st-pr">🪙 ${price(id).toLocaleString('en')}</em>`;
@@ -1485,12 +1486,37 @@ function openStore(tab) {
     '</div><div class="lkt">ظهر الورق</div><div class="lk">' + LOOKS.bk.map(([v, n]) => item('bk:' + v, `<div class="bprev bk-${v}"><i></i><i></i></div>`, n)).join('') + '</div>';
   else if (storeTab === 'tb') h = '<div class="lk">' + LOOKS.tb.map(([v, n]) => item('tb:' + v, `<div class="tprev tb-${v}"><div class="felt"></div></div>`, n)).join('') + '</div>';
   else if (storeTab === 'fx') h = '<div class="lk lk4">' + FX_KEYS.map((k) => item('fx:' + k, `<div class="fxprev">${FXE[k].e}</div>`, FXE[k].l)).join('') + '</div><p class="st-note">التفاعلات بتطلع لكل اللي عالطاولة مع صوت 🔊</p>';
+  else if (storeTab === 'coins') {
+    const P = packsInfo;
+    if (!P) { loadPacks(); h = '<div class="empty">جاري التحميل…</div>'; }
+    else if (!P.enabled) h = '<div class="empty">💳 شحن النقاط بالدفع رح يتفعّل قريباً<br><small>هلأ فيك تجمع نقاط من اللعب والمكافأة اليومية 🎁</small></div>';
+    else h = '<div class="packs">' + Object.entries(P.packs).map(([k, v], i) => `<button class="pack" data-pack="${k}"><div class="pk-c">🪙</div><b>${v.coins.toLocaleString('en')}</b><small>نقطة</small><em>${v.sar} ريال</em>${i === 1 ? '<i class="pk-b">الأكثر طلباً</i>' : ''}</button>`).join('') + '</div><p class="st-note">الدفع بمدى، فيزا، ماستركارد أو STC Pay 🔒 والنقاط بتنضاف فوراً</p>';
+  }
   else h = `<div class="vipbox"><div class="vipc">👑</div><b>غرف VIP</b><p>طاولتك بتطلع بإطار ذهبي و👑 بقائمة الطاولات، وبتختار وقت الدور (٢٠ ثانية لـ ٩٠ ثانية).</p>${item('vip:room', '', 'مفتاح غرف VIP للأبد')}</div>`;
   openModal('store', `<div class="st-head"><h3>🛍️ المتجر</h3><div class="coin"><span>🪙</span><b>${me ? Number(me.points).toLocaleString('en') : 0}</b></div></div>
   ${me && me.dailyReady ? '<button class="green st-daily" data-daily="1">🎁 خود مكافأتك اليومية +100</button>' : ''}
   <div class="st-tabs">${T.map(([k, n]) => `<button class="${k === storeTab ? 'on' : ''}" data-stab="${k}">${n}</button>`).join('')}</div>${h}
   <p class="st-note">النقاط بتجمعها من اللعب: الفوز +30، والمكافأة اليومية +100 🎁</p>
   <button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>`);
+}
+let packsInfo = null;
+async function loadPacks() { try { packsInfo = await (await fetch('/api/packs')).json(); } catch { packsInfo = { enabled: false }; } if (overlayKind === 'store' && storeTab === 'coins') openStore(); }
+function loadMoyasar() {
+  if (window.Moyasar) return Promise.resolve();
+  return new Promise((ok, no) => {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/vendor/moyasar.css'; document.head.appendChild(l);
+    const sc = document.createElement('script'); sc.src = '/vendor/moyasar.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+  });
+}
+async function buyPack(k) {
+  const v = packsInfo.packs[k];
+  openModal('pay', `<h3>💳 ${v.coins.toLocaleString('en')} نقطة بـ ${v.sar} ريال</h3><div class="mysr-form"></div><button class="ghost" style="width:100%;margin-top:10px" data-stab="coins">رجوع</button>`);
+  try {
+    await loadMoyasar();
+    Moyasar.init({ element: '.mysr-form', amount: v.sar * 100, currency: 'SAR', description: `Diwaniya ${v.coins} coins (user ${me.id})`,
+      publishable_api_key: packsInfo.pk, callback_url: location.origin + '/pay/done', methods: ['creditcard', 'stcpay'],
+      supported_networks: ['mada', 'visa', 'mastercard'], metadata: { uid: String(me.id), pkg: k } });
+  } catch { toast('ما قدرنا نفتح صفحة الدفع'); }
 }
 async function storeOp(op, id) {
   try {
@@ -1521,6 +1547,7 @@ function menuAct(m) {
 }
 $('modal').addEventListener('click', (ev) => {
   const st = ev.target.closest('[data-stab]'); if (st) { SND.play('pop'); openStore(st.dataset.stab); return; }
+  const pk = ev.target.closest('[data-pack]'); if (pk) { buyPack(pk.dataset.pack); return; }
   if (ev.target.closest('[data-daily]')) { storeOp('daily'); return; }
   const b = ev.target.closest('[data-buy]');
   if (b) {
@@ -1647,6 +1674,7 @@ function uploadPhoto(file) {
   img.src = url;
 }
 
+{ const pq = new URLSearchParams(location.search).get('pay'); if (pq) { history.replaceState(null, '', location.pathname); setTimeout(() => { toast(pq === 'paid' ? '✅ تم الدفع وانضافت النقاط' : '❌ الدفع ما اكتمل، ما انسحب شي'); SND.play(pq === 'paid' ? 'win' : 'bad'); }, 1200); } }
 if (token) connect(); else show('auth');
 </script><script>
 (()=>{const R=()=>{$("gGrid").innerHTML=GAMES.map((g,i)=>`<button class="gt ${i===gi?"on":""}" data-gi="${i}"><div class="gfan">${g.cards.map(x=>cardHtml(x)).join("")}</div><b>${g.ic} ${g.n}</b><small>${g.d}</small></button>`).join("");$("bCreate").textContent="▶ العب "+GAMES[gi].n};$("gGrid").addEventListener("click",ev=>{const b=ev.target.closest("[data-gi]");if(!b)return;gi=+b.dataset.gi;try{localStorage.setItem("lastGame",GAMES[gi].g)}catch{}R();SND.play("pop")});R()})();

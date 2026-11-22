@@ -22,6 +22,24 @@ const CATALOG = {
   'fx:angry': 150, 'fx:scream': 200, 'fx:kiss': 250, 'fx:party': 300,
   'vip:room': 1500,
 };
+// ================== Coin packs (real money via Moyasar; amounts in halalas) ==================
+const PACKS = { p1: { coins: 1000, sar: 5 }, p2: { coins: 5000, sar: 19 }, p3: { coins: 15000, sar: 49 } };
+const MOYASAR_PK = Bun.env.MOYASAR_PUBLISHABLE_KEY || '', MOYASAR_SK = Bun.env.MOYASAR_SECRET_KEY || '';
+const memPaid = new Set();
+async function creditPayment(payId) {
+  if (!MOYASAR_SK) throw new Error('الدفع مو مفعّل لسا');
+  const r = await fetch('https://api.moyasar.com/v1/payments/' + encodeURIComponent(payId), { headers: { authorization: 'Basic ' + Buffer.from(MOYASAR_SK + ':').toString('base64') } });
+  if (!r.ok) throw new Error('ما لقينا عملية الدفع');
+  const pay = await r.json();
+  const md = pay.metadata || {}, pk = PACKS[md.pkg], uid = +md.uid;
+  if (pay.status !== 'paid' || !pk || !uid || pay.currency !== 'SAR' || pay.amount !== pk.sar * 100) throw new Error('الدفع ما اكتمل');
+  if (sql) {
+    const ins = await sql`insert into payments (id, uid, pkg, amount, coins) values (${pay.id}, ${uid}, ${md.pkg}, ${pay.amount}, ${pk.coins}) on conflict (id) do nothing returning id`;
+    if (!ins.length) return { uid, dup: true };
+    await sql`update users set points = points + ${pk.coins} where id = ${uid}`;
+  } else { if (memPaid.has(pay.id)) return { uid, dup: true }; memPaid.add(pay.id); const u = mem.users.get(uid); if (u) u.points += pk.coins; }
+  return { uid, coins: pk.coins };
+}
 const owns = (u, id) => CATALOG[id] === 0 || (u.items || []).includes(id);
 
 // ================== Storage ==================
@@ -41,6 +59,9 @@ if (Bun.env.DATABASE_URL) {
   await sql`create table if not exists matches (
     id serial primary key, game text not null, players jsonb not null, winners jsonb not null,
     finished_at timestamptz not null default now())`;
+  await sql`create table if not exists payments (
+    id text primary key, uid int not null, pkg text not null, amount int not null, coins int not null,
+    created_at timestamptz not null default now())`;
   await sql`alter table users add column if not exists avatar text`;
   await sql`alter table users add column if not exists email text`;
   await sql`alter table users add column if not exists photo text`;
@@ -443,6 +464,14 @@ const server = Bun.serve({
       const u = p && (await getUser(p.id));
       return u ? json({ user: pub(u, true) }) : json({ error: 'unauthorized' }, 401);
     }
+    if (url.pathname === '/api/packs') return json({ packs: PACKS, pk: MOYASAR_PK, enabled: !!(MOYASAR_PK && MOYASAR_SK) });
+    if (url.pathname === '/pay/done') {
+      // Moyasar redirects here after payment: ?id=...&status=...
+      let msg = 'paid';
+      try { const r = await creditPayment(url.searchParams.get('id') || ''); const u = await getUser(r.uid); const ws = clients.get(r.uid); if (ws && u) send(ws, { t: 'me', user: pub(u, true) }); }
+      catch (e) { msg = 'failed'; console.error('pay', e.message); }
+      return new Response(null, { status: 302, headers: { location: '/?pay=' + msg } });
+    }
     if (url.pathname === '/api/store' && req.method === 'POST') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
       let u = p && (await getUser(p.id));
@@ -514,6 +543,10 @@ const server = Bun.serve({
       const b = SND_FILES[url.pathname.slice(5).replace(/\.mp3$/, '')];
       if (!b) return new Response('not found', { status: 404 });
       return new Response(b, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } });
+    }
+    if (url.pathname === '/vendor/moyasar.js' || url.pathname === '/vendor/moyasar.css') {
+      const f = Bun.file(ROOT + 'public' + url.pathname);
+      return new Response(f, { headers: { 'content-type': url.pathname.endsWith('.js') ? 'application/javascript' : 'text/css', 'cache-control': 'public, max-age=86400' } });
     }
     if (url.pathname === '/health') return new Response('ok');
     return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
