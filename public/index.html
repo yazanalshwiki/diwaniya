@@ -282,6 +282,8 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .avm{width:42px;height:42px;border-radius:50%;overflow:hidden;margin:0 auto 2px}.avm svg{width:100%;height:100%;display:block}
 .av{transition:box-shadow .3s}.av .ring,.pnm.tm{transition:filter .3s}.c.fly,.c.collect,.c.ghost{will-change:transform,opacity}.pl{transition:transform .2s}
 .avimg{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}.av .avimg{position:absolute;inset:0}.pf-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}.pf-av{width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--gold);flex:none;background:#333}.pf-av svg{width:100%;height:100%;display:block}.pf-btns{display:flex;flex-direction:column;gap:6px;flex:1}.pf-up{display:block;text-align:center;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#fff;font-weight:700;border-radius:10px;padding:9px;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.4)}.pf-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}.pf-stats div{background:#1b1b2e;border:1px solid #3a3a55;border-radius:12px;padding:8px 2px;text-align:center}.pf-stats b{display:block;color:var(--gold2);font-size:17px}.pf-stats small{font-size:11px;color:var(--muted)}.pf-l{display:block;font-size:13px;color:var(--muted);margin:0 2px 4px}.pf-pass{margin:4px 0 8px}.pf-pass summary{cursor:pointer;color:var(--muted);margin-bottom:8px}
+.st-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.st-head h3{margin:0}.st-tabs{display:flex;gap:6px;margin:10px 0;overflow-x:auto}.st-tabs button{flex:1;white-space:nowrap;padding:9px 8px;font-size:13px;background:#1b1b2e;border:1px solid #3a3a55}.st-tabs button.on{background:var(--gold);color:#3a2600}.st-daily{width:100%;margin:4px 0}.lkb{position:relative}.lkb em{font-style:normal;font-size:12px;font-weight:800;border-radius:999px;padding:2px 10px}.st-on{background:#1f9d4c;color:#fff}.st-own{background:#33384f;color:#cfe3ff}.st-pr{background:#000;color:var(--gold2)}.lkb.lock>div{filter:saturate(.7) brightness(.8)}.lk4{grid-template-columns:repeat(4,1fr)}.fxprev{font-size:34px;line-height:1.2}.st-note{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 0}.vipbox{text-align:center;background:linear-gradient(180deg,#4a3f1c,#1e1a0c);border:2px solid var(--gold2);border-radius:16px;padding:14px}.vipbox .vipc{font-size:54px}.vipbox p{color:#e8dcb5;font-size:13px}.vipbox .lkb{width:100%}.vipopt{display:flex;gap:8px;align-items:center;justify-content:center}.vipopt select{background:#1b1b1b;color:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;font-family:inherit;margin-top:12px}.palette .fxg button.lockfx{opacity:.55;background:#2a2a35}.bnav button.dotd span{position:relative}.bnav button.dotd span::after{content:'';position:absolute;top:-2px;right:-6px;width:10px;height:10px;border-radius:50%;background:#e21b2c}
+.vipt .tbar{background:linear-gradient(180deg,#3a3010,#1c1c1c);border-bottom-color:#c9a227}.vipt .tbar .ttl{color:var(--gold2)}
 .rules p{margin:6px 0;line-height:1.7;font-size:14px;color:#ddd}
 .rules h4{margin:12px 0 4px;color:var(--gold2)}
 .conn{position:fixed;bottom:10px;left:10px;background:#5a3b00;color:#ffe2a6;font-size:12px;padding:4px 10px;border-radius:999px;z-index:98}
@@ -319,7 +321,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 <h2 class="gh">اختار اللعبة 👇</h2>
 <div class="ggrid" id="gGrid"></div>
 <div class="hidden"><button id="gPrev"></button><div id="gCard"></div><button id="gNext"></button><div id="gDots"></div></div>
-<div class="lbtns"><button class="green big" id="bCreate">▶ لعبة ودية</button><label class="chk"><input type="checkbox" id="cPriv" checked> طاولة خاصة (تدخلها بالكود فقط)</label></div>
+<div class="lbtns"><button class="green big" id="bCreate">▶ لعبة ودية</button><div id="vipBox" class="vipopt hidden"><label class="chk"><input type="checkbox" id="cVip"> 👑 طاولة VIP</label><select id="cTurn"><option value="20000">الدور ٢٠ ثانية</option><option value="40000" selected>الدور ٤٠ ثانية</option><option value="60000">الدور ٦٠ ثانية</option><option value="90000">الدور ٩٠ ثانية</option></select></div><label class="chk"><input type="checkbox" id="cPriv" checked> طاولة خاصة (تدخلها بالكود فقط)</label></div>
 <div class="box">
 <h2>ادخل بالكود</h2>
 <div class="row"><input id="jCode" placeholder="مثال: K7M2Q" style="direction:ltr;text-align:center;text-transform:uppercase;letter-spacing:3px" maxlength="5"><button class="gold" id="bJoin">دخول</button></div>
@@ -339,7 +341,7 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 </div>
 </section>
 </div>
-<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Look"><span>🎨</span>الشكل</button></nav>
+<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
 </div>
 
 <div id="waiting" class="hidden"><div class="wrap">
@@ -626,12 +628,14 @@ function renderMe() {
   $('lLvl').textContent = Math.floor(xp / 100) + 1; $('lXp').style.width = pc + '%'; $('lXpT').textContent = pc + '%';
   $('lAv').innerHTML = avPic({ uid: me.id, ph: me.ph, name: me.username, av: me.avatar });
   $('myStats').textContent = `لعبت ${me.games} • فزت ${me.wins}`;
+  syncLook(); renderPalette(); renderVip();
+  document.querySelector('.bnav [data-tab="Look"]').classList.toggle('dotd', !!me.dailyReady);
 }
 function renderLobby() {
   renderMe();
   const L = $('rList');
   if (!lobbyRooms.length) { L.innerHTML = '<div class="empty">ما فيه طاولات عامة الحين — افتح وحدة وشارك الكود</div>'; return; }
-  L.innerHTML = lobbyRooms.map((r) => `<div class="ri"><div><b>${esc(r.gameName)}</b> <span class="badge ${r.status === 'playing' ? 'live' : ''}">${r.status === 'playing' ? 'شغالة' : 'تنتظر'}</span>
+  L.innerHTML = lobbyRooms.map((r) => `<div class="ri"><div><b>${r.vip ? '👑 ' : ''}${esc(r.gameName)}</b> <span class="badge ${r.status === 'playing' ? 'live' : ''}">${r.status === 'playing' ? 'شغالة' : 'تنتظر'}</span>
     <div class="meta">${esc(r.host)} • ${r.humans} لاعب${r.free ? ` • ${r.free} كرسي فاضي` : ''}</div></div>
     <button class="small ${r.status === 'waiting' && r.free ? 'gold' : ''}" data-join="${r.code}">${r.status === 'waiting' && r.free ? 'انضم' : 'تفرج'}</button></div>`).join('');
   L.querySelectorAll('[data-join]').forEach((b) => (b.onclick = () => sendWs({ t: 'join', code: b.dataset.join })));
@@ -658,10 +662,11 @@ const stepCar = (d) => { gi = (gi + d + GAMES.length) % GAMES.length; renderCar(
 $('gPrev').onclick = () => stepCar(-1); $('gNext').onclick = () => stepCar(1);
 (() => { let sx = null; const c = $('gCard'); c.addEventListener('pointerdown', (e) => (sx = e.clientX)); c.addEventListener('pointerup', (e) => { if (sx == null) return; const d = e.clientX - sx; sx = null; if (Math.abs(d) > 40) stepCar(d < 0 ? 1 : -1); }); })();
 renderCar(0);
-$('bCreate').onclick = () => { try { localStorage.setItem('lastGame', GAMES[gi].g); } catch {} sendWs({ t: 'create', game: GAMES[gi].g, priv: $('cPriv').checked }); };
+$('bCreate').onclick = () => { try { localStorage.setItem('lastGame', GAMES[gi].g); } catch {} const vip = ownsItem('vip:room') && $('cVip').checked; sendWs({ t: 'create', game: GAMES[gi].g, priv: $('cPriv').checked, vip, turnMs: +$('cTurn').value }); };
+function renderVip() { $('vipBox').classList.toggle('hidden', !ownsItem('vip:room')); }
 document.querySelectorAll('.bnav button').forEach((b) => (b.onclick = () => {
   const t = b.dataset.tab;
-  if (t === 'Look') { openLook('cards'); return; }
+  if (t === 'Look') { openStore(); return; }
   document.querySelectorAll('.bnav button').forEach((x) => x.classList.toggle('on', x === b));
   for (const k of ['Home', 'Rooms', 'Top']) $('tab' + k).classList.toggle('hidden', k !== t);
   if (t === 'Rooms') sendWs({ t: 'lobby' });
@@ -796,7 +801,7 @@ function fanHtml(n) {
 }
 function ringPct() {
   if (!room.deadline) return null;
-  return Math.max(0, Math.min(100, ((room.deadline - Date.now()) / TURN_MS) * 100));
+  return Math.max(0, Math.min(100, ((room.deadline - Date.now()) / (room.turnMs || TURN_MS)) * 100));
 }
 function layoutHand() {
   const H = $('gHand');
@@ -816,7 +821,7 @@ function renderTable() {
   const e = room.engine;
   if (!e) return;
   const mine = room.mySeat;
-  $('gTitle').textContent = room.gameName;
+  $('gTitle').textContent = (room.vip ? '👑 ' : '') + room.gameName; $('table').classList.toggle('vipt', !!room.vip);
   $('gCode').textContent = room.code + ' 🔗';
   $('gCross').innerHTML = crossHtml(e);
   $('gTrump').innerHTML = trumpHtml(e);
@@ -1312,8 +1317,9 @@ function sticker(seat, key) {
   if (d.voice) { SND.play(d.s); if (!SND.play(d.voice) && d.say) setTimeout(() => SPEECH.say(d.say), 250); }
   else { SND.play(d.s); if (d.say) setTimeout(() => SPEECH.say(d.say), 250); }
 }
-$('palette').innerHTML = `<div class="lbl">تفاعلية مع صوت 🔊</div><div class="fxg">${Object.entries(FXE).map(([k, d]) => `<button data-r="!${k}">${d.e}<small>${d.l}</small></button>`).join('')}</div><div class="em">${EMOS.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div><div class="ph">${PHRASES.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div>`;
-$('palette').addEventListener('click', (ev) => { const b = ev.target.closest('[data-r]'); if (!b) return; sendWs({ t: 'react', e: b.dataset.r }); $('palette').classList.add('hidden'); });
+function renderPalette() { $('palette').innerHTML = `<div class="lbl">تفاعلية مع صوت 🔊</div><div class="fxg">${Object.entries(FXE).map(([k, d]) => ownsItem('fx:' + k) ? `<button data-r="!${k}">${d.e}<small>${d.l}</small></button>` : `<button class="lockfx" data-shop="fx">${d.e}<small>🔒 ${price('fx:' + k)}</small></button>`).join('')}</div><div class="em">${EMOS.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div><div class="ph">${PHRASES.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div>`; }
+renderPalette();
+$('palette').addEventListener('click', (ev) => { if (ev.target.closest('[data-shop]')) { $('palette').classList.add('hidden'); openStore('fx'); return; } const b = ev.target.closest('[data-r]'); if (!b) return; sendWs({ t: 'react', e: b.dataset.r }); $('palette').classList.add('hidden'); });
 $('gEmo').onclick = (ev) => { ev.stopPropagation(); $('palette').classList.toggle('hidden'); };
 document.addEventListener('pointerdown', (ev) => { if (!ev.target.closest('#palette') && !ev.target.closest('#gEmo')) $('palette').classList.add('hidden'); });
 function onReact(m) {
@@ -1441,16 +1447,48 @@ function applyLook() {
   for (const k in LOOKS) { [...el.classList].filter((c) => c.startsWith(k + '-')).forEach((c) => el.classList.remove(c)); el.classList.add(k + '-' + look[k]); }
 }
 applyLook();
-function openLook(which) {
-  const opt = (k, v, n, inner) => `<button class="lkb ${look[k] === v ? 'on' : ''}" data-lk="${k}:${v}">${inner}<span>${n}</span></button>`;
-  let h;
-  if (which === 'tb') h = '<h3>🎨 شكل الطاولة</h3><div class="lk">' + LOOKS.tb.map(([v, n]) => opt('tb', v, n, `<div class="tprev tb-${v}"><div class="felt"></div></div>`)).join('') + '</div>';
-  else h = '<h3>🃏 شكل الورق</h3><div class="lkt">وجه الورق</div><div class="lk">' + LOOKS.cs.map(([v, n]) => opt('cs', v, n, `<div class="cprev cs-${v}">${['S14', 'H13', 'D12', 'C10'].map((c) => cardHtml(c, '', 'style="--cw:38px"')).join('')}</div>`)).join('') +
-    '</div><div class="lkt">ظهر الورق</div><div class="lk">' + LOOKS.bk.map(([v, n]) => opt('bk', v, n, `<div class="bprev bk-${v}"><i></i><i></i></div>`)).join('') + '</div>';
-  openModal('look', h + `<div class="row" style="margin-top:12px"><button class="ghost" style="flex:1" data-m="${which === 'tb' ? 'cards' : 'tb'}">${which === 'tb' ? '🃏 شكل الورق' : '🎨 شكل الطاولة'}</button><button class="gold" style="flex:1" onclick="closeOverlay()">تمام</button></div>`);
+const FX_KEYS = ['laugh', 'burn', 'clap', 'cry', 'angry', 'scream', 'kiss', 'party'];
+function price(id) { return me && me.catalog && me.catalog[id] != null ? me.catalog[id] : 0; }
+function ownsItem(id) { return price(id) === 0 || !!(me && me.items && me.items.includes(id)); }
+function syncLook() {
+  if (me && me.equip) for (const k in LOOKS) { const v = me.equip[k]; look[k] = v && LOOKS[k].some((o) => o[0] === v) ? v : LOOKS[k][0][0]; }
+  applyLook();
+}
+let storeTab = 'cards';
+function openLook(which) { openStore(which === 'tb' ? 'tb' : 'cards'); }
+function openStore(tab) {
+  if (tab) storeTab = tab;
+  const T = [['cards', '🃏 الورق'], ['tb', '🎨 الطاولات'], ['fx', '😂 التفاعلات'], ['vip', '👑 VIP']];
+  const item = (id, inner, n) => {
+    const own = ownsItem(id), [k, v] = id.split(':'), on = (k === 'cs' || k === 'bk' || k === 'tb') && look[k] === v;
+    const tag = on ? '<em class="st-on">✓ مستعمل</em>' : own ? (k === 'fx' || k === 'vip' ? '<em class="st-own">عندك ✓</em>' : '<em class="st-own">استعمل</em>') : `<em class="st-pr">🪙 ${price(id).toLocaleString('en')}</em>`;
+    return `<button class="lkb ${on ? 'on' : ''} ${own ? '' : 'lock'}" data-buy="${id}">${inner}<span>${n}</span>${tag}</button>`;
+  };
+  let h = '';
+  if (storeTab === 'cards') h = '<div class="lkt">وجه الورق</div><div class="lk">' + LOOKS.cs.map(([v, n]) => item('cs:' + v, `<div class="cprev cs-${v}">${['S14', 'H13', 'D12', 'C10'].map((c) => cardHtml(c, '', 'style="--cw:38px"')).join('')}</div>`, n)).join('') +
+    '</div><div class="lkt">ظهر الورق</div><div class="lk">' + LOOKS.bk.map(([v, n]) => item('bk:' + v, `<div class="bprev bk-${v}"><i></i><i></i></div>`, n)).join('') + '</div>';
+  else if (storeTab === 'tb') h = '<div class="lk">' + LOOKS.tb.map(([v, n]) => item('tb:' + v, `<div class="tprev tb-${v}"><div class="felt"></div></div>`, n)).join('') + '</div>';
+  else if (storeTab === 'fx') h = '<div class="lk lk4">' + FX_KEYS.map((k) => item('fx:' + k, `<div class="fxprev">${FXE[k].e}</div>`, FXE[k].l)).join('') + '</div><p class="st-note">التفاعلات بتطلع لكل اللي عالطاولة مع صوت 🔊</p>';
+  else h = `<div class="vipbox"><div class="vipc">👑</div><b>غرف VIP</b><p>طاولتك بتطلع بإطار ذهبي و👑 بقائمة الطاولات، وبتختار وقت الدور (٢٠ ثانية لـ ٩٠ ثانية).</p>${item('vip:room', '', 'مفتاح غرف VIP للأبد')}</div>`;
+  openModal('store', `<div class="st-head"><h3>🛍️ المتجر</h3><div class="coin"><span>🪙</span><b>${me ? Number(me.points).toLocaleString('en') : 0}</b></div></div>
+  ${me && me.dailyReady ? '<button class="green st-daily" data-daily="1">🎁 خود مكافأتك اليومية +100</button>' : ''}
+  <div class="st-tabs">${T.map(([k, n]) => `<button class="${k === storeTab ? 'on' : ''}" data-stab="${k}">${n}</button>`).join('')}</div>${h}
+  <p class="st-note">النقاط بتجمعها من اللعب: الفوز +30، والمكافأة اليومية +100 🎁</p>
+  <button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>`);
+}
+async function storeOp(op, id) {
+  try {
+    const r = await fetch('/api/store', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ op, id }) });
+    const j = await r.json();
+    if (!r.ok) { toast(j.error || 'صار خطأ'); SND.play('bad'); return; }
+    me = j.user; renderMe(); syncLook(); renderPalette(); renderVip();
+    SND.play(op === 'equip' ? 'pop' : 'win');
+    if (op === 'buy') toast('مبروك! صار عندك ✅'); if (op === 'daily') toast('+100 🪙 مكافأة اليوم');
+    if (overlayKind === 'store') openStore();
+  } catch { toast('تعذر الاتصال'); }
 }
 function openMenu() {
-  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="store">🛍️ المتجر</button><button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 function menuAct(m) {
   if (m === 'home') {
@@ -1461,12 +1499,20 @@ function menuAct(m) {
   else if (m === 'res') { closeOverlay(); showResults(); }
   else if (m === 'av') openAvatars();
   else if (m === 'prof') openProfile();
+  else if (m === 'store') openStore();
   else if (m === 'out') { closeOverlay(); logout(); }
   else if (m === 'rules') openModal('rules', RULES_HTML + '<button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>');
 }
 $('modal').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-lk]');
-  if (b) { const [k, v] = b.dataset.lk.split(':'); look[k] = v; try { localStorage.setItem('look_' + k, v); } catch {} applyLook(); SND.play('pop'); openLook(k === 'tb' ? 'tb' : 'cards'); return; }
+  const st = ev.target.closest('[data-stab]'); if (st) { SND.play('pop'); openStore(st.dataset.stab); return; }
+  if (ev.target.closest('[data-daily]')) { storeOp('daily'); return; }
+  const b = ev.target.closest('[data-buy]');
+  if (b) {
+    const id = b.dataset.buy, [k] = id.split(':');
+    if (ownsItem(id)) { if (k === 'cs' || k === 'bk' || k === 'tb') storeOp('equip', id); return; }
+    if (confirm(`بدك تشتريه بـ ${price(id)} نقطة؟`)) storeOp('buy', id);
+    return;
+  }
   const m = ev.target.closest('[data-m]');
   if (m) menuAct(m.dataset.m);
 });

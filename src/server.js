@@ -12,7 +12,17 @@ const hmac = (data) => new Bun.CryptoHasher('sha256', SECRET).update(data).diges
 function safeEq(a, b) { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; }
 const TURN_MS = +(Bun.env.TURN_MS || 40000);      // human turn timeout -> bot plays for them
 const AWAY_MS = 10000;      // disconnected grace before bot takes over
-const WIN_PTS = 30, LOSS_PTS = 10, START_PTS = 1000;
+const WIN_PTS = 30, LOSS_PTS = 10, START_PTS = +(Bun.env.START_PTS || 1000), DAILY_PTS = 100;
+// ================== Store catalog (prices in coins) ==================
+const CATALOG = {
+  'cs:classic': 0, 'cs:four': 300, 'cs:ivory': 500, 'cs:dark': 500,
+  'bk:red': 0, 'bk:blue': 200, 'bk:green': 200, 'bk:gold': 800,
+  'tb:sky': 0, 'tb:green': 300, 'tb:wood': 500, 'tb:black': 800, 'tb:neon': 1000,
+  'fx:laugh': 0, 'fx:burn': 0, 'fx:clap': 0, 'fx:cry': 0,
+  'fx:angry': 150, 'fx:scream': 200, 'fx:kiss': 250, 'fx:party': 300,
+  'vip:room': 1500,
+};
+const owns = (u, id) => CATALOG[id] === 0 || (u.items || []).includes(id);
 
 // ================== Storage ==================
 let sql = null;
@@ -42,7 +52,7 @@ if (Bun.env.DATABASE_URL) {
 } else console.log('No DATABASE_URL — using in-memory store');
 
 const pub = (u, self) => u && { id: u.id, username: u.username, points: u.points, games: u.games, wins: u.wins, avatar: u.avatar || null, ph: +u.ph || 0,
-  ...(self ? { email: u.email || '', items: u.items || [], equip: u.equip || {}, dailyReady: !u.last_daily || String(u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
+  ...(self ? { email: u.email || '', items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
 async function patchUser(id, f) {
   if (sql) {
     if ('email' in f) await sql`update users set email = ${f.email} where id = ${id}`;
@@ -131,7 +141,7 @@ function roomView(r, uid) {
   const eng = r.engine;
   return {
     code: r.code, game: r.game, gameName: GAME_NAMES[r.game], status: r.status, priv: r.priv,
-    hostId: r.host, isHost: r.host === uid, mySeat,
+    hostId: r.host, isHost: r.host === uid, mySeat, vip: !!r.vip, turnMs: r.turnMs || TURN_MS,
     seats: r.seats.map((s) => s && {
       name: s.name, bot: !!s.bot, uid: s.uid || null, av: s.av || null, ph: s.ph || 0,
       away: !s.bot && (s.left || !isConnected(s.uid)),
@@ -162,7 +172,7 @@ function lobbyList() {
   return [...rooms.values()].filter((r) => !r.priv && r.status !== 'finished').map((r) => ({
     code: r.code, game: r.game, gameName: GAME_NAMES[r.game], status: r.status,
     host: (r.seats.find((s) => s && s.uid === r.host) || {}).name || '',
-    humans: humanSeats(r).length, free: r.seats.filter((s) => !s).length,
+    humans: humanSeats(r).length, free: r.seats.filter((s) => !s).length, vip: !!r.vip,
   })).slice(0, 50);
 }
 
@@ -187,7 +197,7 @@ function schedule(r) {
   let delay;
   if (s.bot || s.left) delay = 650 + Math.random() * 600;
   else if (!isConnected(s.uid)) delay = Math.max(300, (s.awaySince || Date.now()) + AWAY_MS - Date.now());
-  else { delay = TURN_MS; r.deadline = Date.now() + TURN_MS; }
+  else { const ms = r.turnMs || TURN_MS; delay = ms; r.deadline = Date.now() + ms; }
   r.timer = setTimeout(() => {
     try { if (eng.turn === seat && !eng.pending) eng.act(seat, eng.botAction(seat)); }
     catch (e) { console.error('bot error', e); }
@@ -246,8 +256,14 @@ async function handle(ws, m) {
     case 'leaders': send(ws, { t: 'leaders', list: await leaderboard() }); break;
     case 'create': {
       if (!GAME_NAMES[m.game]) throw new Error('لعبة غير معروفة');
+      let vip = false, turnMs = TURN_MS;
+      if (m.vip) {
+        const cu = await getUser(uid);
+        if (!cu || !owns(cu, 'vip:room')) throw new Error('غرف VIP بدها شراء من المتجر 👑');
+        vip = true; if ([20000, 40000, 60000, 90000].includes(+m.turnMs)) turnMs = +m.turnMs;
+      }
       removeFromRoom(uid);
-      const room = { code: newCode(), game: m.game, priv: !!m.priv, host: uid, status: 'waiting',
+      const room = { code: newCode(), game: m.game, priv: !!m.priv, host: uid, status: 'waiting', vip, turnMs,
         seats: [{ uid, name, av, ph }, null, null, null], watchers: new Set(), voice: new Set(), chat: [], engine: null, timer: null, created: Date.now() };
       rooms.set(room.code, room);
       userRoom.set(uid, room.code);
@@ -341,6 +357,10 @@ async function handle(ws, m) {
       ws.data.lastReact = now;
       const e = String(m.e || '').slice(0, 40);
       if (!e) break;
+      if (e[0] === '!' && CATALOG['fx:' + e.slice(1)] !== undefined) {
+        const ru = await getUser(uid);
+        if (!ru || !owns(ru, 'fx:' + e.slice(1))) { send(ws, { t: 'error', msg: 'هالتفاعل بدك تشتريه من المتجر 🛍️' }); break; }
+      }
       const seat = seatOf(r, uid);
       const msg = { t: 'react', seat, name, e };
       for (const [s2] of humanSeats(r)) if (!s2.left) send(clients.get(s2.uid), msg);
@@ -422,6 +442,30 @@ const server = Bun.serve({
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
       const u = p && (await getUser(p.id));
       return u ? json({ user: pub(u, true) }) : json({ error: 'unauthorized' }, 401);
+    }
+    if (url.pathname === '/api/store' && req.method === 'POST') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      let u = p && (await getUser(p.id));
+      if (!u) return json({ error: 'unauthorized' }, 401);
+      const b = await body(req), id = String(b.id || '');
+      if (b.op === 'daily') {
+        const today = new Date().toISOString().slice(0, 10);
+        if (u.last_daily && String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) === today) return json({ error: 'أخدت مكافأة اليوم، ارجع بكرا 🌙' }, 400);
+        u = await patchUser(u.id, { points: u.points + DAILY_PTS, last_daily: today });
+      } else if (b.op === 'buy') {
+        if (CATALOG[id] === undefined) return json({ error: 'غرض مو موجود' }, 400);
+        if (owns(u, id)) return json({ error: 'عندك ياه من قبل' }, 400);
+        if (u.points < CATALOG[id]) return json({ error: 'نقاطك ما بتكفي 🪙' }, 400);
+        u = await patchUser(u.id, { points: u.points - CATALOG[id], items: [...(u.items || []), id] });
+        const [k] = id.split(':'); if (['cs', 'bk', 'tb'].includes(k)) u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: id.split(':')[1] } });
+      } else if (b.op === 'equip') {
+        const [k, v] = id.split(':');
+        if (!['cs', 'bk', 'tb'].includes(k) || CATALOG[id] === undefined) return json({ error: 'غرض مو موجود' }, 400);
+        if (!owns(u, id)) return json({ error: 'لازم تشتريه أول' }, 400);
+        u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: v } });
+      } else return json({ error: 'طلب غلط' }, 400);
+      const ws = clients.get(u.id); if (ws) send(ws, { t: 'me', user: pub(u, true) });
+      return json({ user: pub(u, true) });
     }
     if (url.pathname.startsWith('/p/')) {
       const u = await getUser(+url.pathname.slice(3));
