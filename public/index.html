@@ -294,6 +294,14 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 @media (prefers-reduced-motion:reduce){.hand .c.dealin,.c.fly{animation:none!important;opacity:1!important}}
 @media (min-width:700px){.felt{left:22%;right:22%}.led{left:calc(22% - 17px);right:calc(22% - 17px)}}
 .felt{top:max(20%,100px)}.led{top:calc(max(20%,100px) - 17px)}@media (min-width:900px){#table{left:0;right:0;margin:0 auto;width:min(100%,1100px,150vh);box-shadow:0 0 0 100vmax #141414}}
+.palette{z-index:300;left:50%;right:auto;transform:translateX(-50%);width:min(calc(100vw - 16px),520px);padding:6px 6px 8px;border-radius:16px;background:#18181e;isolation:isolate}
+.palette .ptabs{display:flex;gap:4px;margin-bottom:6px}.palette .ptabs button{flex:1;padding:5px 0;font-size:18px;background:transparent;border:0;border-radius:10px;opacity:.6}.palette .ptabs button.on{background:#33384f;opacity:1}
+.palette .pstrip{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center;min-height:62px}.palette .pstrip::-webkit-scrollbar{display:none}
+.palette .pi{flex:0 0 auto;background:transparent;border:0;padding:0;position:relative}
+.palette .pfx{display:flex;flex-direction:column;align-items:center;width:58px;height:60px;justify-content:center;background:linear-gradient(180deg,#3a3f7a,#252850);border:1px solid #4a52a8;border-radius:12px;font-size:26px;line-height:1}.palette .pfx small{font-size:10px;font-weight:700;color:#cfe3ff;margin-top:2px}.palette .pfx.lockfx{opacity:.55;background:#2a2a35}
+.palette .pimg{width:58px;height:58px}.palette .pimg img{width:56px;height:56px;display:block}.palette .pimg.lk img{opacity:.35;filter:grayscale(.6)}.palette .pimg.lk::after{content:'🔒';position:absolute;bottom:0;right:0;font-size:12px}
+.palette .pem{font-size:30px;width:44px}
+.palette .pph{font-size:14px;padding:8px 12px;border-radius:999px;background:#33384f;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1340,9 +1348,18 @@ function sticker(seat, key) {
   if (d.voice) { SND.play(d.s); if (!SND.play(d.voice) && d.say) setTimeout(() => SPEECH.say(d.say), 250); }
   else { SND.play(d.s); if (d.say) setTimeout(() => SPEECH.say(d.say), 250); }
 }
-function renderPalette() { $('palette').innerHTML = `<div class="lbl">تفاعلية مع صوت 🔊</div><div class="fxg">${Object.entries(FXE).map(([k, d]) => ownsItem('fx:' + k) ? `<button data-r="!${k}">${d.e}<small>${d.l}</small></button>` : `<button class="lockfx" data-shop="fx">${d.e}<small>🔒 ${price('fx:' + k)}</small></button>`).join('')}</div><div class="lbl">إيموجيات الديوانية 👑</div><div class="emg">${LUX.map(([k, n]) => `<button ${luxOk(k) ? `data-r="~${k}"` : 'class="lk" data-shop="fx"'} title="${n}"><img src="/img/emo/${k}.webp" alt="${n}" loading="lazy"></button>`).join('')}</div><div class="em">${EMOS.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div><div class="ph">${PHRASES.map((x) => `<button data-r="${x}">${x}</button>`).join('')}</div>`; }
+var palTab = (() => { try { return localStorage.getItem('palTab') || 'fx'; } catch { return 'fx'; } })();
+function renderPalette() {
+  const tabs = [['fx', '🔊'], ['lux', '👑'], ['em', '😀'], ['ph', '💬']];
+  let body = '';
+  if (palTab === 'fx') body = Object.entries(FXE).sort((a, b) => ownsItem('fx:' + b[0]) - ownsItem('fx:' + a[0])).map(([k, d]) => ownsItem('fx:' + k) ? `<button class="pi pfx" data-r="!${k}">${d.e}<small>${d.l}</small></button>` : `<button class="pi pfx lockfx" data-shop="fx">${d.e}<small>🔒${price('fx:' + k)}</small></button>`).join('');
+  else if (palTab === 'lux') body = [...LUX].sort((a, b) => luxOk(b[0]) - luxOk(a[0])).map(([k, n]) => `<button class="pi pimg${luxOk(k) ? '' : ' lk'}" ${luxOk(k) ? `data-r="~${k}"` : 'data-shop="fx"'} title="${n}"><img src="/img/emo/${k}.webp" alt="${n}" loading="lazy"></button>`).join('');
+  else if (palTab === 'em') body = EMOS.map((x) => `<button class="pi pem" data-r="${x}">${x}</button>`).join('');
+  else body = PHRASES.map((x) => `<button class="pi pph" data-r="${x}">${x}</button>`).join('');
+  $('palette').innerHTML = `<div class="ptabs">${tabs.map(([k, e]) => `<button data-pt="${k}" class="${k === palTab ? 'on' : ''}">${e}</button>`).join('')}</div><div class="pstrip">${body}</div>`;
+}
 renderPalette();
-$('palette').addEventListener('click', (ev) => { if (ev.target.closest('[data-shop]')) { $('palette').classList.add('hidden'); openStore('fx'); return; } const b = ev.target.closest('[data-r]'); if (!b) return; sendWs({ t: 'react', e: b.dataset.r }); $('palette').classList.add('hidden'); });
+$('palette').addEventListener('click', (ev) => { const pt = ev.target.closest('[data-pt]'); if (pt) { palTab = pt.dataset.pt; try { localStorage.setItem('palTab', palTab); } catch {} renderPalette(); return; } if (ev.target.closest('[data-shop]')) { $('palette').classList.add('hidden'); openStore('fx'); return; } const b = ev.target.closest('[data-r]'); if (!b) return; sendWs({ t: 'react', e: b.dataset.r }); $('palette').classList.add('hidden'); });
 $('gEmo').onclick = (ev) => { ev.stopPropagation(); $('palette').classList.toggle('hidden'); };
 document.addEventListener('pointerdown', (ev) => { if (!ev.target.closest('#palette') && !ev.target.closest('#gEmo')) $('palette').classList.add('hidden'); });
 function onReact(m) {
