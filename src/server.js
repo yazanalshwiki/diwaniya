@@ -18,6 +18,9 @@ const CATALOG = {
   'cs:classic': 0, 'cs:four': 300, 'cs:ivory': 500, 'cs:dark': 500,
   'bk:red': 0, 'bk:blue': 200, 'bk:green': 200, 'bk:gold': 800,
   'tb:sky': 0, 'tb:green': 300, 'tb:wood': 500, 'tb:black': 800, 'tb:neon': 1000,
+  'tb:igreen': 300, 'tb:iblue': 300, 'tb:iblack': 400, 'tb:iwood': 500, 'tb:ired': 600, 'tb:iquilt': 600, 'tb:ipurple': 700, 'tb:imarble': 800,
+  'tb:icasino': 900, 'tb:ineon': 1000, 'tb:isnow': 1000, 'tb:idesert': 1000, 'tb:iroyal': 1200, 'tb:iramadan': 1200, 'tb:iriyadh': 1500,
+  'emo:lux': 600,
   'fx:laugh': 0, 'fx:burn': 0, 'fx:clap': 0, 'fx:cry': 0,
   'fx:angry': 150, 'fx:scream': 200, 'fx:kiss': 250, 'fx:party': 300,
   'vip:room': 1500,
@@ -40,6 +43,8 @@ async function creditPayment(payId) {
   } else { if (memPaid.has(pay.id)) return { uid, dup: true }; memPaid.add(pay.id); const u = mem.users.get(uid); if (u) u.points += pk.coins; }
   return { uid, coins: pk.coins };
 }
+const LUX_ALL = ['heba', 'mawt', 'hubb', 'masdoum', 'cool', 'bosa', 'dahk', 'm3assab', 'tasfeeq', 'tamam', 'salam', 'quwwa', 'qalb', 'maksour', 'nar', 'malik', 'warda', 'qahwa', 'shay', 'dalla', 'hadiyye', 'kake', 'kas', 'waraq', 'almas', 'floos'];
+const LUX_FREE = ['tamam', 'tasfeeq', 'nar', 'qahwa', 'warda', 'salam'];
 const owns = (u, id) => CATALOG[id] === 0 || (u.items || []).includes(id);
 
 // ================== Storage ==================
@@ -378,6 +383,11 @@ async function handle(ws, m) {
       ws.data.lastReact = now;
       const e = String(m.e || '').slice(0, 40);
       if (!e) break;
+      if (e[0] === '~') {
+        const k = e.slice(1);
+        if (!LUX_ALL.includes(k)) break;
+        if (!LUX_FREE.includes(k)) { const ru = await getUser(uid); if (!ru || !owns(ru, 'emo:lux')) { send(ws, { t: 'error', msg: 'باقة الإيموجيات بالمتجر 🛍️' }); break; } }
+      }
       if (e[0] === '!' && CATALOG['fx:' + e.slice(1)] !== undefined) {
         const ru = await getUser(uid);
         if (!ru || !owns(ru, 'fx:' + e.slice(1))) { send(ws, { t: 'error', msg: 'هالتفاعل بدك تشتريه من المتجر 🛍️' }); break; }
@@ -543,6 +553,11 @@ const server = Bun.serve({
       const b = SND_FILES[url.pathname.slice(5).replace(/\.mp3$/, '')];
       if (!b) return new Response('not found', { status: 404 });
       return new Response(b, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } });
+    }
+    if (/^\/img\/(av|tb|emo)\/[a-z0-9]+\.webp$/.test(url.pathname)) {
+      const f = Bun.file(ROOT + 'public' + url.pathname);
+      if (!(await f.exists())) return new Response('not found', { status: 404 });
+      return new Response(f, { headers: { 'content-type': 'image/webp', 'cache-control': 'public, max-age=604800' } });
     }
     if (url.pathname === '/vendor/moyasar.js' || url.pathname === '/vendor/moyasar.css') {
       const f = Bun.file(ROOT + 'public' + url.pathname);
