@@ -346,6 +346,15 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .mhelp p{margin:6px 0;line-height:1.6;font-size:14px}
 .xrow{direction:rtl;gap:3px}.xrow b{font-size:10px;margin-left:2px}.xrow .ch.gone{text-decoration:line-through;opacity:.55}.xrow .ch.x2{outline:2px solid #ff3b30;position:relative}.xrow .ch.x2::after{content:'×2';font-size:8px;color:#ff3b30;margin-right:1px}
 .xrow .ch.dn{color:#d01020;font-size:10px}.xrow.two{background:rgba(20,90,160,.9);color:#fff}
+.board.cols{flex-direction:row;width:auto;gap:10px;align-items:flex-start}
+.bcol{position:relative;width:var(--cw);background:rgba(0,0,0,.18);border-radius:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.bcol .c{position:absolute;left:0;box-shadow:0 -1px 3px rgba(0,0,0,.35)}.bcol .c.jk{box-shadow:0 0 0 2px rgba(255,210,77,.7),0 2px 6px rgba(0,0,0,.5)}
+.bcol .c.nw{box-shadow:0 0 0 3px #ffd24d,0 0 16px 3px #ffd24d;animation:popin .45s ease-out;z-index:60!important}
+.bcol .bph{position:absolute;left:0;right:0;border:2px dashed rgba(255,255,255,.3);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:20px}.bcol .bph small{font-size:9px;line-height:1.1;text-align:center;color:#dde}
+.bcol .who{position:absolute;left:50%;transform:translateX(-50%);z-index:70;background:#ffd24d;color:#111;font:800 9px/14px Tajawal,sans-serif;border-radius:7px;padding:0 5px;max-width:70px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;direction:rtl}
+.xrow{flex-wrap:wrap!important;white-space:normal!important;max-width:min(128px,34vw);justify-content:center;border-radius:10px!important;row-gap:2px}.mex .xrow{max-width:none}
+.xrow .ch{white-space:nowrap}.xrow .ch.x2::after{content:'×2';font-size:7px}
+.pl .pinf,#meInf{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -947,12 +956,19 @@ function renderTable() {
     const lm = trixMove && trixMove.deal === e.dealNo ? trixMove : null;
     const who = (c) => lm && lm.card === c ? ` nw` : '';
     const tag = (c, side) => lm && lm.card === c ? `<b class="who ${side}">${esc(room.seats[lm.seat] ? room.seats[lm.seat].name : '')}</b>` : '';
-    fh += '<div class="board">' + ['S', 'H', 'D', 'C'].map((s) => {
+    const CW = 46, CH = Math.round(CW * 1.4), ST = Math.round(CH * 0.34), TOP = 3 * ST, COLH = TOP + CH + 9 * ST;
+    fh += `<div class="board cols" style="--cw:${CW}px">` + ['S', 'H', 'D', 'C'].map((s) => {
       const b = e.board[s];
-      if (!b) return `<div class="brow empty"><div class="ph"></div><div class="wait">${suitHtml(s, '22px')}<br>بيفتح بالولد</div><div class="ph"></div></div>`;
-      const rng = b.lo === b.hi ? 'J' : `${RN[b.lo] || b.lo} – ${RN[b.hi] || b.hi}`;
-      const lo = s + b.lo, hi = s + b.hi;
-      return `<div class="brow">${b.lo < 11 ? cardHtml(lo, who(lo), `style="--cw:42px" data-bc="${lo}"`) + tag(lo, 'l') : '<div class="ph"></div>'}<div class="mid">${suitHtml(s)}<small>${rng}</small></div>${cardHtml(hi, who(hi), `style="--cw:42px" data-bc="${hi}"`)}${tag(hi, 'r')}</div>`;
+      if (!b) return `<div class="bcol" style="height:${COLH}px"><div class="bph" style="top:${TOP}px;height:${CH}px">${suitHtml(s, '20px')}<small>بيفتح<br>بالولد</small></div></div>`;
+      let h = '';
+      for (let r = b.lo; r <= b.hi; r++) {
+        const c = s + r;
+        const top = r >= 11 ? TOP - (r - 11) * ST : TOP + (11 - r) * ST;
+        const z = r >= 11 ? 30 - (r - 11) : 30 + (11 - r);
+        h += cardHtml(c, who(c) + (r === 11 ? ' jk' : ''), `style="--cw:${CW}px;top:${top}px;z-index:${z}" data-bc="${c}"`);
+        if (lm && lm.card === c) h += `<b class="who" style="top:${top + CH - 8}px">${esc(room.seats[lm.seat] ? room.seats[lm.seat].name : '')}</b>`;
+      }
+      return `<div class="bcol" style="height:${COLH}px">${h}</div>`;
     }).join('') + '</div>';
   } else {
     let tr = e.trick, winner = null;
