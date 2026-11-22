@@ -325,6 +325,27 @@ button.green{background:linear-gradient(180deg,#3fc06a,#1f8f45);color:#fff;box-s
 .mtoks{position:absolute;inset:2px;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1.35fr repeat(6,1fr) 1.35fr;gap:2px;pointer-events:none}
 .mtok{grid-row:var(--r);grid-column:var(--c);align-self:center;justify-self:center;width:calc(var(--bs)*.06);height:calc(var(--bs)*.06);border-radius:50%;border:2px solid var(--pc);overflow:hidden;background:#222;transform:translate(var(--dx),var(--dy));box-shadow:0 2px 6px rgba(0,0,0,.6);transition:transform .15s}.mtok .avimg{width:100%;height:100%}.mtok.act{border-width:3px;box-shadow:0 0 10px var(--pc);z-index:3}
 .mrank .li{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #333}
+.mboard{display:block!important;direction:ltr}.mcells{position:absolute;inset:2px;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1.35fr repeat(6,1fr) 1.35fr;gap:2px}
+.mcells .mctr{display:none}.mboard>.mctr{position:absolute;left:calc(1.35/8.7*100% + 4px);right:calc(1.35/8.7*100% + 4px);top:calc(1.35/8.7*100% + 4px);bottom:calc(1.35/8.7*100% + 4px);gap:5px;justify-content:space-between;padding:6px 8px}
+.mtoks{display:block!important;position:absolute;inset:2px}.mtok{position:absolute;transform:translate(-50%,-50%)!important;transition:left .15s linear,top .15s linear!important;width:calc(var(--bs)*.065)!important;height:calc(var(--bs)*.065)!important;z-index:4}
+.mtok.act{z-index:6;width:calc(var(--bs)*.08)!important;height:calc(var(--bs)*.08)!important;animation:tokb 1s ease-in-out infinite alternate}@keyframes tokb{to{box-shadow:0 0 14px 3px var(--pc)}}
+.mc{font-size:calc(var(--bs)*.026)!important;border:2px solid transparent}.mc .mn{font-weight:900;line-height:1.05}.mc.owned{border-color:var(--oc);background:color-mix(in srgb,var(--oc) 16%,#f6efd9)}
+.mc .band{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:calc(var(--bs)*.017);letter-spacing:-2px}.mc .mpr{font-size:calc(var(--bs)*.022)!important}.mc .mpr.own{color:#fff;background:var(--oc);border-radius:4px;padding:0 3px;font-weight:900}
+.mc.here{box-shadow:0 0 0 3px #fff,0 0 14px 4px #ffd24d;z-index:3}
+.mtop{display:flex;justify-content:space-between;align-items:center;width:100%}.mib{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+.mdice{gap:10px!important}.die{width:calc(var(--bs)*.1);height:calc(var(--bs)*.1);background:#fff;border-radius:18%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:9%;box-shadow:0 4px 8px rgba(0,0,0,.4),inset 0 -3px 0 #ddd}.die i{border-radius:50%;margin:12%}.die i.on{background:#b01020}
+.mdice.roll .die{animation:droll .55s ease-out}
+.mbtn.big{font-size:18px;padding:12px}.mlink{background:none;border:0;color:#bfe;text-decoration:underline;font-size:12px}
+.deed{background:#fffdf4;color:#222;border-radius:10px;overflow:hidden;width:100%;max-width:280px;margin:0 auto;box-shadow:0 6px 16px rgba(0,0,0,.4);text-align:center}.deed .dh{color:#fff;font-weight:900;font-size:18px;padding:8px;text-shadow:0 1px 2px rgba(0,0,0,.5)}.deed .dh small{display:block;font-size:11px;opacity:.9}
+.deed .dprice{padding:6px;font-size:14px}.deed .drows div{display:flex;justify-content:space-between;padding:4px 14px;border-top:1px solid #eee;font-size:13px}.deed .drows div.cur{background:#fff1b8;font-weight:800}.deed .dnote,.dnote{font-size:11px;color:#666;padding:6px}
+.deed .downer{padding:6px;font-weight:800;background:var(--oc);color:#fff}.deed .downer.free{background:#2e7d32}.deed.mini{max-width:220px}.deed.mini .dh{font-size:15px;padding:5px}.deed.mini .dprice{padding:3px}.deed.mini .downer{padding:3px;font-size:12px}
+.mcard{font-size:14px!important;padding:8px 12px!important;border:2px solid #c9a227}
+.mpl{gap:1px}.mpl .mpn{display:flex;align-items:center;gap:3px}.mdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--pc);flex:0 0 auto;vertical-align:middle}.mpx{font-size:10px;opacity:.85}
+.mfloat{position:absolute;left:50%;top:30%;transform:translateX(-50%);font-weight:900;font-size:16px;pointer-events:none;animation:mfl 1.5s ease-out forwards;z-index:9;text-shadow:0 2px 4px #000}.mfloat.g{color:#39d353}.mfloat.b{color:#ff5050}@keyframes mfl{to{top:-40%;opacity:0}}
+.mprops .pg{margin-bottom:8px;border-radius:10px;overflow:hidden;background:#1c1c28}.pgh{background:var(--gc);color:#fff;font-weight:800;padding:5px 10px;text-shadow:0 1px 2px #000}.pgi{display:flex;align-items:center;gap:6px;padding:6px 10px;border-top:1px solid #2a2a38;font-size:13px}.pgi span:first-child{flex:1}.pgr{color:var(--gold2);font-size:12px}.gold.sm{padding:4px 8px;font-size:12px}
+.mhelp p{margin:6px 0;line-height:1.6;font-size:14px}
+.xrow{direction:rtl;gap:3px}.xrow b{font-size:10px;margin-left:2px}.xrow .ch.gone{text-decoration:line-through;opacity:.55}.xrow .ch.x2{outline:2px solid #ff3b30;position:relative}.xrow .ch.x2::after{content:'×2';font-size:8px;color:#ff3b30;margin-right:1px}
+.xrow .ch.dn{color:#d01020;font-size:10px}.xrow.two{background:rgba(20,90,160,.9);color:#fff}
 </style>
 </head>
 <body>
@@ -804,22 +825,27 @@ function playerInfo(e, i) {
   }
   if (e.type === 'trix') {
     if (e.phase === 'trix') return e.finished.includes(i) ? '#' + (e.finished.indexOf(i) + 1) : '';
-    if (e.phase === 'playing' || e.phase === 'handEnd') return `🃏${e.tricksWon[i]}${e.live && e.live[i] ? ' • ' + (e.live[i] > 0 ? '+' : '') + e.live[i] : ''}`;
+    if (e.phase === 'playing' || e.phase === 'handEnd') return `أكلات ${e.tricksWon[i]}${e.live && e.live[i] ? ' | ' + e.live[i] : ''}`;
   }
   return '';
 }
 function chipC(c) { return `<i class="ch ${'HD'.includes(c[0]) ? 'rd' : ''}">${RN[+c.slice(1)] || c.slice(1)}${SYM[c[0]]}</i>`; }
 function trixExtra(e, i) {
-  if (e.type !== 'trix' || !e.contract || e.contract === 'trix') return '';
+  if (e.type !== 'trix' || !e.contract) return '';
+  if (e.contract === 'trix') {
+    if (e.partner2s != null && room.mySeat >= 0 && i === (room.mySeat + 2) % 4) return `<div class="xrow two">شريكك معه <i class="ch">${e.partner2s}</i> ورقة ٢</div>`;
+    return '';
+  }
   const dbl = Object.entries(e.doubled || {}).filter(([, s]) => s === i).map(([c]) => c);
   const pen = (e.pen && e.pen[i]) || [];
   const cx = e.contract;
   const showQ = cx === 'queens' || cx === 'complex', showK = cx === 'king' || cx === 'complex', showD = cx === 'diamonds' || cx === 'complex';
   const big = pen.filter((c) => (showK && c === 'H13') || (showQ && +c.slice(1) === 12));
   const dn = showD ? pen.filter((c) => c[0] === 'D').length : 0;
+  const eaten = new Set((e.pen || []).flat());
   let h = '';
-  if (dbl.length) h += `<div class="xrow dbl" title="دبّل">✖️2 ${dbl.map(chipC).join('')}</div>`;
-  if (big.length || dn) h += `<div class="xrow ate" title="أكل">🍽️ ${big.map(chipC).join('')}${dn ? `<i class="ch rd">${dn}♦</i>` : ''}</div>`;
+  if (dbl.length) h += `<div class="xrow dbl"><b>دبّل</b>${dbl.map((c) => chipC(c).replace('class="ch', `class="ch${eaten.has(c) ? ' gone' : ''}`)).join('')}</div>`;
+  if (big.length || dn) h += `<div class="xrow ate"><b>أكل</b>${big.map((c) => { const by = (e.doubled || {})[c]; return chipC(c).replace('class="ch', `class="ch${by !== undefined ? ' x2' : ''}`); }).join('')}${dn ? `<i class="ch dn">${dn} ديناري</i>` : ''}</div>`;
   return h;
 }
 function madeCls(e, i) {
@@ -988,7 +1014,7 @@ function renderTable() {
     $('meName').classList.toggle('tm', myTurn && pct != null);
     if (myTurn && pct != null) $('meName').setAttribute('data-ring', '1'); else { $('meName').removeAttribute('data-ring'); $('meName').style.removeProperty('--p'); }
     const mi = playerInfo(e, mine);
-    $('meInf').textContent = mi && e.type === 't41' && e.phase !== 'bidding' ? 'أكلات ' + mi : mi && e.type === 'trix' && mi.startsWith('🃏') ? 'أكلاتي ' + mi : mi;
+    $('meInf').textContent = mi && e.type === 't41' && e.phase !== 'bidding' ? 'أكلات ' + mi : mi && e.type === 'trix' && mi.startsWith('أكلات ') ? mi.replace('أكلات', 'أكلاتي') : mi;
     $('meInf').className = 'pinf ' + madeCls(e, mine);
     { const mx = trixExtra(e, mine); if ($('meX').__h !== mx) { $('meX').innerHTML = mx; $('meX').__h = mx; } }
     $('meBar').classList.toggle('turn', myTurn);
@@ -1325,33 +1351,54 @@ const MB = [
   ['gojail', 'روح عالسجن'], ['p', 'حي الخالدية', 5, 260], ['p', 'حي الشاطئ', 5, 280], ['util', 'المياه', 150], ['tax', 'ضريبة رفاهية', 75], ['p', 'الكورنيش', 6, 350], ['p', 'برج الديوانية', 6, 400],
 ];
 const MG_COL = ['#9a6034', '#5ec8f2', '#e2479b', '#f39c12', '#e53935', '#f2d000', '#2f55d4'];
+const MG_NAME = ['بني', 'سماوي', 'زهري', 'برتقالي', 'أحمر', 'أصفر', 'كحلي'];
 const MP_COL = ['#ff4d4d', '#3aa0ff', '#39d353', '#ffc93a'];
 const MICON = { go: '✨', luck: '🍀', tax: '🏛️', rail: '🚆', util: '💡', jail: '🚔', park: '☕', gojail: '👮' };
-function mCell(i) { // grid row/col (1..8)
+const M_MULT = [0.08, 0.4, 1.1, 2.6, 3.6, 4.8];
+const mRent = (price, lv) => Math.round(price * M_MULT[lv] / 5) * 5 || 5;
+const mShort = (n) => n.replace(/^حي /, '');
+// cell centre in % (tracks: 1.35 + 6×1 + 1.35 = 8.7)
+function mCell(i) {
   if (i <= 7) return [8, 8 - i];
   if (i <= 14) return [8 - (i - 7), 1];
   if (i <= 21) return [1, 1 + (i - 14)];
   return [1 + (i - 21), 8];
 }
-const mono = { shown: null, fx: null, roll: 0, card: 0, key: '' };
-function monoDice(n) { return ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][n] || '🎲'; }
+function mCenter(k) { return k === 1 ? 1.35 / 2 : k === 8 ? 8.7 - 1.35 / 2 : 1.35 + (k - 2) + 0.5; }
+const mono = { shown: null, fx: null, roll: 0, card: 0, key: '', cash: null, deedKey: '' };
+function diceHtml(n) {
+  const P = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] }[n] || [];
+  return `<div class="die">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<i class="${P.includes(k) ? 'on' : ''}"></i>`).join('')}</div>`;
+}
 function monoTokens(e) {
   const by = {};
   e.players.forEach((p, s) => { if (p.out) return; const pos = mono.shown ? mono.shown[s] : p.pos; (by[pos] ||= []).push(s); });
-  let h = '';
+  const out = [];
   for (const [pos, ss] of Object.entries(by)) {
     const [r, c] = mCell(+pos);
     ss.forEach((s, k) => {
-      const dx = (k % 2) * 46 - 23, dy = Math.floor(k / 2) * 46 - 23 + (ss.length <= 2 ? 23 : 0);
-      const seat = room.seats[s];
-      h += `<div class="mtok ${e.turn === s || e.cur === s && e.phase !== 'roll' ? 'act' : ''}" style="--r:${r};--c:${c};--dx:${dx}%;--dy:${dy}%;--pc:${MP_COL[s]}">${seat ? avPic(seat) : ''}</div>`;
+      const off = ss.length === 1 ? [0, 0] : [[-1, -1], [1, -1], [-1, 1], [1, 1]][k];
+      const x = (mCenter(c) / 8.7) * 100, y = (mCenter(r) / 8.7) * 100;
+      out[s] = `left:calc(${x}% + ${off[0]} * var(--bs) * .022);top:calc(${y}% + ${off[1]} * var(--bs) * .022)`;
     });
   }
-  return h;
+  return out;
+}
+function paintTokens(e) {
+  const box = $('mTok'); if (!box) return;
+  const pos = monoTokens(e);
+  e.players.forEach((p, s) => {
+    let t = box.querySelector(`[data-t="${s}"]`);
+    if (p.out) { t && t.remove(); return; }
+    const seat = room.seats[s];
+    if (!t) { t = document.createElement('div'); t.className = 'mtok'; t.dataset.t = s; t.style.setProperty('--pc', MP_COL[s]); t.innerHTML = seat ? avPic(seat) : ''; box.appendChild(t); }
+    t.style.cssText = `--pc:${MP_COL[s]};` + pos[s];
+    t.classList.toggle('act', (e.turn === s || (e.turn < 0 && e.cur === s)) && !e.over);
+  });
 }
 function monoAnimate(e) {
   const fx = e.moveFx;
-  if (!mono.shown || mono.code !== room.code) { mono.shown = e.players.map((p) => p.pos); mono.code = room.code; mono.fx = fx ? fx.id : null; return; }
+  if (!mono.shown || mono.code !== room.code) { mono.shown = e.players.map((p) => p.pos); mono.code = room.code; mono.fx = fx ? fx.id : null; mono.cash = null; mono.key = ''; if ($('mTok')) $('mTok').innerHTML = ''; return; }
   if (fx && fx.id !== mono.fx) {
     mono.fx = fx.id;
     const s = fx.seat;
@@ -1363,28 +1410,56 @@ function monoAnimate(e) {
     mono.t = setInterval(() => {
       pos = (pos + dir + 28) % 28; k++;
       mono.shown[s] = pos; SND.play('tick');
-      $('mTok').innerHTML = monoTokens(room.engine);
-      if (k >= Math.abs(fx.steps)) { clearInterval(mono.t); mono.t = null; mono.shown = room.engine.players.map((p) => p.pos); $('mTok').innerHTML = monoTokens(room.engine); }
+      if (pos === 0 && dir > 0) monoFloat(s, '+200 ✨', true);
+      paintTokens(room.engine);
+      if (k >= Math.abs(fx.steps)) { clearInterval(mono.t); mono.t = null; mono.shown = room.engine.players.map((p) => p.pos); paintTokens(room.engine); }
     }, 160);
     return;
   }
   if (!mono.t) mono.shown = e.players.map((p) => p.pos);
 }
-function monoCellInfo(e, i) {
-  const b = MB[i];
-  const o = e.owner[i];
-  let t = `<b>${MICON[b[0]] || '🏠'} ${b[1]}</b>`;
-  if (b[0] === 'p' || b[0] === 'rail' || b[0] === 'util') {
-    const price = b[0] === 'p' ? b[3] : b[2];
-    t += `<br>السعر: ${price}`;
-    if (o >= 0) t += `<br>المالك: ${esc(room.seats[o].name)}` + (b[0] === 'p' ? `<br>الإيجار الحالي: ${e.rents[i]}` + (e.level[i] ? `<br>${e.level[i] === 5 ? 'فندق 🏨' : e.level[i] + ' بيت 🏠'}` : '') : '');
-    if (b[0] === 'p') t += `<br><small>كلفة البيت: ${e.houseCost[b[2]]} • اجمع الحيّين بنفس اللون لتبني</small>`;
-  } else if (b[0] === 'tax') t += `<br>بتدفع ${b[2]}`;
-  else if (b[0] === 'go') t += '<br>كل مرة بتمرق بتاخد 200';
-  else if (b[0] === 'luck') t += '<br>اسحب ورقة حظ';
-  else if (b[0] === 'gojail') t += '<br>بتروح عالسجن مباشرة';
-  return t;
+function monoFloat(s, txt, good) {
+  const el = document.querySelector(`.mpl[data-seat="${s}"]`); if (!el) return;
+  const f = document.createElement('div'); f.className = 'mfloat ' + (good ? 'g' : 'b'); f.textContent = txt; el.appendChild(f);
+  setTimeout(() => f.remove(), 1500);
 }
+function deedHtml(e, i, mini) {
+  const b = MB[i], o = e.owner[i];
+  const own = o >= 0 && room.seats[o] ? `<div class="downer" style="--oc:${MP_COL[o]}">المالك: ${esc(room.seats[o].name)}</div>` : `<div class="downer free">للبيع 🏷️</div>`;
+  if (b[0] === 'p') {
+    const pr = b[3], lv = e.level[i];
+    const rows = [['الإيجار', mRent(pr, 0)], ['مع اللون كامل', mRent(pr, 0) * 2], ['🏠 ١', mRent(pr, 1)], ['🏠 ٢', mRent(pr, 2)], ['🏠 ٣', mRent(pr, 3)], ['🏠 ٤', mRent(pr, 4)], ['🏨 فندق', mRent(pr, 5)]];
+    return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:${MG_COL[b[2]]}"><small>اللون ${MG_NAME[b[2]]}</small>${b[1]}</div><div class="dprice">السعر <b>${pr}</b></div>${mini ? '' : `<div class="drows">${rows.map(([k, v], r) => `<div class="${o >= 0 && ((r === 0 && lv === 0) || (r >= 2 && r - 1 === lv)) ? 'cur' : ''}"><span>${k}</span><b>${v}</b></div>`).join('')}</div><div class="dnote">البيت بـ${e.houseCost[b[2]]} • لازم تملك الحيّين بنفس اللون لتبني</div>`}${own}</div>`;
+  }
+  if (b[0] === 'rail') return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:#333">🚆 ${b[1]}</div><div class="dprice">السعر <b>${b[2]}</b></div>${mini ? '' : `<div class="drows"><div><span>محطة وحدة</span><b>25</b></div><div><span>محطتين</span><b>50</b></div><div><span>٣ محطات</span><b>100</b></div></div>`}${own}</div>`;
+  if (b[0] === 'util') return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:#5a6b7a">💡 ${b[1]}</div><div class="dprice">السعر <b>${b[2]}</b></div>${mini ? '' : `<div class="drows"><div><span>شركة وحدة</span><b>الزهر × 4</b></div><div><span>الشركتين</span><b>الزهر × 10</b></div></div>`}${own}</div>`;
+  const txt = { go: 'كل ما تمرق من هون بتاخد 200 ✨', luck: 'اسحب ورقة حظ 🍀', tax: `بتدفع ${b[2]} للبنك`, jail: 'إذا انبعتت عالسجن: ارمي دبل لتطلع، أو ادفع 50', park: 'استراحة — ما بيصير شي ☕', gojail: 'روح عالسجن مباشرة 🚔' }[b[0]];
+  return `<div class="deed"><div class="dh" style="background:#7a5a1a">${MICON[b[0]]} ${b[1]}</div><div class="dnote" style="font-size:14px;padding:12px">${txt}</div></div>`;
+}
+function myProps(e) {
+  const mine = room.mySeat; if (mine < 0) return '';
+  const a = e.turn === mine ? e.actions : null;
+  const build = (a && a.build) || [];
+  const groups = [];
+  for (let g = 0; g < 7; g++) {
+    const ids = MB.map((b, i) => (b[0] === 'p' && b[2] === g ? i : -1)).filter((i) => i >= 0);
+    const have = ids.filter((i) => e.owner[i] === mine);
+    if (!have.length) continue;
+    groups.push(`<div class="pg"><div class="pgh" style="--gc:${MG_COL[g]}">${MG_NAME[g]} — ${have.length}/${ids.length}${have.length === ids.length ? ' ✅ كامل' : ''}</div>${have.map((i) => `<div class="pgi"><span>${MB[i][1]} ${e.level[i] ? (e.level[i] === 5 ? '🏨' : '🏠'.repeat(e.level[i])) : ''}</span><span class="pgr">إيجار ${e.rents[i]}</span>${build.includes(i) ? `<button class="gold sm" data-mbuild="${i}">ابني ${e.houseCost[g]}</button>` : ''}</div>`).join('')}</div>`);
+  }
+  const others = MB.map((b, i) => ((b[0] === 'rail' || b[0] === 'util') && e.owner[i] === mine ? `<div class="pgi"><span>${MICON[b[0]]} ${b[1]}</span><span class="pgr">إيجار ${e.rents[i] || (b[0] === 'util' ? 'زهر×' : '')}</span></div>` : '')).join('');
+  return `<h3 style="margin:0 0 8px">🏠 أملاكي</h3><div class="mprops">${groups.join('') || ''}${others}${!groups.length && !others ? '<div style="opacity:.7;padding:10px">لسا ما اشتريت شي</div>' : ''}</div>${a && a.roll && !build.length ? '<div class="dnote">لتبني بيوت لازم تجمع كل أحياء اللون الواحد</div>' : ''}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">سكّر</button>`;
+}
+const MONO_HELP = `<h3 style="margin:0 0 8px">❓ كيف تلعب عقارات الديوانية</h3><div class="mhelp">
+<p>🎲 <b>ارمي الزهر</b> وامشِ بعدد النقاط.</p>
+<p>🏷️ إذا وقفت على حي <b>للبيع</b> بتقدر تشتريه.</p>
+<p>🧾 إذا وقفت على حي <b>لغيرك</b> بتدفعله إيجار.</p>
+<p>🎨 إذا جمعت <b>كل أحياء اللون</b> الإيجار بيتضاعف، وبتقدر تبني بيوت 🏠 (لحد ٤) وبعدين فندق 🏨 — قبل ما ترمي الزهر، اكبس على الحي المضوّي أو من «أملاكي».</p>
+<p>🚆 المحطات: كل ما جمعت أكتر الإيجار بيكبر. 💡 الشركات: الإيجار حسب الزهر.</p>
+<p>✨ كل ما تمرق عالانطلاق بتاخد 200. 🍀 الحظ ممكن يعطيك أو ياخد منك.</p>
+<p>🚔 بالسجن: ارمي دبل لتطلع أو ادفع 50. الدبل برّا السجن بيخليك ترمي مرة كمان.</p>
+<p>💀 اللي بتخلص مصاريه بيفلس. بعد ٢٥ جولة بيربح صاحب <b>أكبر ثروة</b> (مصاري + أملاك + بيوت).</p></div>
+<button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">فهمت 👍</button>`;
 function renderMono(e) {
   const mine = room.mySeat;
   $('table').classList.add('ismono');
@@ -1394,14 +1469,17 @@ function renderMono(e) {
   const a = e.turn === mine && !e.over ? e.actions : null;
   const myTurn = !!a;
   const build = a && a.build && a.build.length ? a.build : [];
+  const activeSeat = e.turn >= 0 ? e.turn : e.cur;
   // players strip
   const ps = e.players.map((p, s) => {
     const seat = room.seats[s];
-    const turn = (e.turn === s || (e.turn < 0 && e.cur === s)) && !e.over;
+    const turn = s === activeSeat && !e.over;
     const pct = e.turn === s ? ringPct() : null;
-    return `<div class="mpl ${turn ? 'turn' : ''} ${p.out ? 'out' : ''} ${s === mine ? 'me' : ''}" data-seat="${s}" style="--pc:${MP_COL[s]}"><div class="av">${seat ? avPic(seat) : ''}${turn && pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="mpn">${esc(seat ? seat.name : '')}</div><div class="mpc">${p.out ? 'أفلس 💀' : '💰' + p.cash}${p.jailed ? ' 🚔' : ''}</div></div>`;
+    const cnt = e.owner.filter((o) => o === s).length;
+    return `<div class="mpl ${turn ? 'turn' : ''} ${p.out ? 'out' : ''} ${s === mine ? 'me' : ''}" data-seat="${s}" style="--pc:${MP_COL[s]}"><div class="av">${seat ? avPic(seat) : ''}${turn && pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="mpn"><i class="mdot"></i>${esc(seat ? seat.name : '')}</div><div class="mpc">${p.out ? 'أفلس 💀' : '💰' + p.cash}</div><div class="mpx">${p.jailed ? '🚔 بالسجن' : `🏠 ${cnt}`}</div></div>`;
   }).join('');
   // board cells
+  const here = activeSeat >= 0 && !mono.t ? e.players[activeSeat].pos : -1;
   let cells = '';
   MB.forEach((b, i) => {
     const [r, c] = mCell(i);
@@ -1409,34 +1487,45 @@ function renderMono(e) {
     const corner = i % 7 === 0;
     const o = e.owner[i];
     const lv = e.level[i];
-    const band = b[0] === 'p' ? `<i class="band" style="background:${MG_COL[b[2]]}"></i>` : '';
-    const houses = lv ? `<i class="hs">${lv === 5 ? '🏨' : '🏠'.repeat(lv)}</i>` : '';
+    const band = b[0] === 'p' ? `<i class="band" style="background:${MG_COL[b[2]]}">${lv ? (lv === 5 ? '🏨' : '🏠'.repeat(lv)) : ''}</i>` : '';
     const price = b[0] === 'p' ? b[3] : (b[0] === 'rail' || b[0] === 'util') ? b[2] : b[0] === 'tax' ? '-' + b[2] : '';
-    cells += `<div class="mc s${side} ${corner ? 'corner' : ''} ${build.includes(i) ? 'canb' : ''}" data-mi="${i}" style="grid-row:${r};grid-column:${c};${o >= 0 ? `--oc:${MP_COL[o]}` : ''}">${band}<span class="mi">${MICON[b[0]] || ''}</span><span class="mn">${b[1]}</span>${houses}${o >= 0 ? '<i class="own"></i>' : price !== '' ? `<span class="mpr">${price}</span>` : ''}</div>`;
+    const sub = o >= 0 ? `<span class="mpr own">${e.rents[i] || '🎲'}</span>` : price !== '' ? `<span class="mpr">${price}</span>` : '';
+    cells += `<div class="mc s${side} ${corner ? 'corner' : ''} ${o >= 0 ? 'owned' : ''} ${build.includes(i) ? 'canb' : ''} ${i === here ? 'here' : ''}" data-mi="${i}" style="grid-row:${r};grid-column:${c};${o >= 0 ? `--oc:${MP_COL[o]}` : ''}">${band}${b[0] !== 'p' ? `<span class="mi">${MICON[b[0]] || ''}</span>` : ''}<span class="mn">${mShort(b[1])}</span>${sub}</div>`;
   });
   // center
   const d = e.dice;
   const rolled = e.rollId !== mono.roll;
-  let ctr = `<div class="mdice ${rolled ? 'roll' : ''}"><span>${monoDice(d[0])}</span><span>${monoDice(d[1])}</span></div>`;
-  if (e.card) ctr += `<div class="mcard ${e.card.id !== mono.card ? 'new' : ''}">🍀 ${esc(e.card.t)}</div>`;
+  let ctr = `<div class="mtop"><button class="mib" data-mhelp="1">❓</button><div class="mrnd">الجولة ${Math.min(e.round, e.maxRounds)}/${e.maxRounds}</div><button class="mib" data-mprops="1">🏠 أملاكي</button></div>`;
+  ctr += `<div class="mdice ${rolled ? 'roll' : ''}">${d[0] ? diceHtml(d[0]) + diceHtml(d[1]) : diceHtml(6) + diceHtml(6)}</div>`;
   let act = '';
-  if (a && a.roll) {
-    act = `<button class="gold mbtn" data-mact='{"type":"roll"}'>🎲 ارمي الزهر</button>`;
-    if (a.bail) act += `<button class="ghost mbtn2" data-mact='{"type":"bail"}'>🔓 ادفع كفالة ${a.bail}</button>`;
-    if (build.length) act += `<div class="mhint">🏗️ اكبس على حي مضوّي لتبني بيت</div>`;
-  } else if (a && a.buy) {
-    act = `<div class="mbuy">بدك تشتري <b>${MB[a.idx][1]}</b> بـ<b>${a.buy}</b>؟</div><div class="row"><button class="gold mbtn" style="flex:1" data-mact='{"type":"buy"}'>🏠 اشتري</button><button class="ghost mbtn" style="flex:1" data-mact='{"type":"skip"}'>لا</button></div>`;
+  if (a && a.buy) {
+    act = `${deedHtml(e, a.idx, true)}<div class="row" style="width:100%;gap:6px"><button class="gold mbtn" style="flex:2" data-mact='{"type":"buy"}' ${a.can ? '' : 'disabled'}>🏷️ اشتري بـ${a.buy}</button><button class="ghost mbtn" style="flex:1" data-mact='{"type":"skip"}'>لا شكراً</button></div><button class="mlink" data-mi="${a.idx}">شوف تفاصيل الإيجار</button>`;
+  } else if (a && a.roll) {
+    act = `<button class="gold mbtn big" data-mact='{"type":"roll"}'>🎲 ارمي الزهر</button>`;
+    if (a.bail) act += `<button class="ghost mbtn2" data-mact='{"type":"bail"}'>🔓 ادفع كفالة ${a.bail} واطلع</button>`;
+    if (build.length) act += `<div class="mhint">🏗️ فيك تبني! اكبس على الحي المضوّي بالأخضر</div>`;
   } else if (!e.over) {
-    const w = e.turn >= 0 ? e.turn : e.cur;
-    act = `<div class="mwait">${w >= 0 && room.seats[w] ? 'دور ' + esc(room.seats[w].name) : ''}</div>`;
+    const w = activeSeat;
+    if (e.card && e.card.id !== mono.cardSeen && e.card.seat === w) act = `<div class="mcard new">🍀 ${esc(e.card.t)}</div>`;
+    act += `<div class="mwait">${w >= 0 && room.seats[w] ? `<i class="mdot" style="--pc:${MP_COL[w]}"></i> دور ${esc(room.seats[w].name)}${e.phase === 'buy' ? ' — عم يفكر يشتري 🤔' : e.phase === 'moving' ? ' — عم يمشي 🚶' : ''}` : ''}</div>`;
   }
-  ctr += `<div class="mact">${act}</div><div class="mlog">${e.log.slice(-3).reverse().map((l) => `<div>${esc(l)}</div>`).join('')}</div><div class="mrnd">الجولة ${Math.min(e.round, e.maxRounds)} من ${e.maxRounds}</div>`;
+  ctr += `<div class="mact">${act}</div><div class="mlog">${e.log.slice(-3).reverse().map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
   const key = JSON.stringify([ps, cells, ctr]);
   if (mono.key !== key) {
     mono.key = key;
-    $('mono').innerHTML = `<div class="mps">${ps}</div><div class="mbw"><div class="mboard">${cells}<div class="mctr">${ctr}</div><div id="mTok" class="mtoks">${monoTokens(e)}</div></div></div>`;
+    const box = $('mono');
+    const tok = $('mTok');
+    if (!box.querySelector('.mboard')) box.innerHTML = `<div class="mps"></div><div class="mbw"><div class="mboard"><div class="mcells"></div><div class="mctr"></div><div id="mTok" class="mtoks"></div></div></div>`;
+    box.querySelector('.mps').innerHTML = ps;
+    box.querySelector('.mcells').innerHTML = cells;
+    box.querySelector('.mctr').innerHTML = ctr;
     fitMono();
-  } else $('mTok').innerHTML = monoTokens(e);
+  }
+  paintTokens(e);
+  // cash change floaters
+  const cash = e.players.map((p) => p.cash);
+  if (mono.cash && mono.cash.length === 4) cash.forEach((c, s) => { const dlt = c - mono.cash[s]; if (dlt && !e.players[s].out) setTimeout(() => monoFloat(s, (dlt > 0 ? '+' : '') + dlt, dlt > 0), mono.t ? 900 : 50); });
+  mono.cash = cash;
   if (rolled) { mono.roll = e.rollId; if (e.rollId) SND.play('pop'); }
   if (e.card && e.card.id !== mono.card) { if (mono.card) SND.play('trump'); mono.card = e.card.id; }
   // my bar
@@ -1448,11 +1537,13 @@ function renderMono(e) {
     $('meInf').textContent = '💰 ' + e.players[mine].cash; $('meInf').className = 'pinf';
     $('meX').innerHTML = ''; $('meX').__h = '';
     $('meBar').classList.toggle('turn', myTurn);
-    $('gTurn').textContent = myTurn ? (a.buy ? 'دورك — اشتري؟' : 'دورك — ارمي 🎲') : '';
+    $('gTurn').textContent = myTurn ? (a.buy ? 'دورك — بدك تشتري؟' : 'دورك — ارمي 🎲') : '';
   } else { $('meAv').__h = ''; $('meAv').textContent = '👀'; $('meName').textContent = 'متفرج'; $('meInf').textContent = ''; $('gTurn').textContent = 'أنت تتفرج'; }
   if (myTurn && !mono.myTurn) { setTimeout(() => SND.play('turn'), 120); try { navigator.vibrate && navigator.vibrate(60); } catch {} }
   if (e.over && !mono.over) SND.play(mine >= 0 && e.winners.includes(mine) ? 'win' : 'lose');
+  if (!mono.helped && mine >= 0) { mono.helped = true; try { if (!localStorage.getItem('monoHelp')) { localStorage.setItem('monoHelp', '1'); setTimeout(() => openModal('mhelp', MONO_HELP), 600); } } catch {} }
   mono.myTurn = myTurn; mono.over = e.over;
+  if (overlayKind === 'mprops') $('modal').innerHTML = myProps(e);
   if (e.over || room.status === 'finished') showGameOver();
   else if (overlayKind === 'over') closeOverlay();
   startTick();
@@ -1460,8 +1551,8 @@ function renderMono(e) {
 function fitMono() {
   const w = $('mono'), bw = w.querySelector('.mbw'); if (!bw) return;
   const ps = w.querySelector('.mps');
-  const avail = Math.min(w.clientWidth - 8, w.clientHeight - ps.offsetHeight - 10);
-  bw.style.setProperty('--bs', Math.max(260, avail) + 'px');
+  const avail = Math.min(w.clientWidth - 6, w.clientHeight - ps.offsetHeight - 8);
+  bw.style.setProperty('--bs', Math.max(280, avail) + 'px');
 }
 addEventListener('resize', () => { if (room && room.engine && room.engine.type === 'mono') fitMono(); });
 function monoRank(e) {
@@ -1471,11 +1562,17 @@ function monoRank(e) {
 $('mono').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mact]');
   if (b) { const a = JSON.parse(b.dataset.mact); sendWs({ t: 'act', a }); SND.play('click'); b.disabled = true; return; }
+  if (ev.target.closest('[data-mhelp]')) return openModal('mhelp', MONO_HELP);
+  if (ev.target.closest('[data-mprops]')) return openModal('mprops', myProps(room.engine));
   const c = ev.target.closest('[data-mi]');
   if (!c || !room || !room.engine) return;
   const e = room.engine, i = +c.dataset.mi;
   if (c.classList.contains('canb')) { sendWs({ t: 'act', a: { type: 'build', idx: i } }); SND.play('bid'); return; }
-  openModal('mcell', `<div style="text-align:center;line-height:1.9">${monoCellInfo(e, i)}</div><button class="gold" style="width:100%;margin-top:12px" onclick="closeOverlay()">تمام</button>`);
+  openModal('mcell', deedHtml(e, i) + '<button class="gold" style="width:100%;margin-top:12px" onclick="closeOverlay()">تمام</button>');
+});
+$('modal').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mbuild]'); if (!b) return;
+  sendWs({ t: 'act', a: { type: 'build', idx: +b.dataset.mbuild } }); SND.play('bid'); b.disabled = true;
 });
 
 // ===== bubbles over players =====

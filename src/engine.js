@@ -624,6 +624,7 @@ export class Trix extends TrickGame {
       used: this.used, board: this.board, doubled: this.doubled, finished: this.finished, dealNo: this.dealNo, actions,
       takenCounts: this.taken ? this.taken.map((t) => t.length) : [0, 0, 0, 0],
       partner: this.partner, teamScores: this.partner ? this.teamScores() : null,
+      partner2s: this.partner && this.contract === 'trix' && seat >= 0 && this.hands ? this.hands[(seat + 2) % 4].filter((c) => rank(c) === 2).length : null,
       live: this.taken && this.contract && this.contract !== 'trix' ? this.dealDeltas() : null,
       pen: this.taken ? this.taken.map((t) => t.filter((c) => c === 'H13' || rank(c) === 12 || suit(c) === 'D')) : [[], [], [], []] };
   }
