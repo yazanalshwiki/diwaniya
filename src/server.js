@@ -563,7 +563,7 @@ const server = Bun.serve({
       if (!(await f.exists())) return new Response('not found', { status: 404 });
       return new Response(f, { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
     }
-    if (url.pathname === '/manifest.json') return Response.json({ name: 'ديوانية الورق', short_name: 'الديوانية', start_url: '/', display: 'standalone', background_color: '#0c0a1c', theme_color: '#14113a', lang: 'ar', dir: 'rtl',
+    if (url.pathname === '/manifest.json') return Response.json({ name: 'ديوانية الورق', short_name: 'الديوانية', start_url: '/', display: 'standalone', background_color: '#0d1433', theme_color: '#0d1433', lang: 'ar', dir: 'rtl',
       icons: [{ src: '/img/icon-192.png?v=3', sizes: '192x192', type: 'image/png' }, { src: '/img/icon-512.png?v=3', sizes: '512x512', type: 'image/png', purpose: 'any' }] });
     if (/^\/img\/(av|tb|emo)\/[a-z0-9]+\.webp$/.test(url.pathname)) {
       const f = Bun.file(ROOT + 'public' + url.pathname);

@@ -490,9 +490,25 @@ html,body{background:#0b0a16}
 .gq .gbar,.dtop .gbar,.ublocks .gbar,.gfoot .gbar{flex:0 0 8px;width:100%;height:8px}
 #auth .ahero .logo{width:min(100%,380px);height:auto;animation:none;filter:drop-shadow(0 12px 30px rgba(0,0,0,.5))}#auth .ahero .logo img{width:100%;display:block;border-radius:18px}
 .hero2 #lobLogo img{width:100%;height:100%;display:block;border-radius:14px}
+#boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(120% 80% at 50% 30%,#1d2a63 0%,#0d1433 50%,#070a1a 100%);transition:opacity .45s,visibility .45s}
+#boot.out{opacity:0;visibility:hidden}
+#boot .bwrap{position:relative;width:min(56vw,240px);aspect-ratio:1}
+#boot .btiles{direction:ltr;position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);border-radius:22%;overflow:visible}
+#boot .btiles i{background:url(/img/logo.png?v=3) no-repeat;background-size:400% 400%;background-position:calc(var(--x)*33.333%) calc(var(--y)*33.333%);opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rt)) scale(.6);animation:bpiece .9s cubic-bezier(.2,.9,.25,1.15) var(--d) forwards}
+@keyframes bpiece{60%{opacity:1}100%{opacity:1;transform:none}}
+#boot .bshine{position:absolute;inset:0;border-radius:22%;background:linear-gradient(115deg,transparent 30%,rgba(255,240,190,.55) 48%,transparent 62%);background-size:250% 100%;background-position:150% 0;opacity:0;animation:bshine 1.1s ease .1s 1.35s forwards;mix-blend-mode:screen}
+@keyframes bshine{0%{opacity:1;background-position:150% 0}100%{opacity:1;background-position:-60% 0}}
+#boot .bwrap{animation:bpop .5s ease 1.3s}@keyframes bpop{50%{transform:scale(1.06)}}
+#boot .bname{font:900 26px/1 Tajawal,system-ui,sans-serif;background:linear-gradient(180deg,#ffe8a0,#e7a92c);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:0;animation:bfade .6s ease 1.1s forwards}
+#boot .bdots{display:flex;gap:6px}#boot .bdots b{width:7px;height:7px;border-radius:50%;background:#e8b64a;opacity:.3;animation:bdot 1s infinite}#boot .bdots b:nth-child(2){animation-delay:.15s}#boot .bdots b:nth-child(3){animation-delay:.3s}
+@keyframes bdot{50%{opacity:1;transform:translateY(-4px)}}@keyframes bfade{to{opacity:1}}
+#boot .bfull{position:absolute;inset:0;width:100%;height:100%;opacity:0;animation:bfade .25s ease 1.3s forwards}
 </style>
 </head>
 <body>
+<div id="boot"><div class="bwrap"><div class="btiles"><i style="--x:0;--y:0;--dx:158px;--dy:306px;--rt:-136deg;--d:0.03s"></i><i style="--x:1;--y:0;--dx:-213px;--dy:-269px;--rt:-51deg;--d:0.02s"></i><i style="--x:2;--y:0;--dx:227px;--dy:-201px;--rt:-114deg;--d:0.25s"></i><i style="--x:3;--y:0;--dx:-151px;--dy:-301px;--rt:138deg;--d:0.43s"></i><i style="--x:0;--y:1;--dx:132px;--dy:-151px;--rt:125deg;--d:0.39s"></i><i style="--x:1;--y:1;--dx:227px;--dy:-278px;--rt:-100deg;--d:0.26s"></i><i style="--x:2;--y:1;--dx:-146px;--dy:-235px;--rt:-111deg;--d:0.25s"></i><i style="--x:3;--y:1;--dx:-135px;--dy:-267px;--rt:112deg;--d:0.19s"></i><i style="--x:0;--y:2;--dx:239px;--dy:232px;--rt:-7deg;--d:0.11s"></i><i style="--x:1;--y:2;--dx:-182px;--dy:-287px;--rt:-7deg;--d:0.24s"></i><i style="--x:2;--y:2;--dx:234px;--dy:295px;--rt:-123deg;--d:0.05s"></i><i style="--x:3;--y:2;--dx:162px;--dy:178px;--rt:90deg;--d:0.19s"></i><i style="--x:0;--y:3;--dx:-200px;--dy:317px;--rt:19deg;--d:0.27s"></i><i style="--x:1;--y:3;--dx:137px;--dy:-209px;--rt:82deg;--d:0.31s"></i><i style="--x:2;--y:3;--dx:-135px;--dy:305px;--rt:135deg;--d:0.45s"></i><i style="--x:3;--y:3;--dx:192px;--dy:311px;--rt:17deg;--d:0.01s"></i></div><img class="bfull" src="/img/logo.png?v=3" alt=""><div class="bshine"></div></div><div class="bname">ديوانية الورق</div><div class="bdots"><b></b><b></b><b></b></div></div>
+<script>(function(){var t0=Date.now();function hide(){var b=document.getElementById('boot');if(!b)return;var w=Math.max(0,1900-(Date.now()-t0));setTimeout(function(){b.classList.add('out');setTimeout(function(){b.remove()},500)},w)}if(document.readyState==='complete')hide();else addEventListener('load',hide);setTimeout(hide,6000)})();</script>
+
 
 <div class="appbg"><i></i><i></i><i></i></div>
 <div id="auth" class="hidden">
