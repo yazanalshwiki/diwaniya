@@ -63,6 +63,10 @@ export class Chess extends UIGame {
     const me = this.col(s), cap = this.b[m.t] || (m.epc !== undefined ? this.b[m.epc] : null);
     if (cap) this.lost[1 - s].push(cap);
     const p = this.b[m.f];
+    const files = 'abcdefgh', sq = (i) => files[i % 8] + (8 - Math.floor(i / 8));
+    this.log = this.log || [];
+    this.log.push({ s, txt: m.cs ? (m.cs === 'K' ? 'O-O' : 'O-O-O') : `${GLYPH[p[1]]}${cap ? '×' : ''}${sq(m.t)}${m.promo ? '=♛' : ''}`, cap: !!cap, cs: !!m.cs });
+    this.lastMv = { f: m.f, t: m.t, cap: !!cap, cs: m.cs || null, promo: !!m.promo, id: (this.lastMv ? this.lastMv.id : 0) + 1, piece: p };
     this.b = this.apply(this.b, m); this.last = [m.f, m.t]; this.sel = -1; this.bump();
     if (p[1] === 'K') { this.castle[me + 'K'] = false; this.castle[me + 'Q'] = false; }
     for (const [sq, k] of [[63, 'wK'], [56, 'wQ'], [7, 'bK'], [0, 'bQ']]) if (m.f === sq || m.t === sq) this.castle[k] = false;
@@ -73,9 +77,18 @@ export class Chess extends UIGame {
     if (!this.legal(op).length) return inCheck ? this.end([s], `كش مات! ${this.nm(s)} ربح ♚`) : this.end([0, 1], 'تعادل — ما في حركات (ستيل مات)');
     if (this.halfmoves >= 100 || this.b.filter(Boolean).length === 2) return this.end([0, 1], 'تعادل');
     this.check2 = inCheck; this.turn = op;
+    if (inCheck) this.log[this.log.length - 1].txt += '+';
+  }
+  view(seat) {
+    const v = super.view(seat);
+    v.chess = { b: this.b, moves: seat === this.turn && !this.over ? this.legal(seat).map((m) => [m.f, m.t]) : [], last: this.lastMv || null, check: !!this.check2 && !this.over,
+      lost: this.lost, log: (this.log || []).slice(-12), mover: this.turn };
+    return v;
   }
   act(seat, a) {
-    this.check(seat); const i = +a.i; const ms = this.legal(seat);
+    this.check(seat);
+    if (a.type === 'move') { const m = this.legal(seat).find((x) => x.f === +a.f && x.t === +a.t); if (!m) throw new Error('حركة مو مسموحة'); return this.doMove(seat, m); }
+    const i = +a.i; const ms = this.legal(seat);
     const m = ms.find((x) => x.f === this.sel && x.t === i);
     if (m) return this.doMove(seat, m);
     if (ms.some((x) => x.f === i)) { this.sel = i; return; }

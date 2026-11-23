@@ -507,6 +507,20 @@ html,body{background:#0b0a16}
 .rmore{margin-top:10px;background:rgba(255,255,255,.04);border-radius:12px;padding:8px 12px}.rmore summary{cursor:pointer;font-weight:800;font-size:14px}
 .playbar .lbtns{display:flex;gap:6px}.playbar #bRules{padding:12px 12px;font-size:13px;border-radius:14px}
 .gt2{padding-left:28px}.gt2 .gfav{position:absolute;bottom:6px;left:5px;font-size:17px;line-height:1;color:#6f6c96;padding:4px;cursor:pointer}.gt2 .gfav.on{color:#ffd24d;text-shadow:0 0 8px rgba(255,210,77,.6)}
+.chstrip{width:100%;display:flex;justify-content:center}.chcap{font-size:15px;letter-spacing:-2px;min-height:18px}
+.chstat{font-size:15px;text-align:center;min-height:24px;color:#d8d8e8}.chstat b{color:#fff}.chstat .red{color:#ff6b6b}
+.chwrap{width:min(96vw,58vh,560px)}.chb{position:relative;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;border-radius:10px;overflow:hidden;box-shadow:0 0 0 6px #5a3a1c,0 0 0 8px #2b1a0b,0 18px 40px rgba(0,0,0,.6);direction:ltr;user-select:none;-webkit-user-select:none}
+.chs{position:relative}.chs.clt{background:#ecd8b4}.chs.cdk{background:#ae8462}
+.chs .cf,.chs .cr{position:absolute;font-style:normal;font-size:10px;font-weight:800;opacity:.7;pointer-events:none}.chs .cf{right:3px;bottom:1px}.chs .cr{left:3px;top:1px}.chs.clt em{color:#ae8462}.chs.cdk em{color:#ecd8b4}
+.chs.last::before{content:'';position:absolute;inset:0;background:rgba(255,214,64,.42)}.chs.sel::before{content:'';position:absolute;inset:0;background:rgba(80,200,120,.5)}
+.chs.tg::after{content:'';position:absolute;left:35%;top:35%;width:30%;height:30%;border-radius:50%;background:rgba(20,20,20,.28)}.chs.tgc::after{content:'';position:absolute;inset:4%;border-radius:50%;box-shadow:inset 0 0 0 4px rgba(20,20,20,.32)}
+.chs.chk::before{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,40,40,.9) 0,rgba(255,40,40,.5) 45%,transparent 75%)}
+.chs.mv{cursor:pointer}.chs.tg,.chs.tgc{cursor:pointer}
+.chp{position:absolute;inset:0;pointer-events:none}
+.pc{position:absolute;width:12.5%;height:12.5%;display:flex;align-items:center;justify-content:center;font-weight:400;font-size:min(9.4vw,5.6vh,50px);line-height:1;transition:left .22s cubic-bezier(.3,.7,.3,1),top .22s cubic-bezier(.3,.7,.3,1);font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",serif}
+.pc.w{color:#fbfbf7;-webkit-text-stroke:1.3px #2a2015;text-shadow:0 2px 3px rgba(0,0,0,.45)}.pc.b{color:#1d1d1d;-webkit-text-stroke:.8px #000;text-shadow:0 1px 0 rgba(255,255,255,.25),0 2px 3px rgba(0,0,0,.4)}
+.pc.moving{z-index:3;transform:scale(1.12)}
+.chlog{display:flex;gap:6px;overflow-x:auto;width:min(96vw,560px);padding:4px 2px;scrollbar-width:none;direction:rtl}.chlog::-webkit-scrollbar{display:none}.chlog span{flex:0 0 auto;font-size:13px;padding:3px 8px;border-radius:8px;direction:ltr}.chlog .w{background:#ecd8b4;color:#222}.chlog .b{background:#2a2a3a;color:#eee}
 </style>
 </head>
 <body>
@@ -764,6 +778,10 @@ const SND = (() => {
     win() { const t = ctx.currentTime; [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => bell(f, t + i * 0.12, 1.6, 0.06)); },
     lose() { const t = ctx.currentTime; bell(440, t, 0.9, 0.055); bell(369.99, t + 0.22, 1.2, 0.05); },
     click() {},
+    move() { const t = ctx.currentTime; nz(t, 0.05, 'bandpass', 1500, 900, 3, 0.35, 0.002); thump(t, 0.22, 220, 90, 0.08); },
+    capture() { const t = ctx.currentTime; nz(t, 0.05, 'bandpass', 1700, 900, 3, 0.4, 0.002); thump(t, 0.25, 230, 80, 0.09); nz(t + 0.07, 0.06, 'bandpass', 1300, 700, 3, 0.35, 0.002); thump(t + 0.07, 0.22, 180, 70, 0.1); },
+    castle() { const t = ctx.currentTime; nz(t, 0.05, 'bandpass', 1500, 900, 3, 0.3, 0.002); thump(t, 0.2, 220, 90, 0.08); nz(t + 0.12, 0.05, 'bandpass', 1400, 900, 3, 0.3, 0.002); thump(t + 0.12, 0.2, 200, 90, 0.08); },
+    chkchk() { const t = ctx.currentTime; nz(t, 0.05, 'bandpass', 1600, 900, 3, 0.35, 0.002); thump(t, 0.22, 220, 90, 0.08); bell(880, t + 0.05, 0.6, 0.06); bell(1174.7, t + 0.13, 0.7, 0.05); },
     pop() { const t = ctx.currentTime; bell(880, t, 0.25, 0.04); nz(t, 0.02, 'bandpass', 1800, 0, 1.5, 0.04, 0.001); },
   };
   return {
@@ -2125,6 +2143,7 @@ function uiBlock(b, bi) {
 function pips(n) { const P = { 0: [], 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] }[n]; return [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<i class="${P.includes(k) ? 'on' : ''}"></i>`).join(''); }
 alt.rolls = {};
 function renderUI(e) {
+  if (e.game === 'chess' && e.chess) return renderChess(e);
   altShell(e);
   const u = e.ui || { blocks: [] }, mine = room.mySeat;
   const strip = altStrip(e, (i) => `<div class="mpc">${(u.players && u.players[i] && u.players[i].badge) || ''}</div><div class="mpx">${(u.players && u.players[i] && u.players[i].sub) || ''}</div>`);
@@ -2140,6 +2159,74 @@ $('alt').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-ua]'); if (!b || b.disabled) return;
   try { sendWs({ t: 'act', a: JSON.parse(b.dataset.ua) }); } catch {}
 });
+
+// ----- شطرنج: dedicated smooth board -----
+const CGLYPH = { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟' };
+const chs = { sel: -1, lastId: 0, code: '' };
+function renderChess(e) {
+  altShell(e);
+  const c = e.chess, mine = room.mySeat, my = e.turn === mine && !e.over, flip = mine === 1;
+  if (chs.code !== room.code) { chs.code = room.code; chs.sel = -1; chs.lastId = c.last ? c.last.id : 0; $('alt').innerHTML = ''; }
+  const strip = altStrip(e, (i) => `<div class="mpc">${i === 0 ? '⚪ الأبيض' : '⚫ الأسود'}</div><div class="mpx chcap">${c.lost[1 - i].map((p) => CGLYPH[p[1]]).join('') || '&nbsp;'}</div>`);
+  if (!$('alt').querySelector('.chb')) {
+    let sq = '';
+    for (let k = 0; k < 64; k++) { const i = flip ? 63 - k : k, r = Math.floor(i / 8), f = i % 8; sq += `<div class="chs ${(r + f) % 2 ? 'cdk' : 'clt'}" data-sq="${i}">${(flip ? r === 0 : r === 7) ? `<em class="cf">${'abcdefgh'[f]}</em>` : ''}${(flip ? f === 7 : f === 0) ? `<em class="cr">${8 - r}</em>` : ''}</div>`; }
+    $('alt').innerHTML = `<div class="chstrip"></div><div class="chstat"></div><div class="chwrap"><div class="chb">${sq}<div class="chp"></div></div></div><div class="chlog"></div>`;
+    $('alt').querySelector('.chb').addEventListener('click', (ev) => {
+      const el = ev.target.closest('[data-sq]'); const E = room.engine; if (!el || !E || !E.chess) return;
+      const i = +el.dataset.sq, mv = E.chess.moves;
+      if (E.turn !== room.mySeat || E.over) return;
+      if (chs.sel >= 0 && mv.some(([f, t]) => f === chs.sel && t === i)) { sendWs({ t: 'act', a: { type: 'move', f: chs.sel, t: i } }); chs.pend = { f: chs.sel, t: i }; chs.sel = -1; paintChess(E, true); return; }
+      chs.sel = mv.some(([f]) => f === i) && chs.sel !== i ? i : -1; if (chs.sel >= 0) SND.play('tick'); paintChess(E);
+    });
+  }
+  $('alt').querySelector('.chstrip').innerHTML = strip;
+  paintChess(e);
+  // move sounds
+  if (c.last && c.last.id !== chs.lastId) { chs.lastId = c.last.id; chs.pend = null; SND.play(c.check ? 'chkchk' : c.last.cs ? 'castle' : c.last.cap ? 'capture' : 'move'); }
+  altMe(e, mine === 0 ? '⚪ الأبيض' : mine === 1 ? '⚫ الأسود' : '', my, c.check ? '⚠️ كش! احمِ الملك' : 'دورك ♟️');
+}
+function chPos(i, flip) { const k = flip ? 63 - i : i; return [(k % 8) * 12.5, Math.floor(k / 8) * 12.5]; }
+function paintChess(e, pending) {
+  const c = e.chess, mine = room.mySeat, my = e.turn === mine && !e.over && !pending, flip = mine === 1;
+  const targets = my && chs.sel >= 0 ? c.moves.filter(([f]) => f === chs.sel).map(([, t]) => t) : [];
+  const movable = my ? new Set(c.moves.map(([f]) => f)) : new Set();
+  const king = c.check ? c.b.indexOf((c.mover === 0 ? 'w' : 'b') + 'K') : -1;
+  $('alt').querySelectorAll('.chs').forEach((el) => {
+    const i = +el.dataset.sq;
+    el.classList.toggle('last', !!c.last && (c.last.f === i || c.last.t === i));
+    el.classList.toggle('sel', i === chs.sel);
+    el.classList.toggle('tg', targets.includes(i) && !c.b[i]);
+    el.classList.toggle('tgc', targets.includes(i) && !!c.b[i]);
+    el.classList.toggle('mv', movable.has(i) && chs.sel < 0);
+    el.classList.toggle('chk', i === king);
+  });
+  // pieces layer (keyed by square, the moved piece slides in from its old square)
+  const layer = $('alt').querySelector('.chp');
+  const anim = c.last && c.last.id !== chs.drawnId ? c.last : null;
+  let h = '';
+  c.b.forEach((p, i) => {
+    if (!p) return;
+    const [x, y] = chPos(i, flip);
+    let from = '';
+    if (anim && i === anim.t) { const [fx, fy] = chPos(anim.f, flip); from = `data-fx="${fx}" data-fy="${fy}"`; }
+    if (anim && anim.cs && ((anim.cs === 'K' && i === anim.t - 1) || (anim.cs === 'Q' && i === anim.t + 1))) { const [fx, fy] = chPos(anim.cs === 'K' ? anim.t + 1 : anim.t - 2, flip); from = `data-fx="${fx}" data-fy="${fy}"`; }
+    h += `<b class="pc ${p[0]}" style="left:${x}%;top:${y}%" ${from}>${CGLYPH[p[1]]}</b>`;
+  });
+  layer.innerHTML = h;
+  if (anim) {
+    chs.drawnId = anim.id;
+    layer.querySelectorAll('[data-fx]').forEach((el) => {
+      const tx = el.style.left, ty = el.style.top;
+      el.style.transition = 'none'; el.style.left = el.dataset.fx + '%'; el.style.top = el.dataset.fy + '%'; el.classList.add('moving');
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = ''; el.style.left = tx; el.style.top = ty; setTimeout(() => el.classList.remove('moving'), 260); }));
+    });
+  }
+  const turnName = e.turn >= 0 && room.seats[e.turn] ? room.seats[e.turn].name : '';
+  $('alt').querySelector('.chstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (c.check ? '<b class="red">⚠️ كش! لازم تحمي الملك</b>' : chs.sel >= 0 ? 'اختار وين بدك تحركها' : '<b>دورك</b> — اختار قطعة') : `دور ${esc(turnName)}${c.check ? ' — <b class="red">كش!</b>' : ''}`;
+  $('alt').querySelector('.chlog').innerHTML = c.log.map((m, k) => `<span class="${m.s === 0 ? 'w' : 'b'}">${esc(m.txt)}</span>`).join('');
+  const lg = $('alt').querySelector('.chlog'); lg.scrollLeft = -lg.scrollWidth;
+}
 
 // ----- ارسم وخمّن -----
 const DCOL = ['#111', '#e53935', '#1e88e5', '#43a047', '#fbc02d', '#8e24aa', '#fb8c00', '#ffffff'];
