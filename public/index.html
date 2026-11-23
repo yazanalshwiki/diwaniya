@@ -739,6 +739,10 @@ button.ghost{border-color:rgba(190,180,255,.3)!important;background:rgba(255,255
 .jxpc .c,.jxflc .c{width:clamp(44px,11vw,60px)!important;height:clamp(63px,15.7vw,86px)!important}
 
 #table.isalt .alt:has(.jxg){background:radial-gradient(circle at 50% 38%,transparent 0 46vmin,rgba(255,255,255,.035) 46vmin 46.4vmin,transparent 46.4vmin 52vmin,rgba(255,255,255,.03) 52vmin 52.3vmin,transparent 52.3vmin),repeating-conic-gradient(from 0deg at 50% 38%,rgba(255,255,255,.025) 0 4deg,transparent 4deg 12deg),radial-gradient(ellipse at 50% 38%,#1d7a4c 0,#125737 40%,#0a3522 75%,#071f15 100%)!important}
+
+.jxp{position:absolute}.jxp .jxbk{position:absolute;top:-4px;left:calc(50% + 16px);margin:0!important;transform:none!important;z-index:-1}
+.jxp[data-pos=right] .jxbk,.jxp[data-pos=left] .jxbk{left:50%;right:auto;top:-18px;translate:-50% 0}
+.jxp[data-pos=left]{left:2px!important}.jxp[data-pos=right]{right:2px!important}
 </style>
 </head>
 <body>
@@ -2611,7 +2615,7 @@ const JDARK = ['#7a0d10', '#0c3a80', '#7a5a00', '#0f5a22'];
 const JLITE = ['#ff9c9c', '#9cc8ff', '#ffe58a', '#9be8a8'];
 const JG = (() => {
   // star-shaped loop: tips on the diagonals, 76 holes at equal arc length, clockwise from the 45° tip
-  const R0 = 200, A = 70, rf = (t) => R0 + A * Math.cos(4 * (t - Math.PI / 4)), N = 4000, pts = [];
+  const R0 = 198, A = 72, rf = (t) => { const c = Math.cos(4 * (t - Math.PI / 4)); return R0 + A * Math.sign(c) * Math.pow(Math.abs(c), 0.55); }, N = 4000, pts = [];
   for (let i = 0; i <= N; i++) { const t = Math.PI / 4 + (i / N) * Math.PI * 2, r = rf(t); pts.push([300 + r * Math.cos(t), 300 + r * Math.sin(t)]); }
   const cum = [0]; for (let i = 1; i <= N; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   const L = cum[N], track = []; let j = 0;
@@ -2621,8 +2625,8 @@ const JG = (() => {
   for (let s = 0; s < 4; s++) {
     const ta = seatAng(s) - Math.PI / 4, rt = rf(ta);
     lane.push([0, 1, 2, 3].map((h) => [300 + (rt - 29 * (h + 1)) * Math.cos(ta), 300 + (rt - 29 * (h + 1)) * Math.sin(ta)]));
-    const ba = seatAng(s) - 0.4, cx = 300 + 228 * Math.cos(ba), cy = 300 + 228 * Math.sin(ba);
-    base.push([[0, -19], [19, 0], [0, 19], [-19, 0]].map(([dx, dy]) => [cx + dx, cy + dy]));
+    const ba = seatAng(s) - 0.33, cx = 300 + 212 * Math.cos(ba), cy = 300 + 212 * Math.sin(ba);
+    base.push([[0, -17], [17, 0], [0, 17], [-17, 0]].map(([dx, dy]) => [cx + dx, cy + dy]));
   }
   return { track, lane, base, tip: (s) => 19 * s, start: (s) => 19 * s + 1 };
 })();
@@ -2760,7 +2764,7 @@ function paintJack(e) {
     const cur = J.cur === i && !e.over, home = J.p[i].filter((x) => x >= 76).length, team = i % 2 === mine % 2;
     const pct = cur && e.turn === i ? ringPct() : null;
     el.className = `jxp${cur ? ' cur' : ''}`; el.style.setProperty('--c', JCOL[i]);
-    el.innerHTML = `<div class="jxav">${st ? avPic(st) : ''}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}<i class="jxdot"></i>${i === J.dealer ? '<em class="jxdl">موزّع</em>' : ''}</div><div class="jxnm">${esc(st ? st.name : '')}${i !== me && team ? ' 🤝' : ''}</div>${i !== me ? `<div class="jxbk">${'<s></s>'.repeat(J.counts[i])}</div>` : ''}<div class="jxhm">${[0, 1, 2, 3].map((k) => `<u class="${k < home ? 'on' : ''}"></u>`).join('')}</div>`;
+    el.innerHTML = `<div class="jxav">${st ? avPic(st) : ''}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}<i class="jxdot"></i>${i === J.dealer ? '<em class="jxdl">موزّع</em>' : ''}</div>${i !== me ? `<div class="jxbk">${'<s></s>'.repeat(J.counts[i])}</div>` : ''}<div class="jxnm">${esc(st ? st.name : '')}${i !== me && team ? ' 🤝' : ''}</div><div class="jxhm">${[0, 1, 2, 3].map((k) => `<u class="${k < home ? 'on' : ''}"></u>`).join('')}</div>`;
   });
   // hand
   const hand = J.hand || []; const playable = new Set((J.legal || []).filter((m) => m.kind !== 'discard').map((m) => m.c));
