@@ -74,6 +74,12 @@ if (Bun.env.DATABASE_URL) {
   await sql`alter table users add column if not exists items jsonb not null default '[]'`;
   await sql`alter table users add column if not exists equip jsonb not null default '{}'`;
   await sql`alter table users add column if not exists last_daily date`;
+  await sql`alter table users add column if not exists banned_until timestamptz`;
+  await sql`alter table users add column if not exists ban_reason text`;
+  await sql`alter table users add column if not exists last_ip text`;
+  await sql`alter table users add column if not exists last_device text`;
+  await sql`alter table users add column if not exists last_seen timestamptz`;
+  await sql`create table if not exists bans (id serial primary key, kind text not null, value text not null, reason text, until timestamptz, created_at timestamptz not null default now())`;
   console.log('Postgres connected');
 } else console.log('No DATABASE_URL — using in-memory store');
 
@@ -89,10 +95,13 @@ async function patchUser(id, f) {
     if ('equip' in f) await sql`update users set equip = ${JSON.stringify(f.equip)}::jsonb where id = ${id}`;
     if ('points' in f) await sql`update users set points = ${f.points} where id = ${id}`;
     if ('last_daily' in f) await sql`update users set last_daily = ${f.last_daily} where id = ${id}`;
+    if ('banned_until' in f) await sql`update users set banned_until = ${f.banned_until}, ban_reason = ${f.ban_reason || null} where id = ${id}`;
+    if ('last_ip' in f) await sql`update users set last_ip = ${f.last_ip}, last_device = ${f.last_device || null}, last_seen = now() where id = ${id}`;
     return getUser(id);
   }
   const u = mem.users.get(id); if (!u) return null;
   if ('username' in f) u.uname_key = keyOf(f.username);
+  if ('last_ip' in f) u.last_seen = new Date();
   Object.assign(u, f); return u;
 }
 const keyOf = (n) => n.trim().toLowerCase();
@@ -124,6 +133,29 @@ async function leaderboard() {
   if (sql) return (await sql`select id, username, points, games, wins, avatar, ph from users order by points desc, wins desc limit 30`);
   return [...mem.users.values()].sort((a, b) => b.points - a.points).slice(0, 30).map(pub);
 }
+
+// ================== Bans / admin helpers ==================
+const memBans = []; let memBanId = 1;
+const clientIP = (req, srv) => (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || req.headers.get('x-real-ip') || (srv && srv.requestIP(req) ? srv.requestIP(req).address : '') || '';
+async function listBans() {
+  if (sql) return await sql`select * from bans where until is null or until > now() order by id desc`;
+  return memBans.filter((b) => !b.until || new Date(b.until) > new Date());
+}
+async function addBan(kind, value, hours, reason) {
+  const until = hours > 0 ? new Date(Date.now() + hours * 3600000) : null;
+  if (sql) return (await sql`insert into bans (kind, value, reason, until) values (${kind}, ${value}, ${reason || null}, ${until}) returning *`)[0];
+  const b = { id: memBanId++, kind, value, reason: reason || null, until, created_at: new Date() }; memBans.push(b); return b;
+}
+async function delBan(id) { if (sql) await sql`delete from bans where id = ${id}`; else { const i = memBans.findIndex((b) => b.id === id); if (i >= 0) memBans.splice(i, 1); } }
+const fmtUntil = (d) => (d ? 'لحد ' + new Date(d).toLocaleString('ar', { timeZone: 'Asia/Riyadh', dateStyle: 'medium', timeStyle: 'short' }) : 'بشكل دائم');
+async function banCheck(u, ip, dev) {
+  if (u && u.banned_until && new Date(u.banned_until) > new Date()) return `حسابك محظور ${new Date(u.banned_until).getFullYear() > 2900 ? 'بشكل دائم' : fmtUntil(u.banned_until)}${u.ban_reason ? ' — السبب: ' + u.ban_reason : ''}`;
+  for (const b of await listBans()) if ((b.kind === 'ip' && ip && b.value === ip) || (b.kind === 'device' && dev && b.value === dev)) return `هالجهاز محظور ${fmtUntil(b.until)}${b.reason ? ' — السبب: ' + b.reason : ''}`;
+  return null;
+}
+function kickUser(uid, msg) { const c = clients.get(uid); if (c) { send(c, { t: 'banned', msg }); setTimeout(() => { try { c.close(); } catch {} }, 300); } removeFromRoom(uid); }
+const ADMIN_PASSWORD = Bun.env.ADMIN_PASSWORD || '';
+const adminOk = (req) => { const p = verify((req.headers.get('authorization') || '').replace('Bearer ', '')); return p && p.admin === true; };
 
 // ================== Tokens ==================
 const b64 = (s) => Buffer.from(s).toString('base64url');
@@ -454,23 +486,30 @@ const server = Bun.serve({
       if (!p) return new Response('unauthorized', { status: 401 });
       const u = await getUser(p.id);
       if (!u) return new Response('unauthorized', { status: 401 });
-      if (srv.upgrade(req, { data: { uid: u.id, name: u.username, av: u.avatar || null, ph: +u.ph || 0 } })) return;
+      const ip = clientIP(req, srv), dev = String(url.searchParams.get('d') || '').slice(0, 64);
+      const ban = await banCheck(u, ip, dev);
+      if (!ban) patchUser(u.id, { last_ip: ip, last_device: dev }).catch(() => {});
+      if (srv.upgrade(req, { data: { uid: u.id, name: u.username, av: u.avatar || null, ph: +u.ph || 0, ban } })) return;
       return new Response('upgrade failed', { status: 400 });
     }
     if (url.pathname === '/api/register' && req.method === 'POST') {
-      const { username = '', password = '' } = await body(req);
+      const { username = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
       const n = String(username).trim().replace(/\s+/g, ' ');
       if (n.length < 2 || n.length > 20) return json({ error: 'الاسم لازم يكون من 2 إلى 20 حرف' }, 400);
       if (/^بوت/.test(n)) return json({ error: 'اختر اسم ثاني' }, 400);
       if (String(password).length < 4) return json({ error: 'كلمة المرور 4 أحرف على الأقل' }, 400);
       if (await findUser(n)) return json({ error: 'الاسم مستخدم، جرب اسم ثاني' }, 400);
+      { const b = await banCheck(null, clientIP(req, srv), dev); if (b) return json({ error: b }, 403); }
       const u = await createUser(n, await Bun.password.hash(String(password)));
+      await patchUser(u.id, { last_ip: clientIP(req, srv), last_device: dev });
       return json({ token: issue(u), user: pub(u, true) });
     }
     if (url.pathname === '/api/login' && req.method === 'POST') {
-      const { username = '', password = '' } = await body(req);
+      const { username = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
       const u = await findUser(String(username));
       if (!u || !(await Bun.password.verify(String(password), u.pass))) return json({ error: 'الاسم أو كلمة المرور غلط' }, 401);
+      { const b = await banCheck(u, clientIP(req, srv), dev); if (b) return json({ error: b }, 403); }
+      await patchUser(u.id, { last_ip: clientIP(req, srv), last_device: dev });
       return json({ token: issue(u), user: pub(u, true) });
     }
     if (url.pathname === '/api/me') {
@@ -575,6 +614,76 @@ const server = Bun.serve({
       const f = Bun.file(ROOT + 'public' + url.pathname);
       return new Response(f, { headers: { 'content-type': url.pathname.endsWith('.js') ? 'application/javascript' : 'text/css', 'cache-control': 'public, max-age=86400' } });
     }
+    if (url.pathname === '/admin') return new Response(Bun.file(ROOT + 'public/admin.html'), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    if (url.pathname.startsWith('/admin/api/')) {
+      const ap = url.pathname.slice(11);
+      if (ap === 'login' && req.method === 'POST') {
+        const { password = '' } = await body(req);
+        if (!ADMIN_PASSWORD) return json({ error: 'لوحة الأدمن مو مفعّلة — لازم تحط ADMIN_PASSWORD' }, 403);
+        if (!safeEq(String(password), ADMIN_PASSWORD)) { await new Promise((r) => setTimeout(r, 800)); return json({ error: 'كلمة السر غلط' }, 401); }
+        return json({ token: sign({ admin: true, exp: Date.now() + 1000 * 60 * 60 * 12 }) });
+      }
+      if (!adminOk(req)) return json({ error: 'unauthorized' }, 401);
+      if (ap === 'stats') {
+        const online = clients.size, live = [...rooms.values()].filter((r) => r.status === 'playing').length;
+        if (sql) {
+          const [a] = await sql`select count(*)::int as users, coalesce(sum(points),0)::bigint as coins, count(*) filter (where created_at > now() - interval '1 day')::int as new24, count(*) filter (where last_seen > now() - interval '1 day')::int as active24, count(*) filter (where banned_until > now())::int as banned from users`;
+          const [m] = await sql`select count(*)::int as games, count(*) filter (where finished_at > now() - interval '1 day')::int as games24 from matches`;
+          const [p] = await sql`select count(*)::int as n, coalesce(sum(amount),0)::int as halalas from payments`;
+          const top = await sql`select game, count(*)::int as n from matches where finished_at > now() - interval '7 days' group by game order by n desc limit 8`;
+          return json({ online, rooms: rooms.size, live, ...a, coins: Number(a.coins), ...m, payments: p.n, revenue: p.halalas / 100, top: top.map((t) => ({ game: GAME_NAMES[t.game] || t.game, n: t.n })) });
+        }
+        const us = [...mem.users.values()];
+        return json({ online, rooms: rooms.size, live, users: us.length, coins: us.reduce((a, u) => a + u.points, 0), new24: us.length, active24: us.length, banned: us.filter((u) => u.banned_until && new Date(u.banned_until) > new Date()).length, games: 0, games24: 0, payments: memPaid.size, revenue: 0, top: [] });
+      }
+      if (ap === 'users') {
+        const q = String(url.searchParams.get('q') || '').trim(), off = Math.max(0, +url.searchParams.get('o') || 0);
+        let list;
+        if (sql) list = q ? await sql`select id, username, points, games, wins, created_at, last_seen, last_ip, last_device, banned_until, ban_reason, email from users where uname_key like ${'%' + keyOf(q) + '%'} or id::text = ${q} or last_ip = ${q} or email ilike ${'%' + q + '%'} order by id desc limit 50 offset ${off}`
+          : await sql`select id, username, points, games, wins, created_at, last_seen, last_ip, last_device, banned_until, ban_reason, email from users order by coalesce(last_seen, created_at) desc limit 50 offset ${off}`;
+        else list = [...mem.users.values()].filter((u) => !q || u.uname_key.includes(keyOf(q)) || String(u.id) === q || u.last_ip === q).reverse().slice(off, off + 50).map((u) => ({ ...u, pass: undefined, photo: undefined }));
+        return json({ list: list.map((u) => ({ ...u, online: clients.has(u.id), room: userRoom.get(u.id) || null })) });
+      }
+      const um = ap.match(/^user\/(\d+)$/);
+      if (um) {
+        const id = +um[1]; const u = await getUser(id); if (!u) return json({ error: 'اللاعب مو موجود' }, 404);
+        if (req.method === 'POST') {
+          const a = await body(req); let note = '';
+          if (a.action === 'coins') { const d = Math.trunc(+a.delta || 0); if (!d) return json({ error: 'اكتب رقم' }, 400); await patchUser(id, { points: Math.max(0, u.points + d) }); note = `${d > 0 ? 'زدنا' : 'نقصنا'} ${Math.abs(d)} 🪙`; const c = clients.get(id); if (c) { send(c, { t: 'me', user: pub(await getUser(id), true) }); if (d > 0) send(c, { t: 'notice', msg: `🎁 وصلك ${d} 🪙 من الإدارة` }); } }
+          else if (a.action === 'setcoins') { const v = Math.max(0, Math.trunc(+a.value || 0)); await patchUser(id, { points: v }); note = `الرصيد صار ${v}`; const c = clients.get(id); if (c) send(c, { t: 'me', user: pub(await getUser(id), true) }); }
+          else if (a.action === 'password') { const v = String(a.value || ''); if (v.length < 4) return json({ error: 'كلمة السر ٤ أحرف عالأقل' }, 400); await patchUser(id, { pass: await Bun.password.hash(v) }); note = 'تغيّرت كلمة السر'; }
+          else if (a.action === 'rename') { const n = String(a.value || '').trim().replace(/\s+/g, ' '); if (n.length < 2 || n.length > 20) return json({ error: 'الاسم من ٢ لـ٢٠ حرف' }, 400); const ex = await findUser(n); if (ex && ex.id !== id) return json({ error: 'الاسم مستخدم' }, 400); await patchUser(id, { username: n }); note = 'تغيّر الاسم'; }
+          else if (a.action === 'ban') { const h = +a.hours || 0; const until = h > 0 ? new Date(Date.now() + h * 3600000) : new Date('2999-01-01'); await patchUser(id, { banned_until: until, ban_reason: String(a.reason || '').slice(0, 120) }); kickUser(id, `حسابك محظور ${h > 0 ? fmtUntil(until) : 'بشكل دائم'}${a.reason ? ' — السبب: ' + a.reason : ''}`); note = 'انحظر الحساب'; }
+          else if (a.action === 'unban') { await patchUser(id, { banned_until: null, ban_reason: null }); note = 'انفك الحظر'; }
+          else if (a.action === 'banip' || a.action === 'bandevice') { const kind = a.action === 'banip' ? 'ip' : 'device'; const v = kind === 'ip' ? u.last_ip : u.last_device; if (!v) return json({ error: 'ما عنا ' + (kind === 'ip' ? 'IP' : 'جهاز') + ' محفوظ لهاللاعب' }, 400); await addBan(kind, v, +a.hours || 0, String(a.reason || '').slice(0, 120)); kickUser(id, 'هالجهاز محظور'); note = kind === 'ip' ? 'انحظر الـIP' : 'انحظر الجهاز'; }
+          else if (a.action === 'kick') { kickUser(id, 'الإدارة طلّعتك من الطاولة'); note = 'انطرد'; }
+          else return json({ error: 'أمر غلط' }, 400);
+          console.log('[admin]', a.action, 'user', id, note);
+          return json({ ok: true, note, user: { ...(await getUser(id)), pass: undefined, photo: undefined } });
+        }
+        const pays = sql ? await sql`select * from payments where uid = ${id} order by created_at desc limit 20` : [];
+        const games = sql ? await sql`select game, winners, players, finished_at from matches where players::text like ${'%"' + u.username + '"%'} order by id desc limit 15` : [];
+        return json({ user: { ...u, pass: undefined, photo: undefined, online: clients.has(id), room: userRoom.get(id) || null }, payments: pays, games });
+      }
+      if (ap === 'bans') {
+        if (req.method === 'POST') {
+          const a = await body(req);
+          if (a.action === 'del') { await delBan(+a.id); return json({ ok: true }); }
+          const kind = a.kind === 'device' ? 'device' : 'ip', v = String(a.value || '').trim(); if (!v) return json({ error: 'اكتب القيمة' }, 400);
+          await addBan(kind, v, +a.hours || 0, String(a.reason || '').slice(0, 120));
+          for (const [uid, c] of clients) getUser(uid).then((u) => { if (u && ((kind === 'ip' && u.last_ip === v) || (kind === 'device' && u.last_device === v))) kickUser(uid, 'هالجهاز محظور'); });
+          return json({ ok: true });
+        }
+        const users = sql ? await sql`select id, username, banned_until, ban_reason from users where banned_until > now() order by banned_until desc limit 100` : [...mem.users.values()].filter((u) => u.banned_until && new Date(u.banned_until) > new Date());
+        return json({ bans: await listBans(), users });
+      }
+      if (ap === 'rooms') {
+        if (req.method === 'POST') { const a = await body(req); const r = rooms.get(String(a.code || '')); if (!r) return json({ error: 'الطاولة مو موجودة' }, 404); for (const s of r.seats) if (s && s.uid) { const c = clients.get(s.uid); userRoom.delete(s.uid); if (c) send(c, { t: 'left', reason: 'الإدارة سكّرت الطاولة' }); } clearTimeout(r.timer); rooms.delete(r.code); lobbyDirty(); return json({ ok: true }); }
+        return json({ list: [...rooms.values()].map((r) => ({ code: r.code, game: GAME_NAMES[r.game] || r.game, status: r.status, priv: r.priv, created: r.created, players: r.seats.map((s) => (s ? (s.bot ? '🤖 ' + s.name : s.name) : null)).filter(Boolean) })) });
+      }
+      if (ap === 'broadcast' && req.method === 'POST') { const { text = '' } = await body(req); const t = String(text).trim().slice(0, 200); if (!t) return json({ error: 'اكتب رسالة' }, 400); for (const c of clients.values()) send(c, { t: 'notice', msg: '📢 ' + t, big: true }); return json({ ok: true, sent: clients.size }); }
+      return json({ error: 'not found' }, 404);
+    }
     if (url.pathname === '/health') return new Response('ok');
     const origin = (req.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')) + '://' + (req.headers.get('x-forwarded-host') || req.headers.get('host'));
     return new Response(html.replace('content="/img/og.png?v=3"', `content="${origin}/img/og.png?v=3"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -583,6 +692,7 @@ const server = Bun.serve({
     idleTimeout: 120,
     sendPings: true,
     open(ws) {
+      if (ws.data.ban) { send(ws, { t: 'banned', msg: ws.data.ban }); setTimeout(() => { try { ws.close(); } catch {} }, 300); return; }
       const uid = ws.data.uid;
       const old = clients.get(uid);
       if (old && old !== ws) { send(old, { t: 'left', reason: 'فتحت الحساب من جهاز ثاني' }); try { old.close(); } catch {} }
@@ -603,6 +713,7 @@ const server = Bun.serve({
       catch (e) { send(ws, { t: 'error', msg: e.message || 'خطأ' }); }
     },
     close(ws) {
+      if (ws.data.ban) return;
       const uid = ws.data.uid;
       if (clients.get(uid) !== ws) return;
       clients.delete(uid);
