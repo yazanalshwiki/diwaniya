@@ -32,6 +32,13 @@ export class Pool {
     if (a.type !== 'shoot') throw new Error('اضرب');
     const angle = +a.angle, power = +a.power;
     if (!Number.isFinite(angle) || !Number.isFinite(power)) throw new Error('ضربة غلط');
+    if (this.bih && a.cue && Number.isFinite(+a.cue.x) && Number.isFinite(+a.cue.y)) {
+      const x = +a.cue.x, y = +a.cue.y;
+      if (x < R || x > W - R || y < R || y > H - R) throw new Error('حط الطابة جوّا الطاولة');
+      if (this.balls.some((b) => b.n !== 0 && !b.in && Math.hypot(b.x - x, b.y - y) < 2 * R)) throw new Error('الطابة فوق طابة تانية');
+      const cue = this.balls.find((b) => b.n === 0); cue.x = x; cue.y = y; cue.in = false;
+    }
+    this.bih = false;
     this.shoot(seat, angle, Math.max(0.05, Math.min(1, power)));
   }
   shoot(seat, angle, power) {
@@ -41,6 +48,7 @@ export class Pool {
     this.history.length++;
     this.shot = { id: this.shotId, seat, angle, power, from };
     this.balls = res.balls;
+    this.lastPots = res.events.pocketed.filter((n) => n !== 0);
     this.resolve(seat, res.events);
     this.pending = { delay: Math.min(9000, res.steps * STEP_MS + 500), fn: 'settle' };
     this.nextTurn = this.turn; this.turn = -1;
@@ -76,16 +84,16 @@ export class Pool {
     if (scratch) respot(this.balls);
     const g2 = this.group[seat];
     const ownPot = pots.some((n) => n !== 8 && (!g2 || (g2 === 'solid' ? isSolid(n) : isStripe(n))));
-    if (foul) { this.fouls[seat]++; this.afterTurn = opp; this.msg = `❌ فاول: ${foul} — دور ${this.nm(opp)}`; }
+    if (foul) { this.fouls[seat]++; this.afterTurn = opp; this.bihNext = true; this.msg = `❌ فاول: ${foul} — ${this.nm(opp)} بيحط الطابة البيضا وين ما بدو`; }
     else if (ownPot) { this.afterTurn = seat; this.msg = `✅ ${this.nm(seat)} دخّل ${pots.filter((n) => n !== 8).length > 1 ? 'طابات' : 'طابة'} — كمّل`; }
     else { this.afterTurn = opp; this.msg = `دور ${this.nm(opp)}`; }
     if (!g && this.group[seat]) this.msg += ` • ${this.nm(seat)}: ${this.group[seat] === 'solid' ? 'السادة 🔴' : 'المخططة 🟡'}`;
   }
   tick() { const p = this.pending; if (!p) return; this.pending = null; this.settle(); }
-  settle() { if (this.over) { this.turn = -1; return; } this.turn = this.afterTurn; }
+  settle() { if (this.over) { this.turn = -1; return; } this.turn = this.afterTurn; this.bih = !!this.bihNext; this.bihNext = false; }
   view(seat) {
     return {
-      type: 'pool', turn: this.turn, balls: this.balls, shot: this.shot, group: this.group, msg: this.msg, over: this.over, winners: this.winners,
+      type: 'pool', turn: this.turn, balls: this.balls, bih: !!this.bih, last: this.lastPots || [], shot: this.shot, group: this.group, msg: this.msg, over: this.over, winners: this.winners,
       history: this.history, hand: [], handCounts: [0, 0], trick: [], legal: [], scores: [0, 1].map((i) => 7 - (this.group[i] ? this.mine(i).length : 7)),
       left: [0, 1].map((i) => (this.group[i] ? this.mine(i).length : null)),
       rank: [0, 1].map((i) => ({ seat: i, score: this.winners.includes(i) ? '🏆' : `${7 - (this.group[i] ? this.mine(i).length : 7)} طابات` })),
@@ -122,7 +130,7 @@ export class Pool {
       if (good) break;
     }
     // human-ish inaccuracy
-    if (best) return { type: 'shoot', angle: best.ang + (Math.random() - 0.5) * 0.02, power: best.pw };
+    if (best) return { type: 'shoot', angle: best.ang + (Math.random() - 0.5) * 0.05, power: best.pw };
     const t = targets[0] || this.balls.find((b) => !b.in && b.n !== 0);
     return { type: 'shoot', angle: Math.atan2(t.y - cue.y, t.x - cue.x), power: 0.6 };
   }
