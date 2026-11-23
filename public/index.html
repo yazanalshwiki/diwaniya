@@ -533,12 +533,34 @@ html,body{background:#0b0a16}
 .lstrip{width:100%;display:flex;justify-content:center}.ldot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
 .lstat{text-align:center;font-size:15px;min-height:24px;color:#d8d8e8}.lstat b{color:#fff}
 .lwrapb{width:min(96vw,58vh,580px)}.ldb{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #fffdf7,0 0 0 8px #2b2a44,0 18px 40px rgba(0,0,0,.6);transform:rotate(var(--rot));direction:ltr}.ldb svg{width:100%;height:100%;display:block}
-.ltoks{position:absolute;inset:0}
-.ltk{position:absolute;width:5.6%;height:5.6%;transform:translate(-50%,-56%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,var(--c) 32%,var(--d) 100%);box-shadow:0 3px 0 var(--d),0 5px 8px rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;transition:left .14s ease,top .14s ease;z-index:2}
-.ltk.sm{width:4.4%;height:4.4%}.ltk i{font-style:normal;font-size:min(2.6vw,13px);font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.ltk.can{z-index:4;cursor:pointer;animation:lpulse .8s ease-in-out infinite alternate}@keyframes lpulse{from{box-shadow:0 3px 0 var(--d),0 0 0 3px #fff,0 0 14px 4px #fff}to{box-shadow:0 3px 0 var(--d),0 0 0 5px #ffd24d,0 0 22px 8px rgba(255,210,77,.8)}}
-.ldice{display:flex;flex-direction:column;align-items:center;gap:4px}.ldie{background:none;border:0;padding:6px;border-radius:18px;box-shadow:0 0 0 3px var(--c)}.ldie .die{width:58px;height:58px}.ldie.can{animation:pulseb .8s infinite alternate;cursor:pointer}.ldie.spin .die{animation:droll .5s linear infinite}.ldie:disabled{opacity:.85}
 .lhint{font-size:12px;color:var(--muted);min-height:16px}
+
+.lgame{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.lprow{direction:ltr;display:flex;justify-content:space-between;gap:8px;width:min(97vw,56vh,580px)}
+.lpan{flex:1;max-width:49%;display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1.5px solid rgba(255,255,255,.08);transition:.25s;min-height:58px}
+.lpan[data-corner=tr],.lpan[data-corner=br]{flex-direction:row-reverse;text-align:left}
+.lpan.cur{border-color:var(--c);background:linear-gradient(135deg,color-mix(in srgb,var(--c) 35%,transparent),rgba(255,255,255,.03));box-shadow:0 0 18px color-mix(in srgb,var(--c) 45%,transparent)}
+.lpav{position:relative;width:40px;height:40px;flex:none;border-radius:50%;box-shadow:0 0 0 3px var(--c)}.lpav img,.lpav>*:not(.ring){width:100%;height:100%;border-radius:50%}
+.lpin{flex:1;min-width:0;direction:rtl;text-align:right}.lpan[data-corner=tl] .lpin,.lpan[data-corner=bl] .lpin{text-align:left}.lpnm{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lpip{display:flex;gap:3px;align-items:center;margin-top:3px}.lpan[data-corner=tr] .lpip,.lpan[data-corner=br] .lpip{flex-direction:row-reverse}
+.lpip i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c);opacity:.55}.lpip i.on{background:var(--c);opacity:1}.lpip i.ok{background:#fff;border-color:#fff;opacity:1;box-shadow:0 0 6px #fff}.lpip em{font-style:normal;font-size:10px;color:var(--muted);margin:0 3px}
+.lpan .ldie{flex:none;padding:3px;border-radius:12px;box-shadow:0 0 0 2.5px var(--c);background:none;border:0}.lpan .ldie .die{width:44px;height:44px}.lpan .ldie.off{width:50px;height:50px;box-shadow:none}
+.lpan .ldie.can{animation:pulseb .7s infinite alternate;cursor:pointer;box-shadow:0 0 0 3px #ffd24d,0 0 16px #ffd24d}
+.lpan .ldie.spin .die{animation:droll .45s linear 1}
+.lstat{text-align:center;font-size:14px;min-height:22px;color:#d8d8e8;padding:0 6px}.lstat b{color:#fff}
+.lwrapb{width:min(97vw,56vh,580px)}
+.lghost,.ltoks,.lfx{position:absolute;inset:0}.lfx{pointer-events:none}
+.ltk{position:absolute;width:6.6%;height:7.6%;transform:translate(-50%,-62%);background:none;transition:left .15s ease,top .15s ease;cursor:default;padding:0}
+.ltk i{display:block;width:100%;height:100%}.ltk svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.ltk.sm{width:5%;height:5.8%}.ltk.fin{width:4.4%;height:5%}
+.ltk.last svg{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.ltk.can{cursor:pointer;animation:lhop .55s ease-in-out infinite alternate}.ltk.can svg{filter:drop-shadow(0 0 5px #ffd24d) drop-shadow(0 0 3px #fff)}
+@keyframes lhop{from{transform:translate(-50%,-62%)}to{transform:translate(-50%,-84%)}}
+.lgh{position:absolute;width:5.6%;height:5.6%;transform:translate(-50%,-50%);border-radius:50%;border:2.5px dashed var(--c);background:color-mix(in srgb,var(--c) 25%,transparent);animation:lgh 1s linear infinite;cursor:pointer;padding:0}
+@keyframes lgh{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.lboom{position:absolute;transform:translate(-50%,-50%);z-index:3000}.lboom div{display:flex;flex-direction:column;align-items:center;animation:lboom 1.2s ease-out forwards}
+.lboom span{font-size:34px}.lboom b{font-size:13px;background:#000a;color:#fff;padding:1px 7px;border-radius:9px;white-space:nowrap}
+@keyframes lboom{0%{opacity:0;scale:.3}20%{opacity:1;scale:1.25}70%{opacity:1;scale:1}100%{opacity:0;scale:1;translate:0 -18px}}
 </style>
 </head>
 <body>
@@ -2275,39 +2297,58 @@ function ludoBoardSvg() {
     g += `<rect x="${c * C + 26}" y="${r * C + 26}" width="${6 * C - 52}" height="${6 * C - 52}" rx="22" fill="#fffdf7" stroke="${LDARK[s]}" stroke-width="3"/>`;
     LYARD[s].forEach(([yr, yc]) => { g += `<circle cx="${(yc + 0.5) * C}" cy="${(yr + 0.5) * C}" r="${C * 0.62}" fill="${LCOL[s]}" opacity=".22"/><circle cx="${(yc + 0.5) * C}" cy="${(yr + 0.5) * C}" r="${C * 0.62}" fill="none" stroke="${LCOL[s]}" stroke-width="2.5"/>`; });
   });
-  LP.forEach(([r, c], k) => { const st = k % 13 === 0 ? k / 13 : -1; g += rect(r, c, st >= 0 ? LCOL[st] : '#fffdf7'); if (LSAFE.includes(k) && st < 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="26" fill="#b7ad98">★</text>`; if (st >= 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="24" fill="#fff" opacity=".85">★</text>`; });
+  LP.forEach(([r, c], k) => { const st = k % 13 === 0 ? k / 13 : -1; g += rect(r, c, st >= 0 ? LCOL[st] : '#fffdf7'); if (LSAFE.includes(k) && st < 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="26" fill="#b7ad98">★</text>`; if (st >= 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="24" fill="#fff">★</text>`; });
   LHOME.forEach((h, s) => h.forEach(([r, c]) => (g += rect(r, c, LCOL[s]))));
   const m = 6 * C, M = 9 * C, mid = 7.5 * C;
   g += `<polygon points="${m},${M} ${M},${M} ${mid},${mid}" fill="${LCOL[0]}"/><polygon points="${m},${m} ${m},${M} ${mid},${mid}" fill="${LCOL[1]}"/><polygon points="${m},${m} ${M},${m} ${mid},${mid}" fill="${LCOL[2]}"/><polygon points="${M},${m} ${M},${M} ${mid},${mid}" fill="${LCOL[3]}"/>`;
   g += `<circle cx="${mid}" cy="${mid}" r="18" fill="#fffdf7" opacity=".9"/><text x="${mid}" y="${mid + 8}" text-anchor="middle" font-size="22">🏁</text>`;
   return `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="600" fill="#fffdf7"/>${g}</svg>`;
 }
-const lud = { code: '', lastId: 0, shown: null, anim: null, roll: 0 };
+const lud = { code: '', lastId: 0, shown: null, anim: null, roll: 0, fx: [] };
+const LCORN = ['bl', 'tl', 'tr', 'br'];
+function ludoTarget(s, p, die) { if (p < 0) return die === 6 ? 0 : null; const n = p + die; return n <= 57 ? n : null; }
 function renderLudo(e) {
   altShell(e);
   const L = e.ludo, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
   if (lud.code !== room.code || !$('alt').querySelector('.ldb')) {
     lud.code = room.code; lud.lastId = L.last ? L.last.id : 0; lud.shown = L.t.map((r) => r.slice()); lud.roll = L.rollId;
-    $('alt').innerHTML = `<div class="lstrip"></div><div class="lstat"></div><div class="lwrapb"><div class="ldb" style="--rot:${-90 * rot}deg">${ludoBoardSvg()}<div class="ltoks"></div></div></div><div class="ldice"></div>`;
-    $('alt').querySelector('.ltoks').addEventListener('click', (ev) => { const b = ev.target.closest('[data-lk]'); if (!b || !b.classList.contains('can')) return; sendWs({ t: 'act', a: { type: 'move', k: +b.dataset.lk } }); b.classList.remove('can'); SND.play('tick'); });
-    $('alt').querySelector('.ldice').addEventListener('click', (ev) => { if (ev.target.closest('.ldie.can')) { sendWs({ t: 'act', a: { type: 'roll' } }); ev.target.closest('.ldie').classList.add('spin'); } });
+    $('alt').innerHTML = `<div class="lgame"><div class="lprow top"><div class="lpan" data-corner="tl"></div><div class="lpan" data-corner="tr"></div></div><div class="lstat"></div><div class="lwrapb"><div class="ldb" style="--rot:${-90 * rot}deg">${ludoBoardSvg()}<div class="lghost"></div><div class="ltoks"></div><div class="lfx"></div></div></div><div class="lprow bot"><div class="lpan" data-corner="bl"></div><div class="lpan" data-corner="br"></div></div></div>`;
+    const g = $('alt').querySelector('.lgame');
+    g.addEventListener('click', (ev) => {
+      const d = ev.target.closest('.ldie.can'); if (d) { sendWs({ t: 'act', a: { type: 'roll' } }); d.classList.add('spin'); d.classList.remove('can'); SND.play('pop'); return; }
+      const b = ev.target.closest('[data-lk]'); if (!b || !b.classList.contains('can')) return;
+      sendWs({ t: 'act', a: { type: 'move', k: +b.dataset.lk } }); g.querySelectorAll('.can').forEach((x) => x.classList.remove('can')); g.querySelector('.lghost').innerHTML = ''; SND.play('tick');
+    });
   }
-  const done = (i) => L.t[i].filter((x) => x === 57).length;
-  $('alt').querySelector('.lstrip').innerHTML = altStrip(e, (i) => `<div class="mpc"><i class="ldot" style="background:${LCOL[i]}"></i> ${done(i)}/4 🏁</div>`);
-  // animate last move step by step
   if (L.last && L.last.id !== lud.lastId && !lud.anim) {
     const m = L.last; lud.lastId = m.id;
     const steps = m.from < 0 ? [0] : Array.from({ length: m.to - m.from }, (_, i) => m.from + i + 1);
     let k = 0;
     lud.anim = setInterval(() => {
       lud.shown[m.s][m.k] = steps[k]; SND.play(k === steps.length - 1 ? 'move' : 'tick'); paintLudo(room.engine);
-      if (++k >= steps.length) { clearInterval(lud.anim); lud.anim = null; if (m.cap) SND.play('capture'); lud.shown = room.engine.ludo.t.map((r) => r.slice()); paintLudo(room.engine); }
-    }, 150);
+      if (++k >= steps.length) {
+        clearInterval(lud.anim); lud.anim = null;
+        const [r, c] = ludoCell(m.s, m.to, m.k);
+        if (m.cap) { SND.play('capture'); ludoFx(r, c, '💥', 'أكل!'); }
+        else if (m.to === 57) { SND.play('win'); ludoFx(r, c, '🏁', 'وصل!'); }
+        else if (m.from < 0) ludoFx(r, c, '✨', '');
+        lud.shown = room.engine.ludo.t.map((x) => x.slice()); paintLudo(room.engine);
+      }
+    }, 170);
   } else if (!lud.anim) lud.shown = L.t.map((r) => r.slice());
+  if (L.rollId !== lud.roll) { lud.roll = L.rollId; lud.rolledAt = Date.now(); SND.play('pop'); }
   paintLudo(e);
-  if (L.rollId !== lud.roll) { lud.roll = L.rollId; SND.play('pop'); }
   altMe(e, '', e.turn === mine && !e.over, L.rolled ? 'حرّك حجر 👆' : 'ارمي الزهر 🎲');
 }
+function ludoFx(r, c, ic, txt) {
+  const fx = $('alt').querySelector('.lfx'); if (!fx) return;
+  const rot = room.mySeat >= 0 ? room.mySeat : 0;
+  const el = document.createElement('div'); el.className = 'lboom';
+  el.style.cssText = `left:${((c + 0.5) / 15) * 100}%;top:${((r + 0.5) / 15) * 100}%`;
+  el.innerHTML = `<div style="transform:rotate(${90 * rot}deg)"><span>${ic}</span>${txt ? `<b>${txt}</b>` : ''}</div>`;
+  fx.appendChild(el); setTimeout(() => el.remove(), 1300);
+}
+function ludoPawn(s) { return `<svg viewBox="0 0 40 48"><defs><radialGradient id="lg${s}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${LCOL[s]}"/><stop offset="1" stop-color="${LDARK[s]}"/></radialGradient></defs><ellipse cx="20" cy="43" rx="15" ry="4.5" fill="rgba(0,0,0,.35)"/><path d="M8 41c0-7 5-10 7-14-4-2-6-5-6-9a11 11 0 0 1 22 0c0 4-2 7-6 9 2 4 7 7 7 14z" fill="url(#lg${s})" stroke="${LDARK[s]}" stroke-width="1.6"/><ellipse cx="16" cy="13" rx="3.5" ry="2.5" fill="#fff" opacity=".7"/></svg>`; }
 function paintLudo(e) {
   const L = e.ludo, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
   const my = e.turn === mine && !e.over && !lud.anim;
@@ -2315,17 +2356,31 @@ function paintLudo(e) {
   lud.shown.forEach((ts, s) => ts.forEach((p, k) => { const [r, c] = ludoCell(s, p, k); const key = p < 0 ? `y${s}${k}` : `${r},${c}`; (byCell[key] ||= []).push({ s, k, r, c, p }); }));
   let h = '';
   for (const list of Object.values(byCell)) list.forEach((o, n) => {
-    const off = list.length > 1 ? [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]][n % 4] : [0, 0];
+    const off = list.length > 1 ? [[-0.2, -0.12], [0.2, -0.12], [-0.2, 0.2], [0.2, 0.2]][n % 4] : [0, 0];
     const x = ((o.c + 0.5 + off[0]) / 15) * 100, y = ((o.r + 0.5 + off[1]) / 15) * 100;
     const can = my && o.s === mine && L.mv.includes(o.k);
-    h += `<b class="ltk${can ? ' can' : ''}${list.length > 1 ? ' sm' : ''}" data-lk="${o.k}" data-ls="${o.s}" style="left:${x}%;top:${y}%;--c:${LCOL[o.s]};--d:${LDARK[o.s]}"><i style="transform:rotate(${90 * rot}deg)">${o.s === mine ? o.k + 1 : ''}</i></b>`;
+    const last = L.last && L.last.s === o.s && L.last.k === o.k && !lud.anim;
+    h += `<b class="ltk${can ? ' can' : ''}${list.length > 1 ? ' sm' : ''}${last ? ' last' : ''}${o.p === 57 ? ' fin' : ''}" data-lk="${o.k}" style="left:${x}%;top:${y}%;z-index:${Math.round(y * 10) + (can ? 2000 : 0)}"><i style="transform:rotate(${90 * rot}deg)">${ludoPawn(o.s)}</i></b>`;
   });
   $('alt').querySelector('.ltoks').innerHTML = h;
+  // destination hints
+  let gh = '';
+  if (my && L.rolled) L.mv.forEach((k) => { const t = ludoTarget(mine, L.t[mine][k], L.die); if (t == null) return; const [r, c] = ludoCell(mine, t, k); gh += `<b class="lgh can" data-lk="${k}" style="left:${((c + 0.5) / 15) * 100}%;top:${((r + 0.5) / 15) * 100}%;--c:${LCOL[mine]}"></b>`; });
+  $('alt').querySelector('.lghost').innerHTML = gh;
+  // corner panels
   const cur = e.turn >= 0 ? e.turn : L.cur;
+  room.seats.forEach((st, i) => {
+    const corner = LCORN[(i - rot + 4) % 4], el = $('alt').querySelector(`.lpan[data-corner="${corner}"]`); if (!el) return;
+    const done = L.t[i].filter((x) => x === 57).length, isCur = cur === i && !e.over;
+    const pct = isCur && e.turn === i ? ringPct() : null;
+    const canRoll = isCur && i === mine && my && !L.rolled;
+    const die = isCur ? `<button class="ldie${canRoll ? ' can' : ''}${isCur && Date.now() - (lud.rolledAt || 0) < 500 ? ' spin' : ''}" ${canRoll ? '' : 'disabled'}>${diceHtml(L.die || 6)}</button>` : '<div class="ldie off"></div>';
+    const pips = [0, 1, 2, 3].map((k) => `<i class="${L.t[i][k] === 57 ? 'ok' : L.t[i][k] >= 0 ? 'on' : ''}"></i>`).join('');
+    el.className = `lpan${isCur ? ' cur' : ''}${i === mine ? ' me' : ''}`; el.style.setProperty('--c', LCOL[i]); el.style.setProperty('--d', LDARK[i]);
+    el.innerHTML = `<div class="lpav">${st ? avPic(st) : ''}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="lpin"><div class="lpnm">${esc(st ? st.name : '')}</div><div class="lpip">${pips}<em>${done}/4</em></div></div>${die}`;
+  });
   const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
-  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (L.rolled ? '<b>اختار حجر من الحجار اللي عم تضوي</b>' : '<b>دورك</b> — اكبس عالزهر') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
-  const canRoll = my && !L.rolled;
-  $('alt').querySelector('.ldice').innerHTML = `<button class="ldie ${canRoll ? 'can' : ''}" style="--c:${LCOL[cur] || '#888'}" ${canRoll ? '' : 'disabled'}>${diceHtml(L.die || 6)}</button><div class="lhint">${canRoll ? 'اكبس لترمي' : L.die ? `طلع ${L.die}${L.die === 6 ? ' — بتلعب كمان!' : ''}` : ''}</div>`;
+  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>🏆 ${esc(e.msg)}</b>` : my ? (L.rolled ? `<b>طلعلك ${L.die}</b> — اكبس عالحجر اللي بدك ياه 👆` : '<b>دورك!</b> اكبس عالزهر 🎲') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 
 // ----- ارسم وخمّن -----
