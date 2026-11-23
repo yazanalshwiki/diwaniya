@@ -558,6 +558,13 @@ const server = Bun.serve({
       if (!b) return new Response('not found', { status: 404 });
       return new Response(b, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=86400' } });
     }
+    if (/^\/img\/[a-z0-9-]+\.png$/.test(url.pathname) || url.pathname === '/favicon.ico') {
+      const f = Bun.file(ROOT + 'public' + (url.pathname === '/favicon.ico' ? '/img/favicon.png' : url.pathname));
+      if (!(await f.exists())) return new Response('not found', { status: 404 });
+      return new Response(f, { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
+    }
+    if (url.pathname === '/manifest.json') return Response.json({ name: 'ديوانية الورق', short_name: 'الديوانية', start_url: '/', display: 'standalone', background_color: '#0c0a1c', theme_color: '#14113a', lang: 'ar', dir: 'rtl',
+      icons: [{ src: '/img/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/img/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }] });
     if (/^\/img\/(av|tb|emo)\/[a-z0-9]+\.webp$/.test(url.pathname)) {
       const f = Bun.file(ROOT + 'public' + url.pathname);
       if (!(await f.exists())) return new Response('not found', { status: 404 });
@@ -569,7 +576,8 @@ const server = Bun.serve({
       return new Response(f, { headers: { 'content-type': url.pathname.endsWith('.js') ? 'application/javascript' : 'text/css', 'cache-control': 'public, max-age=86400' } });
     }
     if (url.pathname === '/health') return new Response('ok');
-    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    const origin = (req.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')) + '://' + (req.headers.get('x-forwarded-host') || req.headers.get('host'));
+    return new Response(html.replace('content="/img/og.png"', `content="${origin}/img/og.png"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
   },
   websocket: {
     idleTimeout: 120,
