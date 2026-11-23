@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#14113a">
-<link rel="icon" type="image/png" href="/img/favicon.png?v=2">
-<link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=2">
-<link rel="manifest" href="/manifest.json?v=2">
+<link rel="icon" type="image/png" href="/img/favicon.png?v=3">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=3">
+<link rel="manifest" href="/manifest.json?v=3">
 <meta name="description" content="ديوانية الورق — أكتر من ٤٠ لعبة جماعية أونلاين: تركس، طرنيب، بلياردو، نرد، ألعاب تحدي وألعاب جمعات مع أصحابك.">
 <meta property="og:title" content="ديوانية الورق">
 <meta property="og:description" content="أكتر من ٤٠ لعبة جماعية أونلاين — ورق • نرد • تحدي • ألعاب جمعات">
-<meta property="og:image" content="/img/og.png?v=2">
+<meta property="og:image" content="/img/og.png?v=3">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="dark only">
@@ -488,6 +488,8 @@ html,body{background:#0b0a16}
 @media (min-width:900px){#lobby .lwrap{max-width:980px}.ggrid2{grid-template-columns:repeat(3,1fr)}}
 .appbg i{opacity:.6}.appbg i:nth-child(2){opacity:.3}.appbg i:nth-child(3){opacity:.38}
 .gq .gbar,.dtop .gbar,.ublocks .gbar,.gfoot .gbar{flex:0 0 8px;width:100%;height:8px}
+#auth .ahero .logo{width:min(100%,380px);height:auto;animation:none;filter:drop-shadow(0 12px 30px rgba(0,0,0,.5))}#auth .ahero .logo img{width:100%;display:block;border-radius:18px}
+.hero2 #lobLogo img{width:100%;height:100%;display:block;border-radius:14px}
 </style>
 </head>
 <body>
@@ -498,7 +500,6 @@ html,body{background:#0b0a16}
 <div class="awrap">
   <div class="ahero">
     <span class="logo" id="authLogo"></span>
-    <h1>ديوانية الورق</h1>
     <p>قعدتك الحلوة مع الربع… من أي مكان 🌙</p>
   </div>
   <div class="aavs"><img src="/img/av/sheikh.webp" alt=""><img src="/img/av/sitt.webp" alt=""><img src="/img/av/cool.webp" alt=""><img src="/img/av/shmagh.webp" alt=""><img src="/img/av/queen.webp" alt=""><span>+ أصحابك</span></div>
@@ -2365,8 +2366,8 @@ const RULES_HTML = `<div class="rules"><h3>القوانين المختصرة</h3
 
 // ===== brand mascot "الختيار": a King card with a shmagh & agal =====
 const MASCOT = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ديوانية الورق"><defs><linearGradient id="dwBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#26205e"/><stop offset=".6" stop-color="#141236"/><stop offset="1" stop-color="#0a0918"/></linearGradient><linearGradient id="dwGd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1bd"/><stop offset=".42" stop-color="#eebd52"/><stop offset="1" stop-color="#a26c16"/></linearGradient><linearGradient id="dwSh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/></linearGradient><radialGradient id="dwGl" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#ffcf5a" stop-opacity=".22"/><stop offset="1" stop-color="#ffcf5a" stop-opacity="0"/></radialGradient></defs><rect width="200" height="200" rx="46" fill="url(#dwBg)"/><circle cx="100" cy="106" r="82" fill="url(#dwGl)"/><circle cx="100" cy="100" r="80" fill="none" stroke="url(#dwGd)" stroke-width="1.6" opacity=".45"/><circle cx="100" cy="100" r="74" fill="none" stroke="url(#dwGd)" stroke-width=".8" opacity=".3" stroke-dasharray="2 4"/><g><circle cx="104" cy="30" r="5.5" fill="url(#dwGd)"/><path d="M96 38h16l3 9H93z" fill="url(#dwGd)"/><path d="M90 48h28c-1 7-4 11-8 14H98c-4-3-7-7-8-14z" fill="url(#dwGd)"/><path d="M98 62h12c15 6 24 20 24 38c0 20-11 34-30 40c-19-6-30-20-30-40c0-18 9-32 24-38z" fill="url(#dwGd)"/><path d="M98 62h12c15 6 24 20 24 38c0 20-11 34-30 40c-19-6-30-20-30-40c0-18 9-32 24-38z" fill="url(#dwSh)"/><path d="M80 84C70 76 58 60 40 52c-3-1-5 2-3 4c14 9 22 24 30 36c3 4 9 4 13-1z" fill="url(#dwGd)"/><path d="M126 70c16-2 24 10 22 26c-2 14-10 24-20 32" fill="none" stroke="url(#dwGd)" stroke-width="7" stroke-linecap="round"/><path d="M84 140h40l5 10H79z" fill="url(#dwGd)"/><path d="M74 152h60" stroke="url(#dwGd)" stroke-width="4" stroke-linecap="round"/><path transform="translate(104 104) scale(1.25)" d="M0-14C-8-6-16-1-16 6c0 5 4 8 8 8c3 0 5-1 7-4l-3 10h8l-3-10c2 3 4 4 7 4c4 0 8-3 8-8C16-1 8-6 0-14z" fill="#16133a"/></g></svg>`;
-$('authLogo').innerHTML = MASCOT; $('lobLogo').innerHTML = MASCOT;
-(() => { const l = document.createElement('link'); l.rel = 'icon'; l.type = 'image/svg+xml'; l.href = 'data:image/svg+xml,' + encodeURIComponent(MASCOT); document.head.appendChild(l); })();
+$('authLogo').innerHTML = '<img src="/img/wordmark.png?v=3" alt="ديوانية الورق">'; $('lobLogo').innerHTML = '<img src="/img/logo.png?v=3" alt="">';
+
 
 // ===== look: card faces, card backs, table themes (saved on this device) =====
 const LOOKS = {
