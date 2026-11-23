@@ -8,11 +8,12 @@ import { Chess } from './g/chess.js';
 import { Snakes, Pig, Yatzy, Liar, Domino, Ludo } from './g/dice.js';
 import { Shayeb, Blackjack, Memory, HiLo, Basra, Crazy8 } from './g/cards.js';
 import { Spy, Draw } from './g/party.js';
+import { Jackaroo } from './g/jackaroo.js';
 const TWO = ['xo', 'pool', 'c4', 'gomoku', 'othello', 'dama', 'dots', 'mancala', 'chess'];
 export const seatCount = (g) => (TWO.includes(g) ? 2 : 4);
 const QUIZ = ['trivia', 'tf', 'flags', 'capitals', 'proverbs', 'dishes', 'scramble', 'math', 'wyr'];
 const MAKERS = { c4: Connect4, gomoku: Gomoku, othello: Othello, dama: Dama, dots: Dots, mancala: Mancala, chess: Chess, snakes: Snakes, pig: Pig, yatzy: Yatzy, liar: Liar, domino: Domino, ludo: Ludo,
-  shayeb: Shayeb, bj: Blackjack, memory: Memory, hilo: HiLo, basra: Basra, crazy8: Crazy8, spy: Spy, draw: Draw };
+  shayeb: Shayeb, bj: Blackjack, memory: Memory, hilo: HiLo, basra: Basra, crazy8: Crazy8, spy: Spy, draw: Draw, jackaroo: Jackaroo };
 // ================== Card helpers ==================
 export const SUITS = ['S', 'H', 'D', 'C'];
 export const suit = (c) => c[0];
@@ -722,7 +723,7 @@ export function createGame(type) {
 }
 export const GAME_NAMES = { t41: 'طرنيب ٤١', t61: 'طرنيب ٦١', trix: 'تركس', trixc: 'تركس كمبلكس', trixp: 'تركس شراكة', trixcp: 'كمبلكس شراكة', mono: 'عقارات الديوانية', xo: 'إكس أو', pool: 'بلياردو', guess: 'خمّن المشهور', words: 'اسم جماد حيوان نبات بلاد',
   c4: '٤ بصف', gomoku: 'خمسة بصف', othello: 'أوثيلو', dama: 'داما', dots: 'نقاط ومربعات', mancala: 'المنقلة', chess: 'شطرنج',
-  snakes: 'سلم وثعبان', pig: 'الطمّاع', yatzy: 'خمسات', liar: 'كذاب الزهر', domino: 'دومينو', ludo: 'لودو',
+  snakes: 'سلم وثعبان', pig: 'الطمّاع', yatzy: 'خمسات', liar: 'كذاب الزهر', domino: 'دومينو', ludo: 'لودو', jackaroo: 'جاكارو',
   shayeb: 'الشايب', bj: 'بلاك جاك ٢١', memory: 'ذاكرة الورق', hilo: 'أعلى ولا أوطى', basra: 'باصرة', crazy8: 'الثمانية المجنونة',
   spy: 'مين الجاسوس', draw: 'ارسم وخمّن',
   trivia: 'مسابقة ثقافية', tf: 'صح ولا غلط', flags: 'خمّن العلم', capitals: 'العواصم', proverbs: 'كمّل المثل', dishes: 'خمّن الأكلة', scramble: 'رتّب الحروف', math: 'رياضيات سريعة', wyr: 'لو خيّروك' };

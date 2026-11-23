@@ -561,6 +561,66 @@ html,body{background:#0b0a16}
 .lboom{position:absolute;transform:translate(-50%,-50%);z-index:3000}.lboom div{display:flex;flex-direction:column;align-items:center;animation:lboom 1.2s ease-out forwards}
 .lboom span{font-size:34px}.lboom b{font-size:13px;background:#000a;color:#fff;padding:1px 7px;border-radius:9px;white-space:nowrap}
 @keyframes lboom{0%{opacity:0;scale:.3}20%{opacity:1;scale:1.25}70%{opacity:1;scale:1}100%{opacity:0;scale:1;translate:0 -18px}}
+
+.jgame{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}
+.jtop{direction:ltr;display:flex;gap:5px;width:min(97vw,52vh,560px)}.jtop .jpl{flex:1}
+.jpl{display:flex;align-items:center;gap:5px;padding:4px 5px;border-radius:12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);min-width:0;transition:.25s}
+.jpl.mate{background:rgba(255,210,77,.07)}.jpl.cur{border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 50%,transparent)}
+.jpl .lpav{width:32px;height:32px}.jpi{flex:1;min-width:0;direction:rtl;text-align:right}.jpi .lpnm{font-size:11px}
+.jpc{display:flex;align-items:center;gap:2px;margin-top:2px}.jpc s{width:7px;height:10px;border-radius:2px;background:linear-gradient(135deg,#5b4bd6,#2b1f7a);border:1px solid #fff5}.jpc em{font-style:normal;font-size:10px;color:var(--muted);margin-right:auto}
+.jstat{text-align:center;font-size:13px;min-height:20px;color:#d8d8e8;padding:0 6px}.jstat b{color:#fff}
+.jwrap{position:relative;width:min(97vw,52vh,560px)}
+.jkb{position:relative;aspect-ratio:1;transform:rotate(var(--rot));direction:ltr;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.6)}.jkb svg{width:100%;height:100%;display:block}
+.jmar,.jfx{position:absolute;inset:0}.jfx{pointer-events:none}
+.jm{position:absolute;width:4.4%;height:4.4%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff 0,var(--c) 30%,var(--d) 95%);box-shadow:0 2px 3px rgba(0,0,0,.6),inset 0 -2px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:left .13s,top .13s;padding:0;z-index:2}
+.jm i{font-style:normal;font-size:min(2.2vw,11px);font-weight:900;color:#fff;text-shadow:0 1px 2px #000}
+.jm.last{box-shadow:0 0 0 2px #fff,0 2px 3px rgba(0,0,0,.6)}
+.jm.can{cursor:pointer;z-index:5;animation:jpul .7s ease-in-out infinite alternate}.jm.sel{box-shadow:0 0 0 3px #fff,0 0 14px 5px #ffd24d!important;animation:none;scale:1.25}
+@keyframes jpul{from{box-shadow:0 0 0 2px #ffd24d,0 0 6px #ffd24d}to{box-shadow:0 0 0 3px #ffd24d,0 0 16px 5px #ffd24d;scale:1.15}}
+.jmid{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);pointer-events:none}
+.jlast{display:flex;flex-direction:column;align-items:center;gap:2px;animation:jin .35s ease-out}.jlast span{font-size:10px;background:#0008;padding:0 6px;border-radius:8px;white-space:nowrap}
+.jlast .c{width:46px;height:66px;box-shadow:0 6px 14px rgba(0,0,0,.5)}@keyframes jin{from{scale:.4;opacity:0}to{scale:1;opacity:1}}
+.jopts{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;width:min(97vw,560px);min-height:4px}
+.jopt{font:inherit;font-size:12px;font-weight:800;padding:7px 10px;border-radius:11px;border:0;background:linear-gradient(180deg,#ffd24d,#e0a800);color:#2b1d00;box-shadow:0 3px 0 #9c7400;cursor:pointer}.jopt.cap{background:linear-gradient(180deg,#ff7a6b,#d8382a);color:#fff;box-shadow:0 3px 0 #8e1d14}
+.jmore{font-size:11px;color:var(--muted)}
+.jme{display:flex;flex-direction:column;align-items:center;gap:4px;width:min(97vw,560px)}.jme .jpl{width:100%;max-width:300px}
+.jhand{display:flex;gap:6px;justify-content:center;direction:ltr}.jhand .c{width:56px;height:80px;cursor:pointer;transition:.18s}
+.jhand .c.dim{opacity:.55}.jhand .c.ok{box-shadow:0 0 0 2px #ffd24d88}.jhand .c.sel{translate:0 -12px;box-shadow:0 0 0 3px #ffd24d,0 8px 18px rgba(0,0,0,.5)}
+
+.cmtabs{display:flex;gap:6px;margin-bottom:12px;background:rgba(255,255,255,.04);padding:5px;border-radius:14px;border:1px solid var(--line)}
+.cmtabs button{flex:1;font:inherit;font-weight:800;font-size:13px;padding:9px 4px;border:0;border-radius:10px;background:none;color:var(--muted);position:relative;cursor:pointer}
+.cmtabs button.on{background:linear-gradient(180deg,#ffd24d,#e0a800);color:#2b1d00}
+.cmtabs button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;top:2px;left:6px;background:#ff4d4d;color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:8px;line-height:16px;padding:0 3px}
+.cmbox{padding:12px}.cmsec{font-size:12px;font-weight:800;color:var(--muted);margin:12px 0 4px}.cmempty{font-size:12px;padding:4px 0 6px}
+.cmrow,.vcrow{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:12px;cursor:pointer;transition:background .15s}.cmrow:active,.vcrow:active{background:rgba(255,255,255,.06)}
+.cmav{width:44px;height:44px;flex:none;border-radius:14px;background:linear-gradient(135deg,rgba(255,210,77,.18),rgba(255,255,255,.04));display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(255,255,255,.08)}.cmav.dm{border-radius:50%;overflow:hidden;padding:0}.cmav.dm img{width:100%;height:100%}
+.cmt{flex:1;min-width:0}.cmn{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cmn i{font-style:normal;font-size:10px;color:var(--muted);font-weight:600}
+.cms{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.cms b{color:#cfc8f5;font-weight:700}
+.cmx{display:flex;flex-direction:column;align-items:flex-end;gap:3px}.cmx small{font-size:10px;color:var(--muted)}.cmun{background:#39d353;color:#062;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.vcrow{border:1px solid rgba(255,255,255,.06);margin-bottom:6px;background:rgba(255,255,255,.025)}.vcrow.in{border-color:#39d353;background:rgba(57,211,83,.08)}
+.vcus{display:flex;align-items:center;margin-top:4px;flex-wrap:wrap}.vcu{width:24px;height:24px;border-radius:50%;overflow:hidden;margin-left:-6px;box-shadow:0 0 0 2px var(--bg,#111)}.vcu:first-child{margin-left:0}.vcu img{width:100%;height:100%}.vcu.mu{opacity:.6}.vcus em{font-style:normal;font-size:11px;color:var(--muted);margin:0 6px}
+#chatv{position:fixed;inset:0;z-index:250;background:#0d1028;display:flex;flex-direction:column}
+.cvh{display:flex;align-items:center;gap:8px;padding:10px 10px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(180deg,#1b1f4a,#141838);border-bottom:1px solid var(--line)}
+.cvbtn{width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.07);color:#fff;font-size:20px;cursor:pointer}
+.cvti{flex:1;min-width:0}#cvT{font-weight:900;font-size:16px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}#cvSub{font-size:11px;color:var(--muted)}
+.cvav{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;display:inline-block}.cvav img{width:100%;height:100%}
+#cvMsgs{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:3px;background:radial-gradient(ellipse at top,rgba(255,210,77,.05),transparent 60%)}
+.cvm{display:flex;align-items:flex-end;gap:6px;max-width:86%}.cvm.me{align-self:flex-end;flex-direction:row-reverse}.cvm:not(.grp){margin-top:6px}
+.cvsp{width:30px;flex:none}.cvm.me .cvsp{display:none}
+.cvb{background:#22264f;border-radius:16px 16px 16px 4px;padding:7px 11px 5px;min-width:60px}.cvm.me .cvb{background:linear-gradient(135deg,#ffd24d,#f0b400);color:#241800;border-radius:16px 16px 4px 16px}
+.cvb b{display:block;font-size:11px;color:#ffd24d;margin-bottom:1px}.cvb p{margin:0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}.cvb small{display:block;font-size:9px;opacity:.6;text-align:left;margin-top:1px}
+.cvempty{margin:auto;color:var(--muted);text-align:center;font-size:14px}
+.cvbar{display:flex;gap:8px;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:#141838;border-top:1px solid var(--line)}.cvbar input{flex:1;border-radius:22px;padding:11px 16px}.cvbar button{width:46px;height:46px;border-radius:50%;padding:0;font-size:18px;transform:scaleX(-1)}
+body.chatopen .bnav{display:none}
+#vcBar{position:fixed;left:8px;right:8px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:240;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:16px;background:linear-gradient(135deg,#1f7a3a,#145a2a);box-shadow:0 8px 24px rgba(0,0,0,.5);border:1px solid #39d35366}
+body.chatopen #vcBar{bottom:calc(76px + env(safe-area-inset-bottom))}#table:not(.hidden)~#vcBar{bottom:auto;top:calc(58px + env(safe-area-inset-top));left:auto;right:8px;padding:4px 6px;gap:5px}#table:not(.hidden)~#vcBar .vbt small{display:none}#table:not(.hidden)~#vcBar .vbb{width:32px;height:32px;font-size:14px}
+.vbt{flex:1;min-width:0;cursor:pointer}.vbt b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vbt small{font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.vbb{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.15);font-size:18px;cursor:pointer}.vbb.off{background:#fff3}.vbb.red{background:#e53935;transform:rotate(135deg)}
+.vcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:12px;margin:8px 0}
+.vcp{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;text-align:center}.vcp span{max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vcpav{position:relative;width:62px;height:62px;border-radius:50%;box-shadow:0 0 0 3px rgba(255,255,255,.12);transition:box-shadow .12s}.vcpav img{width:100%;height:100%;border-radius:50%}.vcpav.talk{box-shadow:0 0 0 3px #39d353,0 0 16px 4px rgba(57,211,83,.7)}.vcpav i{position:absolute;bottom:-2px;left:-2px;font-style:normal;background:#000a;border-radius:50%;font-size:13px;padding:2px}
+.cnseg{display:flex;flex-direction:column;gap:8px;font-size:14px}.cnseg label,.cnf{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);cursor:pointer}.cnf{margin-bottom:5px}
+.cmmem{max-height:40vh;overflow:auto}button.danger{color:#ff7a6b!important;border-color:#ff7a6b55!important}
 </style>
 </head>
 <body>
@@ -579,7 +639,8 @@ html,body{background:#0b0a16}
   <div class="aavs"><img src="/img/av/sheikh.webp" alt=""><img src="/img/av/sitt.webp" alt=""><img src="/img/av/cool.webp" alt=""><img src="/img/av/shmagh.webp" alt=""><img src="/img/av/queen.webp" alt=""><span>+ أصحابك</span></div>
   <div class="abox">
     <div class="tabs"><button id="tLogin" class="on">دخول</button><button id="tReg">حساب جديد</button></div>
-    <label class="afield"><span>👤</span><input id="aUser" placeholder="اسم اللاعب" autocomplete="username"></label>
+    <label class="afield"><span>👤</span><input id="aUser" placeholder="الإيميل أو اسم اللاعب" autocomplete="username"></label>
+    <label class="afield" id="aEmailW" style="display:none"><span>✉️</span><input id="aEmail" type="email" placeholder="الإيميل" autocomplete="email" dir="ltr"></label>
     <label class="afield"><span>🔒</span><input id="aPass" type="password" placeholder="كلمة المرور" autocomplete="current-password"></label>
     <div class="err" id="aErr"></div>
     <button class="gold" id="aGo">دخول</button>
@@ -615,10 +676,15 @@ html,body{background:#0b0a16}
 </div>
 </section>
 <section id="tabFriends" class="hidden">
+<div class="cmtabs"><button data-ct="chat" class="on">💬 الدردشات</button><button data-ct="voice">🎙️ الصوتيات</button><button data-ct="fr">👥 الأصدقاء</button></div>
+<div id="cmChat"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">غرف الدردشة</h2><button class="small gold" id="cmNewT">➕ غرفة جديدة</button></div><div id="cmList"></div></div></div>
+<div id="cmVoice" class="hidden"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">الغرف الصوتية</h2><button class="small gold" id="cmNewV">➕ غرفة صوتية</button></div><p class="meta" style="margin:0 0 6px">احكي مع الشباب بالصوت وأنت بتتنقّل بالموقع 🎧</p><div id="vcList"></div></div></div>
+<div id="cmFr" class="hidden">
 <div class="box"><h2 style="margin:0 0 10px">➕ أضف صديق</h2>
 <div class="row"><input id="fAdd" placeholder="اسم اللاعب" autocomplete="off"><button class="gold" id="fAddB">إضافة</button></div></div>
 <div class="box hidden" id="fInBox"><h2 style="margin:0 0 8px">📩 طلبات صداقة</h2><div id="fIn"></div></div>
 <div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">👥 أصدقائي</h2><button class="small ghost" id="fRef">تحديث</button></div><div id="fList"></div><div id="fOut"></div></div>
+</div>
 </section>
 <section id="tabTop" class="hidden">
 <div class="box">
@@ -628,7 +694,7 @@ html,body{background:#0b0a16}
 </div>
 </section>
 </div>
-<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Friends"><span>👥</span>الأصدقاء</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
+<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Friends"><span>💬</span>المجتمع</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
 </div>
 
 <div id="waiting" class="hidden"><div class="wrap">
@@ -689,6 +755,8 @@ html,body{background:#0b0a16}
 <div id="fx"></div>
 <div id="palette" class="palette hidden"></div>
 
+<div id="chatv" class="hidden"><div class="cvh"><button id="cvBack" class="cvbtn">→</button><div class="cvti"><div id="cvT"></div><small id="cvSub"></small></div><button id="cvMore" class="cvbtn">⋯</button></div><div id="cvMsgs"></div><div class="cvbar"><input id="cvIn" maxlength="400" placeholder="اكتب رسالة…" autocomplete="off"><button id="cvSend" class="gold">➤</button></div></div>
+<div id="vcBar" class="hidden"></div>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -862,12 +930,12 @@ function toast(msg) {
 function sendWs(o) { if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); return true; } toast('غير متصل… جاري إعادة الاتصال'); return false; }
 
 let mode = 'login';
-$('tLogin').onclick = () => { mode = 'login'; $('tLogin').classList.add('on'); $('tReg').classList.remove('on'); $('aGo').textContent = 'دخول'; };
-$('tReg').onclick = () => { mode = 'reg'; $('tReg').classList.add('on'); $('tLogin').classList.remove('on'); $('aGo').textContent = 'إنشاء حساب'; };
+$('tLogin').onclick = () => { mode = 'login'; $('tLogin').classList.add('on'); $('tReg').classList.remove('on'); $('aGo').textContent = 'دخول'; $('aEmailW').style.display = 'none'; $('aUser').placeholder = 'الإيميل أو اسم اللاعب'; };
+$('tReg').onclick = () => { mode = 'reg'; $('tReg').classList.add('on'); $('tLogin').classList.remove('on'); $('aGo').textContent = 'إنشاء حساب'; $('aEmailW').style.display = ''; $('aUser').placeholder = 'اسم اللاعب (بيبيّن للكل)'; };
 $('aPass').addEventListener('keydown', (e) => e.key === 'Enter' && $('aGo').click());
 $('aGo').onclick = async () => {
   $('aErr').textContent = '';
-  const body = JSON.stringify({ username: $('aUser').value, password: $('aPass').value, device: DEV });
+  const body = JSON.stringify({ username: $('aUser').value, email: $('aEmail').value, password: $('aPass').value, device: DEV });
   try {
     const r = await fetch(mode === 'login' ? '/api/login' : '/api/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
     const j = await r.json();
@@ -898,6 +966,10 @@ function connect() {
     const m = JSON.parse(ev.data);
     if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); loadFriends(); }
     else if (m.t === 'friends') { loadFriends(); }
+    else if (m.t === 'cmsg') cmOnMsg(m);
+    else if (m.t === 'cdel') { if (CM.open && CM.open.id === m.ch) { CM.msgs = CM.msgs.filter((x) => x.id !== m.id); cmPaint(); } }
+    else if (m.t === 'cchans') loadComm();
+    else if (m.t && m.t.startsWith('vc')) vcOn(m);
     else if (m.t === 'invite') { SND.play('trump'); openModal('invite', `<h3>📨 دعوة</h3><p style="text-align:center;font-size:16px;line-height:1.7"><b>${esc(m.from)}</b> عازمك تلعب معه <b>${esc(m.game)}</b></p><div class="row"><button class="gold" style="flex:1" data-fjoin="${esc(m.code)}">انضم 🎮</button><button class="ghost" style="flex:1" onclick="closeOverlay()">لا هلق</button></div>`); }
     else if (m.t === 'banned') { manualClose = true; localStorage.removeItem('tok'); token = ''; room = null; show('auth'); openModal('ban', `<h3>⛔ محظور</h3><p style="text-align:center;color:var(--muted);line-height:1.7">${esc(m.msg || '')}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); }
     else if (m.t === 'notice') { if (m.big) openModal('notice', `<h3>📢 من الإدارة</h3><p style="text-align:center;font-size:16px;line-height:1.7">${esc(m.msg.replace(/^📢 /, ''))}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); else toast(m.msg); SND.play('trump'); }
@@ -953,6 +1025,7 @@ const GAMES = [
   { cat: 'cards', g: 'memory', ic: '🧠', n: 'ذاكرة الورق', d: 'لاقي الأجواز', pl: '٢-٤', art: '🧠' },
   { cat: 'cards', g: 'hilo', ic: '↕️', n: 'أعلى ولا أوطى', d: 'حزّر الورقة الجاية', pl: '٢-٤', art: '↕️' },
   { cat: 'dice', g: 'mono', ic: '🏙️', n: 'عقارات الديوانية', d: 'اشتري أحياء وابني', pl: '٤', art: '🏙️' },
+  { cat: 'cards', g: 'jackaroo', ic: '🔴', n: 'جاكارو', d: 'لعبة الكرات والورق — فريقين', pl: '٤', art: '🔴' },
   { cat: 'dice', g: 'ludo', ic: '🏁', n: 'لودو', d: 'وصّل حجارك الأربعة', pl: '٢-٤', art: '🏁' },
   { cat: 'dice', g: 'snakes', ic: '🪜', n: 'سلم وثعبان', d: 'أول واحد للـ١٠٠', pl: '٢-٤', art: '🪜' },
   { cat: 'dice', g: 'domino', ic: '🁫', n: 'دومينو', d: 'لحد ١٠١', pl: '٤', art: '🁫' },
@@ -1001,7 +1074,7 @@ document.querySelectorAll('.bnav button').forEach((b) => (b.onclick = () => {
   if (t === 'Look') { openStore(); return; }
   document.querySelectorAll('.bnav button').forEach((x) => x.classList.toggle('on', x === b));
   for (const k of ['Home', 'Rooms', 'Top', 'Friends']) $('tab' + k).classList.toggle('hidden', k !== t);
-  if (t === 'Friends') loadFriends();
+  if (t === 'Friends') { if (CM.tab === 'fr') loadFriends(); else loadComm(); }
   if (t === 'Rooms') sendWs({ t: 'lobby' });
   if (t === 'Top') sendWs({ t: 'leaders' });
 }));
@@ -2194,6 +2267,7 @@ alt.rolls = {};
 function renderUI(e) {
   if (e.game === 'chess' && e.chess) return renderChess(e);
   if (e.game === 'ludo' && e.ludo) return renderLudo(e);
+  if (e.game === 'jackaroo' && e.jk) return renderJack(e);
   altShell(e);
   const u = e.ui || { blocks: [] }, mine = room.mySeat;
   const strip = altStrip(e, (i) => `<div class="mpc">${(u.players && u.players[i] && u.players[i].badge) || ''}</div><div class="mpx">${(u.players && u.players[i] && u.players[i].sub) || ''}</div>`);
@@ -2381,6 +2455,120 @@ function paintLudo(e) {
   });
   const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
   $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>🏆 ${esc(e.msg)}</b>` : my ? (L.rolled ? `<b>طلعلك ${L.die}</b> — اكبس عالحجر اللي بدك ياه 👆` : '<b>دورك!</b> اكبس عالزهر 🎲') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+}
+
+// ----- جاكارو -----
+const JCOL = ['#e53935', '#1e88e5', '#fbc02d', '#43a047'];
+const JDARK = ['#9e1b18', '#0d4f94', '#b38600', '#22702a'];
+const jrot = (r, c, s) => { for (let i = 0; i < s; i++) [r, c] = [19 - c, r]; return [r, c]; };
+const jAbs = (i) => jrot(19, i % 19, Math.floor(i / 19));
+const jStart = (s) => (19 * s + 9) % 76;
+const JBASE = [[16, 11], [16, 12], [17, 11], [17, 12]];
+function jCell(s, p, k) { if (p < 0) return jrot(JBASE[k][0], JBASE[k][1], s); if (p >= 76) return jrot(18 - (p - 76), 8, s); return jAbs((jStart(s) + p) % 76); }
+function jBoardSvg() {
+  const C = 30, h = C / 2; let g = '';
+  const cc = (r, c) => [(c + 0.5) * C, (r + 0.5) * C];
+  for (let i = 0; i < 76; i++) { const [r, c] = jAbs(i); const [x, y] = cc(r, c); const st = [0, 1, 2, 3].find((s) => jStart(s) === i);
+    g += `<circle cx="${x}" cy="${y}" r="${h - 3}" fill="#3b2412" stroke="${st != null ? JCOL[st] : '#c8995e'}" stroke-width="${st != null ? 4 : 1.5}"/>`; }
+  for (let s = 0; s < 4; s++) {
+    for (let k = 0; k < 4; k++) { const [r, c] = jrot(18 - k, 8, s); const [x, y] = cc(r, c); g += `<circle cx="${x}" cy="${y}" r="${h - 3}" fill="${JCOL[s]}" opacity=".5" stroke="${JDARK[s]}" stroke-width="2"/>`; }
+    const bs = JBASE.map(([r, c]) => jrot(r, c, s)); const xs = bs.map(([r, c]) => c), ys = bs.map(([r]) => r);
+    const x0 = Math.min(...xs) * C - 6, y0 = Math.min(...ys) * C - 6;
+    g += `<rect x="${x0}" y="${y0}" width="${2 * C + 12}" height="${2 * C + 12}" rx="16" fill="${JCOL[s]}" opacity=".28" stroke="${JCOL[s]}" stroke-width="2.5"/>`;
+    bs.forEach(([r, c]) => { const [x, y] = cc(r, c); g += `<circle cx="${x}" cy="${y}" r="${h - 4}" fill="#2a180a" opacity=".6"/>`; });
+  }
+  return `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="jwood" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#b9824a"/><stop offset=".7" stop-color="#8a5a2e"/><stop offset="1" stop-color="#5e3a1a"/></radialGradient></defs><rect width="600" height="600" rx="30" fill="url(#jwood)"/><rect x="14" y="14" width="572" height="572" rx="24" fill="none" stroke="#e8c48a" stroke-opacity=".35" stroke-width="2"/>${g}<text x="300" y="250" text-anchor="middle" font-size="40" font-weight="900" fill="#f4d9a8" opacity=".25" font-family="sans-serif">جاكارو</text></svg>`;
+}
+const jkd = { code: '', lastId: 0, shown: null, anim: null, sel: -1, filt: null, burnId: 0 };
+function jPos(i, mine) { return ['bot', 'right', 'top', 'left'][(i - mine + 4) % 4]; }
+function renderJack(e) {
+  altShell(e);
+  const J = e.jk, mine = room.mySeat >= 0 ? room.mySeat : 0;
+  if (jkd.code !== room.code || !$('alt').querySelector('.jkb')) {
+    jkd.code = room.code; jkd.lastId = J.last ? J.last.id : 0; jkd.shown = J.p.map((r) => r.slice()); jkd.sel = -1; jkd.burnId = J.burn ? J.burn.id : 0;
+    $('alt').innerHTML = `<div class="jgame"><div class="jtop"><div class="jpl" data-pos="left"></div><div class="jpl" data-pos="top"></div><div class="jpl" data-pos="right"></div></div><div class="jstat"></div><div class="jwrap"><div class="jkb" style="--rot:${90 * mine}deg">${jBoardSvg()}<div class="jmar"></div><div class="jfx"></div></div><div class="jmid"></div></div><div class="jopts"></div><div class="jme"><div class="jpl" data-pos="bot"></div><div class="jhand"></div></div></div>`;
+    const g = $('alt').querySelector('.jgame');
+    g.addEventListener('click', (ev) => {
+      const cd = ev.target.closest('[data-jc]'); if (cd) { const c = +cd.dataset.jc; jkd.sel = jkd.sel === c ? -1 : c; jkd.filt = null; SND.play('tick'); return paintJack(room.engine); }
+      const op = ev.target.closest('[data-jkey]'); if (op) { sendWs({ t: 'act', a: { type: 'play', key: op.dataset.jkey } }); jkd.sel = -1; jkd.filt = null; g.querySelector('.jopts').innerHTML = ''; return; }
+      const mb = ev.target.closest('.jm.can'); if (mb) {
+        const s = +mb.dataset.s, k = +mb.dataset.k; const L = jLegal(room.engine).filter((m) => (m.s === s && (m.k === k || m.k2 === k)) || (m.t === s && m.j === k));
+        if (L.length === 1) { sendWs({ t: 'act', a: { type: 'play', key: L[0].key } }); jkd.sel = -1; jkd.filt = null; return; }
+        jkd.filt = { s, k }; paintJack(room.engine);
+      }
+    });
+  }
+  if (J.last && J.last.id !== jkd.lastId && !jkd.anim) {
+    const m = J.last; jkd.lastId = m.id; const steps = [];
+    for (const sg of m.seg) {
+      if (sg.jump || sg.from < 0) steps.push([sg.s, sg.k, sg.to]);
+      else if (sg.back) { for (let i = 1; i <= ((sg.from - sg.to + 76) % 76); i++) steps.push([sg.s, sg.k, (sg.from - i + 76) % 76]); }
+      else for (let x = sg.from + 1; x <= sg.to; x++) steps.push([sg.s, sg.k, x]);
+    }
+    if (steps.length) {
+      let i = 0;
+      jkd.anim = setInterval(() => {
+        const [s, k, p] = steps[i]; jkd.shown[s][k] = p; SND.play(i === steps.length - 1 ? 'move' : 'tick'); paintJack(room.engine, true);
+        if (++i >= steps.length) {
+          clearInterval(jkd.anim); jkd.anim = null;
+          const fin = steps[steps.length - 1];
+          if (m.caps.length) { SND.play('capture'); const [r, c] = jCell(fin[0], fin[2], fin[1]); jFx(r, c, '💥', 'أكل!'); }
+          else if (m.kind === 'swap') SND.play('chip');
+          jkd.shown = room.engine.jk.p.map((x) => x.slice()); paintJack(room.engine);
+        }
+      }, 140);
+    } else jkd.shown = J.p.map((r) => r.slice());
+    if (m.kind === 'burn') SND.play('fire');
+  } else if (!jkd.anim) jkd.shown = J.p.map((r) => r.slice());
+  if (J.burn && J.burn.id !== jkd.burnId) { jkd.burnId = J.burn.id; if (J.burn.s === room.mySeat) toast('🔥 انحرقتلك ورقة ' + (RN[+J.burn.card.slice(1)] || J.burn.card.slice(1))); }
+  if (e.turn !== room.mySeat) { jkd.sel = -1; jkd.filt = null; }
+  paintJack(e);
+  altMe(e, '', e.turn === room.mySeat && !e.over, 'العب ورقة 🃏');
+}
+function jLegal(e) { const L = e.jk.legal || []; return jkd.sel >= 0 ? L.filter((m) => m.c === jkd.sel) : []; }
+function jFx(r, c, ic, txt) {
+  const fx = $('alt').querySelector('.jfx'); if (!fx) return; const mine = room.mySeat >= 0 ? room.mySeat : 0;
+  const el = document.createElement('div'); el.className = 'lboom'; el.style.cssText = `left:${((c + 0.5) / 20) * 100}%;top:${((r + 0.5) / 20) * 100}%`;
+  el.innerHTML = `<div style="transform:rotate(${-90 * mine}deg)"><span>${ic}</span>${txt ? `<b>${txt}</b>` : ''}</div>`; fx.appendChild(el); setTimeout(() => el.remove(), 1300);
+}
+function paintJack(e, animating) {
+  const J = e.jk, me = room.mySeat, mine = me >= 0 ? me : 0;
+  const my = e.turn === me && !e.over && !jkd.anim;
+  const L = my ? jLegal(e) : [];
+  const Lf = jkd.filt ? L.filter((m) => (m.s === jkd.filt.s && (m.k === jkd.filt.k || m.k2 === jkd.filt.k)) || (m.t === jkd.filt.s && m.j === jkd.filt.k)) : L;
+  const canSet = new Set(); L.forEach((m) => { if (m.s != null && m.k != null) canSet.add(m.s + '_' + m.k); if (m.k2 != null) canSet.add(m.s + '_' + m.k2); if (m.t != null) canSet.add(m.t + '_' + m.j); });
+  const last = J.last && !jkd.anim ? new Set(J.last.seg.map((sg) => sg.s + '_' + sg.k)) : new Set();
+  let h = '';
+  jkd.shown.forEach((ts, s) => ts.forEach((p, k) => {
+    const [r, c] = jCell(s, p, k); const can = my && canSet.has(s + '_' + k); const sel = jkd.filt && jkd.filt.s === s && jkd.filt.k === k;
+    h += `<b class="jm${can ? ' can' : ''}${sel ? ' sel' : ''}${last.has(s + '_' + k) ? ' last' : ''}" data-s="${s}" data-k="${k}" style="left:${((c + 0.5) / 20) * 100}%;top:${((r + 0.5) / 20) * 100}%;--c:${JCOL[s]};--d:${JDARK[s]}"><i style="transform:rotate(${-90 * mine}deg)">${s === me ? k + 1 : ''}</i></b>`;
+  }));
+  $('alt').querySelector('.jmar').innerHTML = h;
+  // last played card in the middle
+  const lp = J.last, mid = $('alt').querySelector('.jmid'), mk = lp ? lp.id : 0;
+  if (mid.__k !== mk) { mid.__k = mk; mid.innerHTML = lp && lp.card ? `<div class="jlast">${cardHtml(lp.card, 'jlc')}<span>${esc(room.seats[lp.seat] ? room.seats[lp.seat].name : '')}</span></div>` : ''; }
+  // players
+  room.seats.forEach((st, i) => {
+    const el = $('alt').querySelector(`.jpl[data-pos="${jPos(i, mine)}"]`); if (!el) return;
+    const cur = J.cur === i && !e.over, home = J.p[i].filter((x) => x >= 76).length, team = i % 2 === mine % 2;
+    const pct = cur && e.turn === i ? ringPct() : null;
+    el.className = `jpl${cur ? ' cur' : ''}${team ? ' mate' : ''}`; el.style.setProperty('--c', JCOL[i]);
+    el.innerHTML = `<div class="lpav">${st ? avPic(st) : ''}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="jpi"><div class="lpnm">${esc(st ? st.name : '')}${i !== me && team ? ' 🤝' : ''}</div><div class="jpc">${'<s></s>'.repeat(J.counts[i])}<em>🏠${home}/4</em></div></div>`;
+  });
+  // hand
+  const hand = J.hand || []; const playable = new Set((J.legal || []).filter((m) => m.kind !== 'discard').map((m) => m.c));
+  const discardOnly = my && (J.legal || []).length && (J.legal || []).every((m) => m.kind === 'discard');
+  $('alt').querySelector('.jhand').innerHTML = hand.map((c, i) => cardHtml(c, `jc${jkd.sel === i ? ' sel' : ''}${my && (playable.has(i) || discardOnly) ? ' ok' : my ? ' dim' : ''}`, `data-jc="${i}"`)).join('');
+  // options
+  let o = '';
+  if (my && jkd.sel >= 0) {
+    const opts = Lf.slice(0, 14);
+    o = opts.map((m) => `<button class="jopt${m.caps ? ' cap' : ''}" data-jkey='${m.key.replace(/'/g, '&#39;')}'>${esc(m.label)}${m.caps ? ' 💥' : ''}</button>`).join('') + (Lf.length > 14 ? `<span class="jmore">كبس على حجر لتشوف باقي الخيارات</span>` : '');
+    if (!opts.length) o = '<span class="jmore">هالورقة ما إلها حركة هلق</span>';
+  }
+  $('alt').querySelector('.jopts').innerHTML = o;
+  const cur = J.cur, who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
+  $('alt').querySelector('.jstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (discardOnly ? '<b>ما عندك حركة</b> — اختار ورقة وارميها' : jkd.sel < 0 ? '<b>دورك!</b> اختار ورقة من إيدك 👇' : '<b>اختار الحركة</b> أو كبس على الحجر') : `<i class="ldot" style="background:${JCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 
 // ----- ارسم وخمّن -----
@@ -2645,9 +2833,9 @@ async function loadFriends() {
   const inRoom = !!room;
   $('fInBox').classList.toggle('hidden', !FR.incoming.length);
   $('fIn').innerHTML = FR.incoming.map((f) => frCard(f, `<button class="small gold" data-fa="accept" data-fid="${f.id}">قبول</button><button class="small ghost" data-fa="decline" data-fid="${f.id}">✕</button>`)).join('');
-  $('fList').innerHTML = FR.friends.length ? FR.friends.map((f) => frCard(f, `${f.room && !inRoom ? `<button class="small gold" data-fjoin="${f.room.code}">انضم</button>` : ''}${inRoom && f.online ? `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>` : ''}<button class="small ghost" data-fa="remove" data-fid="${f.id}" title="حذف">🗑️</button>`)).join('') : '<div class="meta" style="padding:12px 0">لسا ما عندك أصدقاء — ضيف أصحابك بأسمائهن 👆</div>';
+  $('fList').innerHTML = FR.friends.length ? FR.friends.map((f) => frCard(f, `${f.room && !inRoom ? `<button class="small gold" data-fjoin="${f.room.code}">انضم</button>` : ''}${inRoom && f.online ? `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>` : ''}<button class="small ghost" data-fdm="${f.id}" title="رسالة">💬</button><button class="small ghost" data-fa="remove" data-fid="${f.id}" title="حذف">🗑️</button>`)).join('') : '<div class="meta" style="padding:12px 0">لسا ما عندك أصدقاء — ضيف أصحابك بأسمائهن 👆</div>';
   $('fOut').innerHTML = FR.outgoing.length ? `<div class="meta" style="margin:10px 0 4px">طلبات بعتّها:</div>` + FR.outgoing.map((f) => frCard(f, `<span class="meta">بانتظار…</span><button class="small ghost" data-fa="cancel" data-fid="${f.id}">إلغاء</button>`)).join('') : '';
-  const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', FR.incoming.length > 0);
+  const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', FR.incoming.length > 0); const fb = document.querySelector('.cmtabs [data-ct="fr"]'); if (fb) fb.dataset.n = FR.incoming.length || '';
 }
 async function frAct(a) { try { const j = await frApi(a); if (j.note) toast(j.note); loadFriends(); if (overlayKind === 'finv') openInvite(); } catch (e) { toast(e.message); } }
 $('fAddB').onclick = () => { const v = $('fAdd').value.trim(); if (!v) return; $('fAdd').value = ''; frAct({ action: 'add', username: v }); };
@@ -2663,6 +2851,198 @@ async function openInvite() {
   openModal('finv', `<h3>👥 ادعُ أصدقاءك</h3>${on.length ? on.map((f) => frCard(f, f.room && room && f.room.code === room.code ? '<span class="meta">معك ✓</span>' : `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>`)).join('') : `<div class="meta" style="text-align:center;padding:10px">${FR.friends.length ? 'ما في حدا من أصدقاءك متصل هلق' : 'لسا ما عندك أصدقاء — ضيفهن من تبويب «الأصدقاء» بالصالة'}</div>`}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 $('wFr').onclick = openInvite;
+
+// ===== المجتمع: دردشات + صوتيات =====
+const CM = { list: [], open: null, msgs: [], unread: {}, tab: 'chat', loaded: false };
+async function cmApi(data) {
+  const r = await fetch('/api/community', { method: data ? 'POST' : 'GET', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: data ? JSON.stringify(data) : undefined });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'خطأ'); return j;
+}
+const cmTime = (t) => { const d = new Date(t), n = new Date(); return d.toDateString() === n.toDateString() ? d.toLocaleTimeString('ar', { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString('ar', { day: 'numeric', month: 'short' }); };
+const cmIcon = (c) => { const m = /^\p{Extended_Pictographic}/u.exec(c.name); return m ? m[0] : c.kind === 'voice' ? '🎙️' : c.priv ? '🔒' : '💬'; };
+const cmName = (c) => c.name.replace(/^\p{Extended_Pictographic}️?\s*/u, '');
+async function loadComm() {
+  try { CM.list = (await cmApi()).channels; CM.loaded = true; } catch { return; }
+  renderComm();
+}
+function cmSetTab(t) {
+  CM.tab = t; document.querySelectorAll('.cmtabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === t));
+  $('cmChat').classList.toggle('hidden', t !== 'chat'); $('cmVoice').classList.toggle('hidden', t !== 'voice'); $('cmFr').classList.toggle('hidden', t !== 'fr');
+  if (t === 'fr') loadFriends(); else loadComm();
+}
+function cmRow(c) {
+  const un = CM.unread[c.id] || 0;
+  const av = c.kind === 'dm' ? `<div class="cmav dm">${avPic({ uid: c.other && c.other.id, ph: c.other && c.other.ph, name: c.name, av: c.other && c.other.av })}</div>` : `<div class="cmav">${cmIcon(c)}</div>`;
+  const sub = c.last ? `<b>${esc(c.last.name)}:</b> ${esc(c.last.text)}` : c.kind === 'dm' ? 'ابدأ المحادثة 👋' : 'لسا ما حدا كتب — كون الأول';
+  return `<div class="cmrow" data-cm="${c.id}">${av}<div class="cmt"><div class="cmn">${esc(c.kind === 'dm' ? c.name : cmName(c))}${c.priv && c.kind !== 'dm' ? ' <i>🔒 خاصة</i>' : ''}</div><div class="cms">${sub}</div></div><div class="cmx">${c.last ? `<small>${cmTime(c.last.at)}</small>` : ''}${un ? `<b class="cmun">${un > 99 ? '99+' : un}</b>` : ''}</div></div>`;
+}
+function vcRow(c) {
+  const us = c.voice || [], inIt = VC.ch === c.id;
+  return `<div class="vcrow${inIt ? ' in' : ''}" data-vc="${c.id}"><div class="cmav">${cmIcon(c)}</div><div class="cmt"><div class="cmn">${esc(cmName(c))}${c.priv ? ' <i>🔒 خاصة</i>' : ''}</div><div class="vcus">${us.length ? us.slice(0, 7).map((u) => `<span class="vcu${u.mute ? ' mu' : ''}">${avPic({ uid: u.id, ph: u.ph, name: u.name, av: u.av })}</span>`).join('') + (us.length > 7 ? `<em>+${us.length - 7}</em>` : '') + `<em>${us.length} جوّا</em>` : '<em>فاضية — فوت وابدأ السهرة</em>'}</div></div><button class="small ${inIt ? 'ghost' : 'gold'}">${inIt ? 'أنت جوّا' : 'فوت 🎙️'}</button>${c.mine || c.priv ? `<button class="small ghost cmmore" data-cmm="${c.id}">⋯</button>` : ''}</div>`;
+}
+function renderComm() {
+  const texts = CM.list.filter((c) => c.kind === 'text').sort((a, b) => (b.seed ? 0 : 1) - (a.seed ? 0 : 1) || new Date(b.at) - new Date(a.at));
+  const pubs = texts.filter((c) => !c.priv), privs = texts.filter((c) => c.priv), dms = CM.list.filter((c) => c.kind === 'dm').sort((a, b) => new Date(b.at) - new Date(a.at));
+  const sec = (t, arr, empty) => `<div class="cmsec">${t}</div>${arr.length ? arr.map(cmRow).join('') : `<div class="meta cmempty">${empty}</div>`}`;
+  $('cmList').innerHTML = sec('🌍 غرف عامة', pubs, '') + sec('🔒 غرفي الخاصة', privs, 'افتح غرفة خاصة وضيف أصحابك عليها') + sec('✉️ رسائل خاصة', dms, 'من تبويب الأصدقاء اكبس 💬 جنب أي صديق');
+  const vs = CM.list.filter((c) => c.kind === 'voice');
+  $('vcList').innerHTML = `<div class="cmsec">🌍 صوتيات عامة</div>${vs.filter((c) => !c.priv).map(vcRow).join('')}<div class="cmsec">🔒 صوتيات خاصة</div>${vs.filter((c) => c.priv).map(vcRow).join('') || '<div class="meta cmempty">افتح غرفة صوتية خاصة لشلّتك</div>'}`;
+  const tot = Object.entries(CM.unread).reduce((s, [id, n]) => { const c = CM.list.find((x) => x.id === +id); return s + (c && (c.priv || c.kind === 'dm') ? n : 0); }, 0);
+  const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', tot > 0 || FR.incoming.length > 0);
+  const db = document.querySelector('.cmtabs [data-ct="chat"]'); if (db) db.dataset.n = tot || '';
+}
+async function cmOpen(id) {
+  let c = CM.list.find((x) => x.id === id); if (!c) { await loadComm(); c = CM.list.find((x) => x.id === id); if (!c) return; }
+  CM.open = c; CM.unread[id] = 0; CM.msgs = [];
+  $('chatv').classList.remove('hidden'); document.body.classList.add('chatopen');
+  $('cvT').innerHTML = c.kind === 'dm' ? `<span class="cvav">${avPic({ uid: c.other && c.other.id, ph: c.other && c.other.ph, name: c.name, av: c.other && c.other.av })}</span>${esc(c.name)}` : `${cmIcon(c)} ${esc(cmName(c))}`;
+  $('cvSub').textContent = c.kind === 'dm' ? 'محادثة خاصة' : c.priv ? `غرفة خاصة · ${c.members} أعضاء` : 'غرفة عامة · الكل بيشوف';
+  $('cvMore').style.display = c.kind === 'dm' ? 'none' : '';
+  $('cvMsgs').innerHTML = '<div class="meta" style="text-align:center;padding:20px">…</div>';
+  try { CM.msgs = (await cmApi({ action: 'history', ch: id })).msgs; } catch (e) { toast(e.message); }
+  cmPaint(true); renderComm(); setTimeout(() => $('cvIn').focus(), 50);
+}
+function cmClose() { CM.open = null; $('chatv').classList.add('hidden'); document.body.classList.remove('chatopen'); renderComm(); }
+function cmMsgHtml(m, prev) {
+  const mine = me && m.uid === me.id, grp = prev && prev.uid === m.uid && new Date(m.at) - new Date(prev.at) < 120000;
+  return `<div class="cvm${mine ? ' me' : ''}${grp ? ' grp' : ''}" data-mid="${m.id}">${mine || grp ? '<span class="cvsp"></span>' : `<span class="cvav">${avPic({ uid: m.uid, ph: m.ph, name: m.name, av: m.av })}</span>`}<div class="cvb">${!mine && !grp && CM.open && CM.open.kind !== 'dm' ? `<b>${esc(m.name)}</b>` : ''}<p>${esc(m.text)}</p><small>${cmTime(m.at)}</small></div></div>`;
+}
+function cmPaint(toEnd) {
+  const box = $('cvMsgs'), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.innerHTML = CM.msgs.length ? CM.msgs.map((m, i) => cmMsgHtml(m, CM.msgs[i - 1])).join('') : `<div class="cvempty">${CM.open && CM.open.kind === 'dm' ? '👋 قول مرحبا' : '💬 لسا ما في رسائل — افتح السالفة'}</div>`;
+  if (toEnd || atEnd) box.scrollTop = box.scrollHeight;
+}
+function cmSend() { const v = $('cvIn').value.trim(); if (!v || !CM.open) return; sendWs({ t: 'cmsg', ch: CM.open.id, text: v }); $('cvIn').value = ''; $('cvIn').focus(); }
+function cmOnMsg(m) {
+  const c = CM.list.find((x) => x.id === m.ch); if (c) { c.last = { name: m.m.name, text: m.m.text, at: m.m.at }; c.at = m.m.at; }
+  if (CM.open && CM.open.id === m.ch) { CM.msgs.push(m.m); cmPaint(m.m.uid === (me && me.id)); if (m.m.uid !== (me && me.id)) SND.play('tick'); }
+  else if (!me || m.m.uid !== me.id) {
+    CM.unread[m.ch] = (CM.unread[m.ch] || 0) + 1;
+    if (c && (c.priv || c.kind === 'dm')) { SND.play('pop'); if (!room) toast(`💬 ${m.m.name}: ${m.m.text.slice(0, 50)}`); }
+    if (!c) loadComm();
+  }
+  if (!$('tabFriends').classList.contains('hidden') || !c) renderComm(); else renderComm();
+}
+async function cmMenu(id) {
+  const c = CM.list.find((x) => x.id === id) || CM.open; if (!c) return;
+  let mem = []; try { mem = (await cmApi({ action: 'members', ch: c.id })).members; } catch {}
+  const canInv = c.priv && c.kind !== 'dm';
+  openModal('cmm', `<h3>${cmIcon(c)} ${esc(cmName(c))}</h3>
+  ${c.priv ? `<div class="cmsec">الأعضاء (${mem.length})</div><div class="cmmem">${mem.map((u) => frCard({ id: u.id, username: u.username, av: u.av, ph: u.ph, online: u.online }, u.owner ? '<span class="meta">👑 صاحبها</span>' : c.mine ? `<button class="small ghost" data-cmkick="${c.id}:${u.id}">إزالة</button>` : '')).join('')}</div>` : '<p class="meta" style="text-align:center">غرفة عامة مفتوحة لكل اللاعبين</p>'}
+  ${canInv ? `<button class="gold" style="width:100%;margin-top:10px" data-cminv="${c.id}">➕ ضيف أصدقاء</button>` : ''}
+  ${c.priv && c.kind !== 'dm' ? `<button class="ghost" style="width:100%;margin-top:8px" data-cmleave="${c.id}">🚪 اطلع من الغرفة</button>` : ''}
+  ${c.mine || (me && me.isAdmin) ? `<button class="ghost danger" style="width:100%;margin-top:8px" data-cmdel="${c.id}">🗑️ احذف الغرفة</button>` : ''}
+  <button class="ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">إغلاق</button>`);
+}
+async function cmInvite(id) {
+  try { FR = await frApi(); } catch {}
+  let mem = []; try { mem = (await cmApi({ action: 'members', ch: id })).members.map((u) => u.id); } catch {}
+  openModal('cminv', `<h3>➕ ضيف أصدقاء</h3>${FR.friends.length ? FR.friends.map((f) => frCard(f, mem.includes(f.id) ? '<span class="meta">موجود ✓</span>' : `<button class="small gold" data-cmadd="${id}:${f.id}">ضيف</button>`)).join('') : '<p class="meta" style="text-align:center">لسا ما عندك أصدقاء</p>'}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">تم</button>`);
+}
+async function cmNew(kind) {
+  try { FR = await frApi(); } catch {}
+  openModal('cmnew', `<h3>${kind === 'voice' ? '🎙️ غرفة صوتية جديدة' : '💬 غرفة دردشة جديدة'}</h3>
+  <input id="cnName" maxlength="30" placeholder="${kind === 'voice' ? 'مثلاً: ☕ سهرة الشباب' : 'مثلاً: 🃏 شلة التركس'}" style="width:100%;margin-bottom:10px">
+  <div class="cnseg"><label><input type="radio" name="cnp" value="0" checked> 🌍 عامة — الكل بيقدر يفوت</label><label><input type="radio" name="cnp" value="1"> 🔒 خاصة — بس اللي بتضيفهن</label></div>
+  <div id="cnFr" class="hidden"><div class="cmsec">اختار أصدقاء (فيك تضيف بعدين كمان)</div>${FR.friends.length ? FR.friends.map((f) => `<label class="cnf"><input type="checkbox" value="${f.id}"> ${esc(f.username)}</label>`).join('') : '<p class="meta">ما عندك أصدقاء لسا</p>'}</div>
+  <button class="gold" style="width:100%;margin-top:12px" id="cnGo">إنشاء</button><button class="ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">إلغاء</button>`);
+  document.querySelectorAll('[name=cnp]').forEach((r) => (r.onchange = () => $('cnFr').classList.toggle('hidden', !document.querySelector('[name=cnp][value="1"]').checked)));
+  $('cnGo').onclick = async () => {
+    const priv = document.querySelector('[name=cnp][value="1"]').checked;
+    try { const j = await cmApi({ action: 'create', kind, name: $('cnName').value, priv, invite: [...document.querySelectorAll('#cnFr input:checked')].map((x) => +x.value) }); closeOverlay(); await loadComm(); if (kind === 'voice') vcJoin(j.id); else cmOpen(j.id); } catch (e) { toast(e.message); }
+  };
+}
+async function cmDm(uid) { try { const j = await cmApi({ action: 'dm', uid }); await loadComm(); closeOverlay(); cmOpen(j.id); } catch (e) { toast(e.message); } }
+document.addEventListener('click', async (ev) => {
+  const t = ev.target;
+  const ct = t.closest('.cmtabs [data-ct]'); if (ct) return cmSetTab(ct.dataset.ct);
+  const mm = t.closest('[data-cmm]'); if (mm) { ev.stopPropagation(); return cmMenu(+mm.dataset.cmm); }
+  const r = t.closest('[data-cm]'); if (r) return cmOpen(+r.dataset.cm);
+  const v = t.closest('[data-vc]'); if (v) { const id = +v.dataset.vc; if (VC.ch !== id) vcJoin(id); else vcExpand(); return; }
+  const dm = t.closest('[data-fdm]'); if (dm) return cmDm(+dm.dataset.fdm);
+  const inv = t.closest('[data-cminv]'); if (inv) return cmInvite(+inv.dataset.cminv);
+  const ad = t.closest('[data-cmadd]'); if (ad) { const [ch, uid] = ad.dataset.cmadd.split(':').map(Number); try { await cmApi({ action: 'invite', ch, uid }); ad.outerHTML = '<span class="meta">انضاف ✓</span>'; loadComm(); } catch (e) { toast(e.message); } return; }
+  const kk = t.closest('[data-cmkick]'); if (kk) { const [ch, uid] = kk.dataset.cmkick.split(':').map(Number); try { await cmApi({ action: 'kick', ch, uid }); cmMenu(ch); } catch (e) { toast(e.message); } return; }
+  const lv = t.closest('[data-cmleave]'); if (lv) { if (!confirm('أكيد بدك تطلع؟')) return; try { await cmApi({ action: 'leave', ch: +lv.dataset.cmleave }); closeOverlay(); cmClose(); if (VC.ch === +lv.dataset.cmleave) vcLeave(); loadComm(); } catch (e) { toast(e.message); } return; }
+  const dl = t.closest('[data-cmdel]'); if (dl) { if (!confirm('أكيد بدك تحذف الغرفة وكل رسائلها؟')) return; try { await cmApi({ action: 'del', ch: +dl.dataset.cmdel }); closeOverlay(); cmClose(); loadComm(); } catch (e) { toast(e.message); } return; }
+  const dmsg = t.closest('.cvm'); if (dmsg && CM.open && ev.detail === 2) { const m = CM.msgs.find((x) => x.id === +dmsg.dataset.mid); if (m && (m.uid === me.id || CM.open.mine || me.isAdmin) && confirm('حذف الرسالة؟')) sendWs({ t: 'cdel', ch: CM.open.id, id: m.id }); }
+});
+$('cvBack').onclick = cmClose; $('cvSend').onclick = cmSend; $('cvMore').onclick = () => CM.open && cmMenu(CM.open.id);
+$('cvIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cmSend(); } });
+$('cmNewT').onclick = () => cmNew('text'); $('cmNewV').onclick = () => cmNew('voice');
+
+// ----- voice rooms -----
+const VC = { ch: null, stream: null, peers: new Map(), audios: new Map(), users: [], mute: false, chain: Promise.resolve(), ana: new Map(), actx: null, loop: null };
+async function vcJoin(id) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('المتصفح هذا ما بيدعم المايك — جرّب كروم أو سفاري'); return; }
+  if (VOICE.on) { voiceStop(); sendWs({ t: 'voice', on: false }); }
+  if (!VC.stream) { try { VC.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); } catch { toast('اسمح للمتصفح يستخدم المايك 🎤'); return; } }
+  VC.mute = false; VC.stream.getAudioTracks().forEach((t) => (t.enabled = true));
+  vcClosePeers(); sendWs({ t: 'vcjoin', ch: id }); VC.pending = id;
+}
+function vcClosePeers() { for (const id of [...VC.peers.keys()]) vcClosePeer(id); }
+function vcClosePeer(id) { const pc = VC.peers.get(id); if (pc) { try { pc.close(); } catch {} VC.peers.delete(id); } const a = VC.audios.get(id); if (a) { a.srcObject = null; a.remove(); VC.audios.delete(id); } VC.ana.delete(id); }
+function vcLeave(silent) {
+  if (VC.ch == null && !VC.stream) return; if (!silent) sendWs({ t: 'vcleave' });
+  vcClosePeers(); if (VC.stream) VC.stream.getTracks().forEach((t) => t.stop()); VC.stream = null; VC.ch = null; VC.users = [];
+  clearInterval(VC.loop); VC.loop = null; $('vcBar').classList.add('hidden'); if (overlayKind === 'vcfull') closeOverlay(); renderComm();
+}
+function vcPeer(id) {
+  const pc = new RTCPeerConnection({ iceServers: ICE }); VC.peers.set(id, pc);
+  VC.stream.getTracks().forEach((t) => pc.addTrack(t, VC.stream));
+  pc.onicecandidate = (e) => { if (e.candidate) sendWs({ t: 'vcrtc', to: id, data: { c: e.candidate } }); };
+  pc.ontrack = (e) => {
+    let a = VC.audios.get(id); if (!a) { a = document.createElement('audio'); a.autoplay = true; a.setAttribute('playsinline', ''); document.body.appendChild(a); VC.audios.set(id, a); }
+    a.srcObject = e.streams[0]; a.play().catch(() => {}); vcAnalyse(id, e.streams[0]);
+  };
+  pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') vcClosePeer(id); };
+  return pc;
+}
+function vcAnalyse(id, stream) {
+  try { VC.actx ||= new (window.AudioContext || window.webkitAudioContext)(); const src = VC.actx.createMediaStreamSource(stream); const an = VC.actx.createAnalyser(); an.fftSize = 256; src.connect(an); VC.ana.set(id, an); } catch {}
+}
+function vcSpeakLoop() {
+  clearInterval(VC.loop); const buf = new Uint8Array(128);
+  VC.loop = setInterval(() => {
+    for (const [id, an] of VC.ana) { an.getByteFrequencyData(buf); let s = 0; for (const v of buf) s += v; const on = s / buf.length > 18; document.querySelectorAll(`[data-vsp="${id}"]`).forEach((el) => el.classList.toggle('talk', on)); }
+  }, 150);
+}
+function vcRenderBar() {
+  const c = CM.list.find((x) => x.id === VC.ch); const n = VC.users.length;
+  $('vcBar').classList.toggle('hidden', VC.ch == null);
+  $('vcBar').innerHTML = VC.ch == null ? '' : `<div class="vbt" onclick="vcExpand()"><b>🎙️ ${esc(c ? cmName(c) : 'غرفة صوتية')}</b><small>${n} جوّا · ${VC.users.slice(0, 3).map((u) => esc(u.name)).join('، ')}</small></div><button class="vbb ${VC.mute ? 'off' : ''}" onclick="vcMute()">${VC.mute ? '🔇' : '🎤'}</button><button class="vbb red" onclick="vcLeave()">📞</button>`;
+  if (overlayKind === 'vcfull') vcExpand();
+}
+function vcExpand() {
+  const c = CM.list.find((x) => x.id === VC.ch); if (!c) return;
+  openModal('vcfull', `<h3>🎙️ ${esc(cmName(c))}</h3><div class="vcgrid">${VC.users.map((u) => `<div class="vcp"><div class="vcpav" data-vsp="${u.id === me.id ? 'me' : u.id}">${avPic({ uid: u.id, ph: u.ph, name: u.name, av: u.av })}${u.mute ? '<i>🔇</i>' : ''}</div><span>${esc(u.name)}</span></div>`).join('')}</div>
+  <div class="row" style="gap:8px;margin-top:14px"><button class="${VC.mute ? 'ghost' : 'gold'}" style="flex:1" onclick="vcMute()">${VC.mute ? '🔇 المايك مسكّر' : '🎤 المايك شغّال'}</button><button class="ghost danger" style="flex:1" onclick="vcLeave()">📞 اطلع</button></div>
+  ${c.priv ? `<button class="ghost" style="width:100%;margin-top:8px" onclick="cmInvite(${c.id})">➕ ادعُ أصدقاء</button>` : ''}<button class="ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">صغّر ⬇️</button>`);
+}
+function vcMute() { VC.mute = !VC.mute; if (VC.stream) VC.stream.getAudioTracks().forEach((t) => (t.enabled = !VC.mute)); sendWs({ t: 'vcmute', m: VC.mute }); vcRenderBar(); }
+function vcOn(m) {
+  if (m.t === 'vcin') {
+    VC.ch = m.ch; SND.play('good'); vcSpeakLoop(); if (VC.stream) vcAnalyse('me', VC.stream);
+    VC.chain = VC.chain.then(async () => { for (const id of m.peers) { const pc = vcPeer(id); await pc.setLocalDescription(await pc.createOffer()); sendWs({ t: 'vcrtc', to: id, data: { sdp: pc.localDescription } }); } }).catch(() => {});
+    toast('🎙️ فتت عالغرفة الصوتية');
+  } else if (m.t === 'vcs') {
+    const c = CM.list.find((x) => x.id === m.ch); if (c) c.voice = m.users;
+    if (m.ch === VC.ch) { const before = VC.users.length; VC.users = m.users; if (m.users.length > before && before) SND.play('pop'); vcRenderBar(); }
+    renderComm();
+  } else if (m.t === 'vcbye') vcClosePeer(m.uid);
+  else if (m.t === 'vcend') { toast('انسكرت الغرفة الصوتية'); vcLeave(true); }
+  else if (m.t === 'vcrtc') {
+    const from = m.from, data = m.data;
+    VC.chain = VC.chain.then(async () => {
+      if (VC.ch == null || !VC.stream) return; let pc = VC.peers.get(from);
+      if (data.sdp) {
+        if (data.sdp.type === 'offer') { if (pc) vcClosePeer(from); pc = vcPeer(from); await pc.setRemoteDescription(data.sdp); await pc.setLocalDescription(await pc.createAnswer()); sendWs({ t: 'vcrtc', to: from, data: { sdp: pc.localDescription } }); }
+        else if (pc) await pc.setRemoteDescription(data.sdp);
+      } else if (data.c && pc) { try { await pc.addIceCandidate(data.c); } catch {} }
+    }).catch(() => {});
+  }
+}
+window.vcMute = vcMute; window.vcLeave = vcLeave; window.vcExpand = vcExpand; window.cmInvite = cmInvite;
 
 // ===== per-game rules =====
 const RULES = {
@@ -2693,6 +3073,7 @@ const RULES = {
   mono: ['كل لاعب بيبلّش بـ1500. ارمي الزهر وامشي.', '🏷️ إذا وقفت على حي للبيع بتقدر تشتريه. 🧾 إذا وقفت على حي لغيرك بتدفعله إيجار.',
     '🎨 إذا جمعت كل أحياء اللون الإيجار بيتضاعف، وبتقدر تبني بيوت 🏠 (لحد ٤) وبعدين فندق 🏨 — قبل ما ترمي الزهر.', '🚆 المحطات كل ما جمعت أكتر إيجارها أكبر. 💡 الشركات إيجارها حسب الزهر.',
     '✨ كل ما تمرق عالانطلاق +200. 🍀 الحظ بيعطيك أو بياخد منك. 🚔 بالسجن ارمي دبل لتطلع أو ادفع 50. الدبل بيخليك ترمي كمان.', '💀 اللي بتخلص مصاريه بيفلس. بعد ٢٥ جولة بيربح صاحب أكبر ثروة.'],
+  jackaroo: ['٤ لاعبين، كل اتنين قبال بعض <b>فريق</b> 🤝. كل لاعب معه ٤ كرات ببيته.', 'بكل توزيعة بياخد كل واحد ٤ ورقات، وبالدور كل واحد بيلعب ورقة وحدة.', '<b>A</b>: بتطلّع كرة أو بتمشي ١ أو ١١ — <b>K</b>: بتطلّع كرة أو بتمشي ١٣ — <b>Q</b>: ١٢.', '<b>J</b>: بتبدّل مكان كرتك مع كرة أي لاعب تاني عالمسار.', '<b>٧</b>: بتمشيها لكرة وحدة أو بتقسمها على كرتين (مثلاً ٣ + ٤).', '<b>٥</b>: بتحرّك أي كرة عالمسار ٥ خطوات — حتى كرات الخصم!', '<b>٤</b>: لورا ٤ خطوات (حركة ذكية لتقرّب من البيت).', '<b>١٠</b>: بتمشي ١٠ أو 🔥 بتحرق ورقة عشوائية من إيد اللاعب اللي بعدك.', 'باقي الأوراق (٢،٣،٦،٨،٩) بتمشي قد رقمها.', '💥 إذا وقفت على كرة حدا بترجّعها لبيتها. الكرة اللي واقفة على مربع طلعتها <b>محمية</b> وما حدا بيقطعها.', 'لازم الكرة تلف دورة كاملة وتدخل البيت بالعدد المظبوط. إذا خلّصت كراتك بتكمّل بكرات شريكك.', 'إذا ما عندك ولا حركة لازم ترمي ورقة. 🏆 أول فريق بيدخّل كراته الـ٨ بيربح.'],
   ludo: ['كل لاعب معه ٤ حجار بالبيت. لازم تجيب <b>٦</b> لتطلّع حجر.', 'الـ٦ بيخليك تلعب كمان، بس ٣ ستات ورا بعض بيروح دورك.', '💥 إذا وقفت على حجر خصم (برّا المربعات الآمنة ★) بترجّعه لبيته وبتلعب كمان.', '🏁 أول واحد بيوصّل حجاره الأربعة للنص بيربح.'],
   snakes: ['ارمي الزهر وامشي. 🪜 السلم بيطلّعك لفوق، 🐍 الحية بتنزّلك لتحت.', 'الـ٦ بيخليك ترمي كمان.', 'لازم توصل للـ100 بالمضبوط. أول واحد بيوصل بيربح.'],
   domino: ['كل لاعب معه ٧ حجار.', 'نزّل حجر رقمه متل أحد طرفين السلسلة. إذا ما معك «دق» 👊.', 'اللي بيخلّص حجاره بياخد مجموع نقاط حجار الباقيين. إذا تسكّرت اللعبة بيربح الأقل نقاط.', 'أول واحد بيوصل 101 بيربح.'],

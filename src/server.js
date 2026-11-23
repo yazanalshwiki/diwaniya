@@ -1,3 +1,4 @@
+import { makeCommunity } from './community.js';
 import { SQL } from 'bun';
 import { createGame, GAME_NAMES, seatCount } from './engine.js';
 
@@ -111,7 +112,14 @@ async function patchUser(id, f) {
 }
 const keyOf = (n) => n.trim().toLowerCase();
 
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i;
+async function findByEmail(e) {
+  e = String(e).trim().toLowerCase(); if (!e) return null;
+  if (sql) return (await sql`select * from users where lower(email) = ${e} order by id limit 1`)[0];
+  return [...mem.users.values()].find((u) => (u.email || '').toLowerCase() === e);
+}
 async function findUser(name) {
+  if (String(name).includes('@')) return findByEmail(name);
   if (sql) return (await sql`select * from users where uname_key = ${keyOf(name)}`)[0];
   return [...mem.users.values()].find((u) => u.uname_key === keyOf(name));
 }
@@ -218,6 +226,8 @@ function newCode() {
   do { c = Array.from({ length: 5 }, () => A[Math.floor(Math.random() * A.length)]).join(''); } while (rooms.has(c));
   return c;
 }
+const COMM = makeCommunity({ sql, clients, send: (w, m) => send(w, m), getUser, frGet, isAdminPlayer: (u) => isAdminPlayer(u) });
+await COMM.init();
 const send = (ws, m) => { try { ws && ws.readyState === 1 && ws.send(JSON.stringify(m)); } catch {} };
 const humanSeats = (r) => r.seats.map((s, i) => [s, i]).filter(([s]) => s && !s.bot);
 const isConnected = (uid) => clients.has(uid);
@@ -341,6 +351,7 @@ function sysChat(r, text) { r.chat.push({ sys: true, text, ts: Date.now() }); }
 
 async function handle(ws, m) {
   const uid = ws.data.uid, name = ws.data.name, av = ws.data.av || null, ph = ws.data.ph || 0;
+  if (m.t && (m.t[0] === 'c' && m.t !== 'create' && m.t !== 'chat' || m.t.startsWith('vc')) && (await COMM.ws(ws, m, { uid, name, av, ph }))) return;
   const code = userRoom.get(uid);
   const r = code && rooms.get(code);
   switch (m.t) {
@@ -527,21 +538,25 @@ const server = Bun.serve({
       return new Response('upgrade failed', { status: 400 });
     }
     if (url.pathname === '/api/register' && req.method === 'POST') {
-      const { username = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
-      const n = String(username).trim().replace(/\s+/g, ' ');
+      const { username = '', email = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
+      const n = String(username).trim().replace(/\s+/g, ' '); const em = String(email).trim().toLowerCase();
+      if (!EMAIL_RE.test(em)) return json({ error: 'اكتب إيميل صحيح' }, 400);
+      if (n.includes('@')) return json({ error: 'الاسم ما لازم يكون فيه @' }, 400);
+      if (await findByEmail(em)) return json({ error: 'هالإيميل مسجّل من قبل — جرّب تسجّل دخول' }, 400);
       if (n.length < 2 || n.length > 20) return json({ error: 'الاسم لازم يكون من 2 إلى 20 حرف' }, 400);
       if (/^بوت/.test(n)) return json({ error: 'اختر اسم ثاني' }, 400);
       if (String(password).length < 4) return json({ error: 'كلمة المرور 4 أحرف على الأقل' }, 400);
       if (await findUser(n)) return json({ error: 'الاسم مستخدم، جرب اسم ثاني' }, 400);
       { const b = await banCheck(null, clientIP(req, srv), dev); if (b) return json({ error: b }, 403); }
       const u = await createUser(n, await Bun.password.hash(String(password)));
+      await patchUser(u.id, { email: em });
       await patchUser(u.id, { last_ip: clientIP(req, srv), last_device: dev });
       return json({ token: issue(u), user: pub(u, true) });
     }
     if (url.pathname === '/api/login' && req.method === 'POST') {
       const { username = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
       const u = await findUser(String(username));
-      if (!u || !(await Bun.password.verify(String(password), u.pass))) return json({ error: 'الاسم أو كلمة المرور غلط' }, 401);
+      if (!u || !(await Bun.password.verify(String(password), u.pass))) return json({ error: 'الإيميل/الاسم أو كلمة المرور غلط' }, 401);
       { const b = await banCheck(u, clientIP(req, srv), dev); if (b) return json({ error: b }, 403); }
       await patchUser(u.id, { last_ip: clientIP(req, srv), last_device: dev });
       return json({ token: issue(u), user: pub(u, true) });
@@ -588,6 +603,11 @@ const server = Bun.serve({
       if (!u || !u.photo) return new Response('not found', { status: 404 });
       return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
     }
+    if (url.pathname === '/api/community') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      const me = p && (await getUser(p.id)); if (!me) return json({ error: 'unauthorized' }, 401);
+      try { return json(await COMM.api(req.method === 'POST' ? await body(req) : null, me)); } catch (e) { return json({ error: e.message }, 400); }
+    }
     if (url.pathname === '/api/friends') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
       const me = p && (await getUser(p.id)); if (!me) return json({ error: 'unauthorized' }, 401);
@@ -630,6 +650,7 @@ const server = Bun.serve({
       if (b.email !== undefined) {
         const e = String(b.email).trim().toLowerCase();
         if (e && !/^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(e)) return json({ error: 'الإيميل مو صحيح' }, 400);
+        if (e) { const o = await findByEmail(e); if (o && o.id !== u.id) return json({ error: 'هالإيميل مستخدم بحساب تاني' }, 400); }
         f.email = e || null;
       }
       if (b.username !== undefined && String(b.username).trim() !== u.username) {
@@ -833,6 +854,7 @@ const server = Bun.serve({
       const uid = ws.data.uid;
       if (clients.get(uid) !== ws) return;
       clients.delete(uid);
+      COMM.onClose(uid);
       const code = userRoom.get(uid);
       const r = code && rooms.get(code);
       if (r) {
