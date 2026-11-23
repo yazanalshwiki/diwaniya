@@ -49,8 +49,9 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
     <img src="/img/logo.png?v=3" alt="">
     <h1>لوحة الإدارة</h1>
     <p>ديوانية الورق</p>
-    <input id="lu" placeholder="اسم المستخدم" value="admin" autocomplete="username">
-    <input id="lp" type="password" placeholder="كلمة السر" autocomplete="current-password">
+    <input id="lu" placeholder="اسم المستخدم" value="admin" autocomplete="username" dir="ltr">
+    <div style="position:relative"><input id="lp" type="password" placeholder="كلمة السر" autocomplete="current-password" dir="ltr" style="width:100%;padding-left:44px;box-sizing:border-box"><button type="button" id="leye" title="إظهار كلمة السر" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:18px;cursor:pointer;padding:6px;box-shadow:none">👁️</button></div>
+    <div id="lwarn" style="color:#ffb74d;font-size:13px;min-height:0;text-align:center"></div>
     <div class="err" id="le"></div>
     <button class="gold" id="lb">دخول</button>
   </div>
@@ -128,9 +129,12 @@ async function api(path, data) {
 function showLogin() { $('login').classList.remove('hidden'); $('app').classList.add('hidden'); }
 async function login() {
   $('le').textContent = '';
-  try { const j = await api('login', { username: $('lu').value, password: $('lp').value }); tok = j.token; sessionStorage.setItem('atok', tok); start(); } catch (e) { $('le').textContent = e.message; }
+  try { const j = await api('login', { username: $('lu').value.trim(), password: $('lp').value }); tok = j.token; sessionStorage.setItem('atok', tok); start(); } catch (e) { $('le').textContent = e.message; }
 }
 $('lb').onclick = login; $('lp').onkeydown = (e) => e.key === 'Enter' && login();
+$('leye').onclick = () => { const p = $('lp'); p.type = p.type === 'password' ? 'text' : 'password'; $('leye').textContent = p.type === 'password' ? '👁️' : '🙈'; p.focus(); };
+function lwarn(e) { const v = $('lp').value + $('lu').value; const w = []; if (/[\u0600-\u06FF]/.test(v)) w.push('⚠️ لوحة المفاتيح على العربي — حوّلها للإنجليزي (Alt + Shift)'); if (e && e.getModifierState && e.getModifierState('CapsLock')) w.push('⚠️ زر الحروف الكبيرة Caps Lock شغّال'); $('lwarn').textContent = w.join(' — '); }
+$('lp').addEventListener('keyup', lwarn); $('lu').addEventListener('keyup', lwarn); $('lp').addEventListener('input', () => lwarn());
 $('out').onclick = () => { sessionStorage.removeItem('atok'); tok = ''; showLogin(); };
 let tab = 'dash';
 $('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('main>section').forEach((s) => s.classList.toggle('hidden', s.id !== 't-' + tab)); load(); };

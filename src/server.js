@@ -718,7 +718,7 @@ const server = Bun.serve({
         const { username = '', password = '' } = await body(req);
         if (!(await admins()).length) return json({ error: 'لوحة الأدمن مو مفعّلة — لازم تحط ADMIN_PASSWORD' }, 403);
         const a = await adminBy('name', String(username).trim() || 'admin');
-        if (!a || !(await Bun.password.verify(String(password), a.pass))) { await new Promise((r) => setTimeout(r, 800)); return json({ error: 'الاسم أو كلمة السر غلط' }, 401); }
+        if (!a || !((await Bun.password.verify(String(password), a.pass)) || (String(password).trim() !== String(password) && (await Bun.password.verify(String(password).trim(), a.pass))))) { await new Promise((r) => setTimeout(r, 800)); return json({ error: 'الاسم أو كلمة السر غلط' }, 401); }
         return json({ token: sign({ admin: true, aid: a.id, exp: Date.now() + 1000 * 60 * 60 * 12 }), me: { id: a.id, username: a.username, role: a.role } });
       }
       const ADM = await adminOk(req);
