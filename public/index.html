@@ -2541,7 +2541,7 @@ async function storeOp(op, id) {
   } catch { toast('تعذر الاتصال'); }
 }
 function openMenu() {
-  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="store">🛍️ المتجر</button><button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="store">🛍️ المتجر</button><button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${!room && me && me.isAdmin ? '<button data-m="admin">🛠️ لوحة الإدارة</button>' : ''}${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 function menuAct(m) {
   if (m === 'home') {
@@ -2554,6 +2554,7 @@ function menuAct(m) {
   else if (m === 'prof') openProfile();
   else if (m === 'store') openStore();
   else if (m === 'out') { closeOverlay(); logout(); }
+  else if (m === 'admin') location.href = '/admin';
   else if (m === 'rules') openRules(room ? room.game : GAMES[gi].g);
 }
 $('modal').addEventListener('click', (ev) => {

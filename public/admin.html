@@ -58,7 +58,7 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
 
 <div id="app" class="hidden">
   <header>
-    <div class="hbar"><img src="/img/logo.png?v=3" alt=""><b>لوحة الإدارة</b><span class="sp"></span><span class="muted" id="who"></span><button id="refresh">🔄</button><button id="out">خروج</button></div>
+    <div class="hbar"><img src="/img/logo.png?v=3" alt=""><b>لوحة الإدارة</b><span class="sp"></span><span class="muted" id="who"></span><button class="gold" id="play">🎮 العب</button><button id="refresh">🔄</button><button id="out">خروج</button></div>
     <nav id="tabs">
       <button data-t="dash" class="on">📊 نظرة عامة</button><button data-t="users">👥 اللاعبين</button><button data-t="bans">⛔ الحظر</button><button data-t="rooms">🃏 الطاولات</button><button data-t="bc">📢 إعلان</button><button data-t="set">⚙️ الإعدادات</button>
     </nav>
@@ -89,6 +89,9 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
     <section id="t-set" class="hidden">
       <div class="panel"><h3>🔑 غيّر كلمة السر تبعك</h3>
         <div class="row"><input id="po" type="password" placeholder="كلمة السر الحالية" autocomplete="current-password"><input id="pn" type="password" placeholder="كلمة السر الجديدة (٦ أحرف عالأقل)" autocomplete="new-password"><input id="pn2" type="password" placeholder="أعد كتابتها" autocomplete="new-password"><button class="gold" id="pgo">حفظ</button></div></div>
+      <div class="panel"><h3>🎮 حساب اللعب تبعك</h3>
+        <div class="muted" style="margin-bottom:8px">زر «🎮 العب» فوق بيفوتك عالألعاب بحساب لاعب مربوط فيك (بيتعمل لحاله أول مرة). إذا عندك حساب لاعب من قبل اربطه هون.</div>
+        <div class="row"><span id="pl" class="muted"></span><input id="plk" placeholder="اسم حساب اللاعب تبعك"><button id="plgo">ربط</button></div></div>
       <div class="panel" id="admBox"><h3>👮 المشرفين</h3>
         <div class="muted" style="margin-bottom:8px">«مالك» بيقدر يعمل كل شي ويدير المشرفين. «مشرف» بيقدر يدير اللاعبين والحظر والطاولات بس ما بيقدر يضيف مشرفين.</div>
         <div class="row"><input id="au" placeholder="اسم المستخدم"><input id="ap" placeholder="كلمة السر (٦ أحرف عالأقل)" autocomplete="off"><select id="ar"><option value="mod">مشرف</option><option value="owner">مالك</option></select><button class="gold" id="ago">إضافة</button></div>
@@ -133,7 +136,7 @@ let tab = 'dash';
 $('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('main>section').forEach((s) => s.classList.toggle('hidden', s.id !== 't-' + tab)); load(); };
 $('refresh').onclick = () => load();
 let ME = null;
-async function start() { $('login').classList.add('hidden'); $('app').classList.remove('hidden'); try { ME = (await api('me')).me; $('who').textContent = '👤 ' + ME.username + (ME.role === 'owner' ? ' (مالك)' : ' (مشرف)'); } catch {} load(); }
+async function start() { $('login').classList.add('hidden'); $('app').classList.remove('hidden'); try { ME = (await api('me')).me; $('pl').textContent = ME.player ? 'مربوط بـ: ' + ME.player : 'لسا مو مربوط'; $('who').textContent = '👤 ' + ME.username + (ME.role === 'owner' ? ' (مالك)' : ' (مشرف)'); } catch {} load(); }
 async function load() {
   try {
     if (tab === 'dash') {
@@ -175,6 +178,9 @@ document.addEventListener('click', async (e) => {
   if (cl) { if (!confirm('أكيد بدك تسكّر الطاولة ' + cl.dataset.close + '؟')) return; await api('rooms', { code: cl.dataset.close }).then(() => { toast('انسكّرت'); load(); }).catch((x) => toast(x.message)); return; }
   if (tr && !e.target.closest('button')) openUser(+tr.dataset.u);
 });
+async function goPlay(link) { try { const j = await api('play', link ? { link } : {}); localStorage.setItem('tok', j.token); location.href = '/'; } catch (e) { toast(e.message); } }
+$('play').onclick = () => goPlay();
+$('plgo').onclick = async () => { const v = $('plk').value.trim(); if (!v) return; try { await api('play', { link: v }); ME = (await api('me')).me; $('pl').textContent = 'مربوط بـ: ' + ME.player; $('plk').value = ''; toast('✅ انربط'); } catch (e) { toast(e.message); } };
 $('ngo').onclick = async () => { try { const j = await api('newuser', { username: $('nu').value, pass: $('np').value, coins: $('nc').value }); toast('انضاف اللاعب #' + j.id); $('nu').value = $('np').value = $('nc').value = ''; load(); } catch (e) { toast(e.message); } };
 $('pgo').onclick = async () => { if ($('pn').value !== $('pn2').value) return toast('كلمتين السر مو متطابقين'); try { await api('me', { old: $('po').value, pass: $('pn').value }); $('po').value = $('pn').value = $('pn2').value = ''; toast('✅ تغيّرت كلمة السر'); } catch (e) { toast(e.message); } };
 $('ago').onclick = async () => { try { await api('admins', { action: 'add', username: $('au').value, pass: $('ap').value, role: $('ar').value }); $('au').value = $('ap').value = ''; toast('انضاف المشرف'); load(); } catch (e) { toast(e.message); } };

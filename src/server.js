@@ -80,6 +80,7 @@ if (Bun.env.DATABASE_URL) {
   await sql`alter table users add column if not exists last_device text`;
   await sql`alter table users add column if not exists last_seen timestamptz`;
   await sql`create table if not exists admins (id serial primary key, username text not null unique, pass text not null, role text not null default 'mod', created_at timestamptz not null default now())`;
+  await sql`alter table admins add column if not exists player_id int`;
   await sql`create table if not exists bans (id serial primary key, kind text not null, value text not null, reason text, until timestamptz, created_at timestamptz not null default now())`;
   console.log('Postgres connected');
 } else console.log('No DATABASE_URL — using in-memory store');
@@ -162,6 +163,8 @@ async function admins() { return sql ? await sql`select id, username, role, crea
 async function adminBy(field, v) { if (sql) return (field === 'id' ? await sql`select * from admins where id = ${v}` : await sql`select * from admins where lower(username) = ${String(v).toLowerCase()}`)[0]; return memAdmins.find((a) => (field === 'id' ? a.id === v : a.username.toLowerCase() === String(v).toLowerCase())); }
 async function addAdmin(username, pass, role) { const h = await Bun.password.hash(pass); if (sql) return (await sql`insert into admins (username, pass, role) values (${username}, ${h}, ${role}) returning id, username, role`)[0]; const a = { id: memAdminId++, username, pass: h, role, created_at: new Date() }; memAdmins.push(a); return a; }
 async function setAdminPass(id, pass) { const h = await Bun.password.hash(pass); if (sql) await sql`update admins set pass = ${h} where id = ${id}`; else { const a = memAdmins.find((x) => x.id === id); if (a) a.pass = h; } }
+async function setAdminPlayer(id, pid) { if (sql) await sql`update admins set player_id = ${pid} where id = ${id}`; else { const a = memAdmins.find((x) => x.id === id); if (a) a.player_id = pid; } }
+async function isAdminPlayer(uid) { if (sql) return (await sql`select 1 from admins where player_id = ${uid} limit 1`).length > 0; return memAdmins.some((a) => a.player_id === uid); }
 async function delAdmin(id) { if (sql) await sql`delete from admins where id = ${id}`; else { const i = memAdmins.findIndex((a) => a.id === id); if (i >= 0) memAdmins.splice(i, 1); } }
 async function ensureOwner() { if ((await admins()).length === 0 && ADMIN_PASSWORD) await addAdmin('admin', ADMIN_PASSWORD, 'owner'); }
 async function adminOk(req) { const p = verify((req.headers.get('authorization') || '').replace('Bearer ', '')); if (!p || p.admin !== true || !p.aid) return null; const a = await adminBy('id', p.aid); return a ? { id: a.id, username: a.username, role: a.role } : null; }
@@ -524,7 +527,7 @@ const server = Bun.serve({
     if (url.pathname === '/api/me') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
       const u = p && (await getUser(p.id));
-      return u ? json({ user: pub(u, true) }) : json({ error: 'unauthorized' }, 401);
+      return u ? json({ user: { ...pub(u, true), isAdmin: await isAdminPlayer(u.id) } }) : json({ error: 'unauthorized' }, 401);
     }
     if (url.pathname === '/api/packs') return json({ packs: PACKS, pk: MOYASAR_PK, enabled: !!(MOYASAR_PK && MOYASAR_SK) });
     if (url.pathname === '/pay/done') {
@@ -636,6 +639,15 @@ const server = Bun.serve({
       }
       const ADM = await adminOk(req);
       if (!ADM) return json({ error: 'unauthorized' }, 401);
+      if (ap === 'play' && req.method === 'POST') {
+        const a = await adminBy('id', ADM.id); const { link = '' } = await body(req);
+        let u = null;
+        if (link) { u = await findUser(String(link)); if (!u) return json({ error: 'ما في لاعب بهالاسم' }, 404); }
+        else if (a.player_id) u = await getUser(a.player_id);
+        if (!u) { let n = a.username, k = 1; while (await findUser(n)) n = a.username + (++k); u = await createUser(n, await Bun.password.hash(crypto.randomUUID())); }
+        if (a.player_id !== u.id) await setAdminPlayer(a.id, u.id);
+        return json({ token: issue(u), user: { id: u.id, username: u.username } });
+      }
       if (ap === 'me') {
         if (req.method === 'POST') {
           const { old = '', pass = '' } = await body(req); const a = await adminBy('id', ADM.id);
@@ -643,7 +655,8 @@ const server = Bun.serve({
           if (String(pass).length < 6) return json({ error: 'كلمة السر الجديدة ٦ أحرف عالأقل' }, 400);
           await setAdminPass(ADM.id, String(pass)); console.log('[admin]', ADM.username, 'changed own password'); return json({ ok: true });
         }
-        return json({ me: ADM });
+        const a0 = await adminBy('id', ADM.id); const pu = a0.player_id ? await getUser(a0.player_id) : null;
+        return json({ me: { ...ADM, player: pu ? pu.username : null } });
       }
       if (ap === 'admins') {
         if (ADM.role !== 'owner') return json({ error: 'بس المالك بيقدر يدير المشرفين' }, 403);
@@ -744,7 +757,7 @@ const server = Bun.serve({
       const old = clients.get(uid);
       if (old && old !== ws) { send(old, { t: 'left', reason: 'فتحت الحساب من جهاز ثاني' }); try { old.close(); } catch {} }
       clients.set(uid, ws);
-      getUser(uid).then((u) => send(ws, { t: 'me', user: pub(u, true) }));
+      getUser(uid).then(async (u) => send(ws, { t: 'me', user: { ...pub(u, true), isAdmin: await isAdminPlayer(uid) } }));
       const code = userRoom.get(uid);
       const r = code && rooms.get(code);
       if (r) {
