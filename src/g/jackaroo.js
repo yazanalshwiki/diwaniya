@@ -159,7 +159,7 @@ export class Jackaroo extends UIGame {
     const cur = this.turn >= 0 ? this.turn : this.turnSave;
     const my = seat === this.turn && !this.over;
     v.jk = { pile: this.pile || [], dealer: this.dealer, p: this.p, hand: seat >= 0 ? this.hands[seat] : [], counts: this.hands.map((h) => h.length), cur, played: this.played, last: this.lastMv, burn: this.burnFx, round: this.round, deck: this.deck.length,
-      legal: my ? this.moves(seat).map((m) => ({ key: m.key, c: m.c, kind: m.kind, s: m.s, k: m.k, t: m.t, j: m.j, k2: m.k2, label: this.label(m), seg: m.r.seg, caps: m.r.caps.length })) : [] };
+      legal: my ? this.moves(seat).map((m) => ({ key: m.key, c: m.c, kind: m.kind, s: m.s, k: m.k, t: m.t, j: m.j, k2: m.k2, n: m.n, n2: m.n2, label: this.label(m), seg: m.r.seg, caps: m.r.caps.length })) : [] };
     return v;
   }
   ui(seat) { return { blocks: [{ k: 'text', t: this.msg || 'جاكارو', cls: 'lead' }] }; }

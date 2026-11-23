@@ -630,6 +630,15 @@ background:radial-gradient(circle at 32% 28%,#fff 0,var(--l) 14%,var(--c) 45%,va
 .jxhand .c{width:clamp(56px,17vw,76px);height:clamp(80px,24.3vw,108px);margin:0 -6px;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .2s;transform:rotate(calc(var(--i) * 5deg)) translateY(calc(var(--i) * var(--i) * 3px));box-shadow:0 4px 10px rgba(0,0,0,.5)}
 .jxhand .c.dim{filter:brightness(.6)}.jxhand .c.ok{box-shadow:0 0 0 2px #ffd24d99,0 4px 10px rgba(0,0,0,.5)}
 .jxhand .c.sel{transform:translateY(-18px) scale(1.06);box-shadow:0 0 0 3px #ffd24d,0 10px 20px rgba(0,0,0,.6);z-index:3}
+
+.jxw{width:min(98vw,58vh,600px)!important;margin:22px 0 30px!important}
+.jxmb{width:3.9%!important;height:3.9%!important}
+.jxmb.tgt{cursor:pointer;z-index:6;animation:jxt .6s ease-in-out infinite alternate}@keyframes jxt{from{box-shadow:0 0 0 2px #ff5a4d,0 0 6px #ff5a4d;scale:1}to{box-shadow:0 0 0 3px #fff,0 0 16px 6px #ff5a4d;scale:1.25}}
+.jxgh{position:absolute;width:4.6%;height:4.6%;transform:translate(-50%,-50%);border-radius:50%;border:2px dashed #fff;background:color-mix(in srgb,var(--c) 45%,transparent);z-index:7;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;animation:jxg 1s ease-in-out infinite alternate;box-shadow:0 0 10px var(--c)}
+.jxgh i{font-style:normal;font-size:min(2.6vw,12px);font-weight:900;color:#fff;text-shadow:0 1px 2px #000}.jxgh.cap{border-color:#ff5a4d;background:#ff5a4d88}.jxgh.half{opacity:.7;animation:none;pointer-events:none}
+@keyframes jxg{from{scale:.9}to{scale:1.12}}
+.jxopts{margin-bottom:14px;position:relative;z-index:5}.jxo.on{outline:3px solid #fff}.jxo.ghost{background:#ffffff22;color:#fff;box-shadow:none}
+.jxpc:nth-last-child(2){margin-left:-8px}.jxpc:nth-last-child(3){margin-left:7px;margin-top:-4px}
 </style>
 </head>
 <body>
@@ -2475,7 +2484,7 @@ const JDARK = ['#7a0d10', '#0c3a80', '#7a5a00', '#0f5a22'];
 const JLITE = ['#ff9c9c', '#9cc8ff', '#ffe58a', '#9be8a8'];
 const JG = (() => {
   // star-shaped loop: tips on the diagonals, 76 holes at equal arc length, clockwise from the 45° tip
-  const R0 = 192, A = 62, rf = (t) => R0 + A * Math.cos(4 * (t - Math.PI / 4)), N = 4000, pts = [];
+  const R0 = 200, A = 70, rf = (t) => R0 + A * Math.cos(4 * (t - Math.PI / 4)), N = 4000, pts = [];
   for (let i = 0; i <= N; i++) { const t = Math.PI / 4 + (i / N) * Math.PI * 2, r = rf(t); pts.push([300 + r * Math.cos(t), 300 + r * Math.sin(t)]); }
   const cum = [0]; for (let i = 1; i <= N; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   const L = cum[N], track = []; let j = 0;
@@ -2484,8 +2493,8 @@ const JG = (() => {
   const lane = [], base = [];
   for (let s = 0; s < 4; s++) {
     const ta = seatAng(s) - Math.PI / 4, rt = rf(ta);
-    lane.push([0, 1, 2, 3].map((h) => [300 + (rt - 27 * (h + 1)) * Math.cos(ta), 300 + (rt - 27 * (h + 1)) * Math.sin(ta)]));
-    const ba = seatAng(s) - 0.36, cx = 300 + 250 * Math.cos(ba), cy = 300 + 250 * Math.sin(ba);
+    lane.push([0, 1, 2, 3].map((h) => [300 + (rt - 29 * (h + 1)) * Math.cos(ta), 300 + (rt - 29 * (h + 1)) * Math.sin(ta)]));
+    const ba = seatAng(s) - 0.4, cx = 300 + 228 * Math.cos(ba), cy = 300 + 228 * Math.sin(ba);
     base.push([[0, -19], [19, 0], [0, 19], [-19, 0]].map(([dx, dy]) => [cx + dx, cy + dy]));
   }
   return { track, lane, base, tip: (s) => 19 * s, start: (s) => 19 * s + 1 };
@@ -2494,8 +2503,8 @@ function jXY(s, p, k) { if (p < 0) return JG.base[s][k]; if (p >= 76) return JG.
 function jBoardSvg() {
   let g = '';
   const hole = (x, y, r, tint) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="url(#jhole)"/>${tint ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${tint}" opacity=".55"/>` : ''}`;
-  JG.track.forEach(([x, y], i) => { const st = [0, 1, 2, 3].find((s) => JG.start(s) === i); g += hole(x, y, 9.5, st != null ? JDARK[st] : null); if (st != null) g += `<circle cx="${x}" cy="${y}" r="12.5" fill="none" stroke="${JCOL[st]}" stroke-width="2.2" opacity=".9"/>`; });
-  for (let s = 0; s < 4; s++) { JG.lane[s].forEach(([x, y]) => (g += hole(x, y, 9.5, JDARK[s]))); JG.base[s].forEach(([x, y]) => (g += hole(x, y, 10, JDARK[s]))); }
+  JG.track.forEach(([x, y], i) => { const st = [0, 1, 2, 3].find((s) => JG.start(s) === i); g += hole(x, y, 10, st != null ? JDARK[st] : null); if (st != null) g += `<circle cx="${x}" cy="${y}" r="12.5" fill="none" stroke="${JCOL[st]}" stroke-width="2.2" opacity=".9"/>`; });
+  for (let s = 0; s < 4; s++) { JG.lane[s].forEach(([x, y]) => (g += hole(x, y, 10.5, JDARK[s]))); JG.base[s].forEach(([x, y]) => (g += hole(x, y, 10, JDARK[s]))); }
   // center octagon recess
   const oc = [...Array(8)].map((_, i) => { const a = Math.PI / 8 + (i * Math.PI) / 4; return `${300 + 92 * Math.cos(a)},${300 + 92 * Math.sin(a)}`; }).join(' ');
   const oc2 = [...Array(8)].map((_, i) => { const a = Math.PI / 8 + (i * Math.PI) / 4; return `${300 + 80 * Math.cos(a)},${300 + 80 * Math.sin(a)}`; }).join(' ');
@@ -2519,13 +2528,21 @@ function renderJack(e) {
     $('alt').innerHTML = `<div class="jxg"><div class="jxstat"></div><div class="jxw"><div class="jxb" style="--rot:${-90 * mine}deg">${jBoardSvg()}<div class="jxm"></div><div class="jxfx"></div></div><div class="jxpile"></div>${['top', 'left', 'right', 'bot'].map((p) => `<div class="jxp" data-pos="${p}"></div>`).join('')}<div class="jxfly"></div></div><div class="jxopts"></div><div class="jxhand"></div></div>`;
     const g = $('alt').querySelector('.jxg');
     g.addEventListener('click', (ev) => {
-      const cd = ev.target.closest('[data-jc]'); if (cd) { const c = +cd.dataset.jc; jkd.sel = jkd.sel === c ? -1 : c; jkd.filt = null; SND.play('tick'); return paintJack(room.engine); }
-      const op = ev.target.closest('[data-jkey]'); if (op) return jPlay(op.dataset.jkey);
-      const mb = ev.target.closest('.jxmb.can'); if (mb) {
-        const s = +mb.dataset.s, k = +mb.dataset.k; const L = jLegal(room.engine).filter((m) => (m.s === s && (m.k === k || m.k2 === k)) || (m.t === s && m.j === k));
-        if (L.length === 1) return jPlay(L[0].key);
-        jkd.filt = jkd.filt && jkd.filt.s === s && jkd.filt.k === k ? null : { s, k }; SND.play('tick'); paintJack(room.engine);
-      }
+      const cd = ev.target.closest('[data-jc]'); if (cd) { const c = +cd.dataset.jc; jkd.sel = jkd.sel === c ? -1 : c; jkd.filt = null; jkd.splitA = null; const L1 = jLegal(room.engine); if (L1.length === 1 && L1[0].kind !== 'discard' && !jPrim(L1[0])) { /* single out move: keep chip */ } SND.play('tick'); return paintJack(room.engine); }
+      const op = ev.target.closest('[data-jkey]'); if (op && !op.classList.contains('jxgh')) return jPlay(op.dataset.jkey);
+      if (ev.target.closest('[data-jx=cancel]')) { jkd.filt = null; jkd.splitA = null; return paintJack(room.engine); }
+      const sp = ev.target.closest('[data-jsa]'); if (sp) { jkd.splitA = +sp.dataset.jsa; SND.play('tick'); return paintJack(room.engine); }
+      if (!ev.target.closest('.jxw')) return;
+      // nearest tappable thing on the board (forgiving touch)
+      let best = null, bd = 34;
+      for (const el of g.querySelectorAll('.jxw [data-hit]')) { const r = el.getBoundingClientRect(), d = Math.hypot(ev.clientX - (r.left + r.width / 2), ev.clientY - (r.top + r.height / 2)); if (d < bd) { bd = d; best = el; } }
+      if (!best) { if (jkd.filt) { jkd.filt = null; jkd.splitA = null; paintJack(room.engine); } return; }
+      if (best.dataset.jkey) return jPlay(best.dataset.jkey);
+      const s = +best.dataset.s, k = +best.dataset.k, L = jLegal(room.engine);
+      if (best.dataset.hit === 'tgt') { const m = jTargets(L).find((x) => x.ts === s && x.tk === k); if (m) return jPlay(m.key); }
+      const mine = L.filter((m) => jPrim(m) === s + '_' + k);
+      if (mine.length === 1) return jPlay(mine[0].key);
+      jkd.filt = jkd.filt && jkd.filt.s === s && jkd.filt.k === k ? null : { s, k }; jkd.splitA = null; SND.play('tick'); paintJack(room.engine);
     });
   }
   if (J.last && J.last.id !== jkd.lastId && !jkd.anim) {
@@ -2552,12 +2569,21 @@ function renderJack(e) {
       }, 380);
     } else jkd.shown = J.p.map((r) => r.slice());
   } else if (!jkd.anim) jkd.shown = J.p.map((r) => r.slice());
-  if (e.turn !== room.mySeat) { jkd.sel = -1; jkd.filt = null; }
+  if (e.turn !== room.mySeat) { jkd.sel = -1; jkd.filt = null; jkd.splitA = null; }
   if (J.round !== jkd.round) { if (jkd.round) SND.play('deal'); jkd.round = J.round; }
   paintJack(e);
   altMe(e, '', e.turn === room.mySeat && !e.over, 'العب ورقة 🃏');
 }
-function jPlay(key) { sendWs({ t: 'act', a: { type: 'play', key } }); jkd.sel = -1; jkd.filt = null; $('alt').querySelector('.jxopts').innerHTML = ''; $('alt').querySelectorAll('.jxmb.can').forEach((x) => x.classList.remove('can')); }
+function jPlay(key) { sendWs({ t: 'act', a: { type: 'play', key } }); jkd.sel = -1; jkd.filt = null; jkd.splitA = null; $('alt').querySelector('.jxopts').innerHTML = ''; $('alt').querySelectorAll('.jxmb.can').forEach((x) => x.classList.remove('can')); }
+function jPrim(m) { return m.kind === 'fwd' || m.kind === 'back' || m.kind === 'split' || m.kind === 'swap' ? m.s + '_' + m.k : null; }
+function jTargets(L) {
+  const out = [];
+  for (const m of L) {
+    if (m.kind === 'swap') out.push({ ts: m.t, tk: m.j, key: m.key });
+    if (m.kind === 'split' && m.n === jkd.splitA) out.push({ ts: m.s, tk: m.k2, key: m.key });
+  }
+  return out;
+}
 function jLegal(e) { const L = e.jk.legal || []; return jkd.sel >= 0 ? L.filter((m) => m.c === jkd.sel) : []; }
 function jFlyCard(seat, card) {
   const w = $('alt').querySelector('.jxw'), fly = $('alt').querySelector('.jxfly'); if (!w || !card) return;
@@ -2577,15 +2603,25 @@ function paintJack(e) {
   const J = e.jk, me = room.mySeat, mine = me >= 0 ? me : 0;
   const my = e.turn === me && !e.over && !jkd.anim;
   const L = my ? jLegal(e) : [];
-  const fm = (m, f) => (m.s === f.s && (m.k === f.k || m.k2 === f.k)) || (m.t === f.s && m.j === f.k);
-  const Lf = jkd.filt ? L.filter((m) => fm(m, jkd.filt)) : L;
-  const canSet = new Set(); L.forEach((m) => { if (m.s != null && m.k != null) canSet.add(m.s + '_' + m.k); if (m.k2 != null) canSet.add(m.s + '_' + m.k2); if (m.t != null) canSet.add(m.t + '_' + m.j); });
+  const prim = new Set(L.map(jPrim).filter(Boolean));
+  const fk = jkd.filt ? jkd.filt.s + '_' + jkd.filt.k : null;
+  const Lf = fk ? L.filter((m) => jPrim(m) === fk) : L;
+  const tg = fk ? jTargets(Lf) : [];
+  const tgSet = new Set(tg.map((x) => x.ts + '_' + x.tk));
   const last = J.last && !jkd.anim ? new Set(J.last.seg.map((sg) => sg.s + '_' + sg.k)) : new Set();
   let h = '';
   jkd.shown.forEach((ts, s) => ts.forEach((p, k) => {
-    const [x, y] = jXY(s, p, k); const can = my && canSet.has(s + '_' + k); const sel = jkd.filt && jkd.filt.s === s && jkd.filt.k === k;
-    h += `<b class="jxmb${can ? ' can' : ''}${sel ? ' sel' : ''}${last.has(s + '_' + k) ? ' last' : ''}" data-s="${s}" data-k="${k}" style="left:${x / 6}%;top:${y / 6}%;--c:${JCOL[s]};--d:${JDARK[s]};--l:${JLITE[s]}"></b>`;
+    const [x, y] = jXY(s, p, k), id = s + '_' + k; const isT = my && tgSet.has(id), can = my && !fk && prim.has(id), sel = fk === id;
+    h += `<b class="jxmb${can ? ' can' : ''}${isT ? ' tgt' : ''}${sel ? ' sel' : ''}${last.has(id) ? ' last' : ''}" ${can || isT || (my && sel) ? `data-hit="${isT ? 'tgt' : 'm'}"` : ''} data-s="${s}" data-k="${k}" style="left:${x / 6}%;top:${y / 6}%;--c:${JCOL[s]};--d:${JDARK[s]};--l:${JLITE[s]}"></b>`;
   }));
+  // ghost destinations: tap them to play
+  const seen = new Set();
+  for (const m of Lf) {
+    if (!['fwd', 'back', 'out'].includes(m.kind)) continue; const sg = m.seg[0]; if (!sg) continue;
+    const [x, y] = jXY(sg.s, sg.to, sg.k), key = Math.round(x) + ',' + Math.round(y); if (seen.has(key)) continue; seen.add(key);
+    h += `<b class="jxgh${m.caps ? ' cap' : ''}" data-hit="g" data-jkey='${m.key.replace(/'/g, '&#39;')}' style="left:${x / 6}%;top:${y / 6}%;--c:${JCOL[sg.s]}"><i style="transform:rotate(${90 * mine}deg)">${m.kind === 'out' ? '⬇' : m.n}</i></b>`;
+  }
+  if (fk && jkd.splitA) for (const m of Lf.filter((m) => m.kind === 'split' && m.n === jkd.splitA)) { const sg = m.seg[0]; const [x, y] = jXY(sg.s, sg.to, sg.k); const key = Math.round(x) + ',' + Math.round(y); if (seen.has(key)) continue; seen.add(key); h += `<b class="jxgh half" style="left:${x / 6}%;top:${y / 6}%;--c:${JCOL[sg.s]}"><i style="transform:rotate(${90 * mine}deg)">${m.n}</i></b>`; }
   $('alt').querySelector('.jxm').innerHTML = h;
   // discard pile
   const pile = J.pile || [], pk = pile.map((x) => x.c).join();
@@ -2606,13 +2642,27 @@ function paintJack(e) {
   // options
   let o = '';
   if (my && jkd.sel >= 0) {
-    const opts = Lf.slice(0, 12);
-    o = opts.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}${m.kind === 'discard' ? ' dis' : ''}" data-jkey='${m.key.replace(/'/g, '&#39;')}'>${esc(m.label)}${m.caps ? ' 💥' : ''}</button>`).join('') + (Lf.length > 12 ? `<span class="jxmore">كبس على كرة لتشوف حركاتها</span>` : '');
-    if (!opts.length) o = '<span class="jxmore">هالورقة ما إلها حركة هلق — اختار غيرها</span>';
+    const nm = (i) => esc(room.seats[i] ? room.seats[i].name : '');
+    if (!L.length) o = '<span class="jxmore">هالورقة ما إلها حركة هلق — اختار غيرها</span>';
+    else if (L.every((m) => m.kind === 'discard')) o = `<button class="jxo dis" data-jkey='${L[0].key}'>🔥 احرق هالورقة</button>`;
+    else if (!fk) {
+      const outs = L.filter((m) => m.kind === 'out');
+      o = outs.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>⬇️ نزّل كرة${m.caps ? ' 💥' : ''}</button>`).join('') + `<span class="jxmore">${prim.size ? 'كبس على كرة تضوي، أو على الدائرة المنقّطة وين بدك توصل' : ''}</span>`;
+    } else {
+      const sw = Lf.filter((m) => m.kind === 'swap'), spl = Lf.filter((m) => m.kind === 'split'), full = Lf.filter((m) => m.kind === 'fwd' || m.kind === 'back');
+      if (sw.length) o += '<span class="jxmore">🔄 كبس على الكرة اللي بدك تتبدّل معها</span>';
+      if (spl.length || (full.length && jkd.sel >= 0 && (room.engine.jk.hand[jkd.sel] || '').slice(1) === '7')) {
+        const as = [...new Set(spl.map((m) => m.n))].sort((x, y) => x - y);
+        o += full.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>٧ كاملة${m.caps ? ' 💥' : ''}</button>`).join('');
+        o += as.map((a) => `<button class="jxo${jkd.splitA === a ? ' on' : ''}" data-jsa="${a}">✂️ ${a} هون + ${7 - a}</button>`).join('');
+        if (jkd.splitA) o += `<span class="jxmore">هلق كبس على الكرة التانية لتمشي ${7 - jkd.splitA}</span>`;
+      } else if (!sw.length) o += full.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>${m.kind === 'back' ? '◀️ ٤ لورا' : `▶️ ${m.n} خطوة`}${m.caps ? ' 💥' : ''}</button>`).join('');
+      o += '<button class="jxo ghost" data-jx="cancel">✕</button>';
+    }
   }
   $('alt').querySelector('.jxopts').innerHTML = o;
   const cur = J.cur, who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
-  $('alt').querySelector('.jxstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (discardOnly ? '<b>ما عندك حركة</b> — اختار ورقة لترميها 🔥' : jkd.sel < 0 ? '<b>دورك!</b> اختار ورقة 👇' : '<b>اكبس على الكرة</b> أو اختار الحركة') : `<i class="ldot" style="background:${JCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+  $('alt').querySelector('.jxstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (discardOnly ? '<b>ما عندك حركة</b> — اختار ورقة لترميها 🔥' : jkd.sel < 0 ? '<b>دورك!</b> اختار ورقة 👇' : jkd.filt ? '<b>اختار الحركة</b> 👇' : '<b>اختار الكرة</b> أو المكان اللي بدك توصله') : `<i class="ldot" style="background:${JCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 
 // ----- ارسم وخمّن -----
