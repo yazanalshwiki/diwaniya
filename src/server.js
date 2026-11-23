@@ -74,6 +74,7 @@ if (Bun.env.DATABASE_URL) {
   await sql`alter table users add column if not exists items jsonb not null default '[]'`;
   await sql`alter table users add column if not exists equip jsonb not null default '{}'`;
   await sql`alter table users add column if not exists last_daily date`;
+  await sql`alter table users add column if not exists favs jsonb not null default '[]'`;
   await sql`alter table users add column if not exists banned_until timestamptz`;
   await sql`alter table users add column if not exists ban_reason text`;
   await sql`alter table users add column if not exists last_ip text`;
@@ -86,7 +87,7 @@ if (Bun.env.DATABASE_URL) {
 } else console.log('No DATABASE_URL — using in-memory store');
 
 const pub = (u, self) => u && { id: u.id, username: u.username, points: u.points, games: u.games, wins: u.wins, avatar: u.avatar || null, ph: +u.ph || 0,
-  ...(self ? { email: u.email || '', items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
+  ...(self ? { email: u.email || '', favs: u.favs || [], items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
 async function patchUser(id, f) {
   if (sql) {
     if ('email' in f) await sql`update users set email = ${f.email} where id = ${id}`;
@@ -95,6 +96,7 @@ async function patchUser(id, f) {
     if ('photo' in f) await sql`update users set photo = ${f.photo}, ph = ${f.ph} where id = ${id}`;
     if ('items' in f) await sql`update users set items = ${JSON.stringify(f.items)}::jsonb where id = ${id}`;
     if ('equip' in f) await sql`update users set equip = ${JSON.stringify(f.equip)}::jsonb where id = ${id}`;
+    if ('favs' in f) await sql`update users set favs = ${JSON.stringify(f.favs)}::jsonb where id = ${id}`;
     if ('points' in f) await sql`update users set points = ${f.points} where id = ${id}`;
     if ('last_daily' in f) await sql`update users set last_daily = ${f.last_daily} where id = ${id}`;
     if ('banned_until' in f) await sql`update users set banned_until = ${f.banned_until}, ban_reason = ${f.ban_reason || null} where id = ${id}`;
@@ -565,6 +567,13 @@ const server = Bun.serve({
       const u = await getUser(+url.pathname.slice(3));
       if (!u || !u.photo) return new Response('not found', { status: 404 });
       return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
+    }
+    if (url.pathname === '/api/favs' && req.method === 'POST') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      const u = p && (await getUser(p.id)); if (!u) return json({ error: 'unauthorized' }, 401);
+      const { favs = [] } = await body(req);
+      const list = [...new Set((Array.isArray(favs) ? favs : []).map(String).filter((g) => GAME_NAMES[g]))].slice(0, 41);
+      await patchUser(u.id, { favs: list }); return json({ favs: list });
     }
     if (url.pathname === '/api/profile' && req.method === 'POST') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));

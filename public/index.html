@@ -506,6 +506,7 @@ html,body{background:#0b0a16}
 .rpick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.rpick button{padding:6px 10px;font-size:12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#ddd}.rpick button.on{background:var(--gold2);color:#111}
 .rmore{margin-top:10px;background:rgba(255,255,255,.04);border-radius:12px;padding:8px 12px}.rmore summary{cursor:pointer;font-weight:800;font-size:14px}
 .playbar .lbtns{display:flex;gap:6px}.playbar #bRules{padding:12px 12px;font-size:13px;border-radius:14px}
+.gt2{padding-left:28px}.gt2 .gfav{position:absolute;bottom:6px;left:5px;font-size:17px;line-height:1;color:#6f6c96;padding:4px;cursor:pointer}.gt2 .gfav.on{color:#ffd24d;text-shadow:0 0 8px rgba(255,210,77,.6)}
 </style>
 </head>
 <body>
@@ -831,7 +832,7 @@ function connect() {
   };
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
-    if (m.t === 'me') { me = m.user; renderMe(); }
+    if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); }
     else if (m.t === 'banned') { manualClose = true; localStorage.removeItem('tok'); token = ''; room = null; show('auth'); openModal('ban', `<h3>⛔ محظور</h3><p style="text-align:center;color:var(--muted);line-height:1.7">${esc(m.msg || '')}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); }
     else if (m.t === 'notice') { if (m.big) openModal('notice', `<h3>📢 من الإدارة</h3><p style="text-align:center;font-size:16px;line-height:1.7">${esc(m.msg.replace(/^📢 /, ''))}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); else toast(m.msg); SND.play('trump'); }
     else if (m.t === 'lobby') {
@@ -2666,17 +2667,34 @@ function uploadPhoto(file) {
 if (token) connect(); else show('auth');
 </script><script>
 (() => {
-  const CATS = [['all', 'الكل', '✨'], ['cards', 'ورق', '🃏'], ['dice', 'نرد', '🎲'], ['chal', 'تحدي', '♟️'], ['party', 'جمعات', '🎉']];
+  const CATS = [['fav', 'المفضلة', '⭐'], ['all', 'الكل', '✨'], ['cards', 'ورق', '🃏'], ['dice', 'نرد', '🎲'], ['chal', 'تحدي', '♟️'], ['party', 'جمعات', '🎉']];
   let cat = 'all'; try { cat = localStorage.getItem('gcat') || 'all'; } catch {}
+  const favs = () => { if (me && Array.isArray(me.favs)) return me.favs; try { return JSON.parse(localStorage.getItem('favs') || '[]'); } catch { return []; } };
   $('gCount').textContent = GAMES.length;
   const R = () => {
-    $('gCats').innerHTML = CATS.map(([k, n, ic]) => `<button data-gc2="${k}" class="${k === cat ? 'on' : ''}">${ic} ${n}<i>${k === 'all' ? GAMES.length : GAMES.filter((g) => g.cat === k).length}</i></button>`).join('');
-    $('gGrid').innerHTML = GAMES.map((g, i) => (cat === 'all' || g.cat === cat ? `<button class="gt2 c-${g.cat} ${i === gi ? 'on' : ''}" data-gi="${i}"><span class="gic">${g.ic}</span><span class="gtx"><b>${g.n}</b><small>${g.d}</small></span><em>👤 ${g.pl}</em></button>` : '')).join('');
+    const F = favs();
+    if (cat === 'fav' && !F.length) cat = 'all';
+    $('gCats').innerHTML = CATS.map(([k, n, ic]) => (k === 'fav' && !F.length ? '' : `<button data-gc2="${k}" class="${k === cat ? 'on' : ''}">${ic} ${n}<i>${k === 'all' ? GAMES.length : k === 'fav' ? F.length : GAMES.filter((g) => g.cat === k).length}</i></button>`)).join('');
+    const list = GAMES.map((g, i) => [g, i]).filter(([g]) => (cat === 'all' ? true : cat === 'fav' ? F.includes(g.g) : g.cat === cat));
+    if (cat === 'all') list.sort((a, b) => (F.includes(b[0].g) ? 1 : 0) - (F.includes(a[0].g) ? 1 : 0));
+    $('gGrid').innerHTML = list.map(([g, i]) => `<button class="gt2 c-${g.cat} ${i === gi ? 'on' : ''}" data-gi="${i}"><span class="gic">${g.ic}</span><span class="gtx"><b>${g.n}</b><small>${g.d}</small></span><em>👤 ${g.pl}</em><span class="gfav ${F.includes(g.g) ? 'on' : ''}" data-fav="${g.g}" role="button" aria-label="مفضلة">${F.includes(g.g) ? '★' : '☆'}</span></button>`).join('');
     const G = GAMES[gi]; $('pbIc').textContent = G.ic; $('pbName').textContent = G.n; $('pbDesc').textContent = G.d; $('bCreate').textContent = '▶ العب';
   };
+  window.renderGames = R;
   $('bRules').onclick = () => openRules(GAMES[gi].g);
   $('gCats').addEventListener('click', (ev) => { const b = ev.target.closest('[data-gc2]'); if (!b) return; cat = b.dataset.gc2; try { localStorage.setItem('gcat', cat); } catch {} R(); });
-  $('gGrid').addEventListener('click', (ev) => { const b = ev.target.closest('[data-gi]'); if (!b) return; gi = +b.dataset.gi; try { localStorage.setItem('lastGame', GAMES[gi].g); } catch {} R(); SND.play('tick'); });
+  $('gGrid').addEventListener('click', (ev) => {
+    const f = ev.target.closest('[data-fav]');
+    if (f) {
+      ev.stopPropagation();
+      const F = favs().slice(); const g = f.dataset.fav; const k = F.indexOf(g); if (k >= 0) F.splice(k, 1); else F.push(g);
+      if (me) me.favs = F; try { localStorage.setItem('favs', JSON.stringify(F)); } catch {}
+      toast(k >= 0 ? 'انشالت من المفضلة' : '⭐ انضافت للمفضلة');
+      fetch('/api/favs', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ favs: F }) }).catch(() => {});
+      R(); return;
+    }
+    const b = ev.target.closest('[data-gi]'); if (!b) return; gi = +b.dataset.gi; try { localStorage.setItem('lastGame', GAMES[gi].g); } catch {} R(); SND.play('tick');
+  });
   R();
 })();
 (()=>{const VO="/snd/",V={};for(const k of ["burn","laugh","cry","angry","scream"])V[k]=VO+k+".mp3?v=3";const A={};for(const k in V){A[k]=new Audio(V[k]);A[k].preload="auto"}let un=!1;document.addEventListener("pointerdown",()=>{if(un)return;un=!0;for(const k in A){const a=A[k];a.muted=!0;a.play().then(()=>{a.pause();a.currentTime=0;a.muted=!1}).catch(()=>{a.muted=!1})}},{passive:!0});const p=SND.play.bind(SND);SND.play=n=>{const a=A[n];if(!a)return p(n);if(SND.isMuted())return!0;try{a.currentTime=0;a.volume=1;a.play().catch(()=>p(n))}catch{return p(n)}return!0}})();
