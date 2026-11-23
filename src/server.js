@@ -564,7 +564,7 @@ const server = Bun.serve({
       return new Response(f, { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
     }
     if (url.pathname === '/manifest.json') return Response.json({ name: 'ديوانية الورق', short_name: 'الديوانية', start_url: '/', display: 'standalone', background_color: '#0c0a1c', theme_color: '#14113a', lang: 'ar', dir: 'rtl',
-      icons: [{ src: '/img/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/img/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }] });
+      icons: [{ src: '/img/icon-192.png?v=2', sizes: '192x192', type: 'image/png' }, { src: '/img/icon-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'any' }] });
     if (/^\/img\/(av|tb|emo)\/[a-z0-9]+\.webp$/.test(url.pathname)) {
       const f = Bun.file(ROOT + 'public' + url.pathname);
       if (!(await f.exists())) return new Response('not found', { status: 404 });
@@ -577,7 +577,7 @@ const server = Bun.serve({
     }
     if (url.pathname === '/health') return new Response('ok');
     const origin = (req.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')) + '://' + (req.headers.get('x-forwarded-host') || req.headers.get('host'));
-    return new Response(html.replace('content="/img/og.png"', `content="${origin}/img/og.png"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    return new Response(html.replace('content="/img/og.png?v=2"', `content="${origin}/img/og.png?v=2"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
   },
   websocket: {
     idleTimeout: 120,

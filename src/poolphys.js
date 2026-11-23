@@ -6,9 +6,9 @@ export const POCKETS = [
 const POCKET_R = 5.3;
 const MOUTH = 7.5; // cushion gap around a pocket
 const DT = 1 / 120;
-const FRICTION = 0.9955; // per step velocity factor (rolling)
-const DECEL = 14; // linear decel units/s^2
-const MAX_SPEED = 260;
+const FRICTION = 0.998; // per step velocity factor (rolling)
+const DECEL = 18; // linear decel units/s^2
+const MAX_SPEED = 500;
 export const STEP_MS = 1000 / 120;
 
 export function rack() {
