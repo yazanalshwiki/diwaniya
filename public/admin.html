@@ -131,7 +131,7 @@ async function login() {
   $('le').textContent = '';
   try { const j = await api('login', { username: $('lu').value.trim(), password: $('lp').value }); tok = j.token; sessionStorage.setItem('atok', tok); start(); } catch (e) { $('le').textContent = e.message; }
 }
-$('lb').onclick = login; $('lp').onkeydown = (e) => e.key === 'Enter' && login();
+$('lb').onclick = login; $('lp').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }); $('lu').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('lp').focus(); });
 $('leye').onclick = () => { const p = $('lp'); p.type = p.type === 'password' ? 'text' : 'password'; $('leye').textContent = p.type === 'password' ? '👁️' : '🙈'; p.focus(); };
 function lwarn(e) { const v = $('lp').value + $('lu').value; const w = []; if (/[\u0600-\u06FF]/.test(v)) w.push('⚠️ لوحة المفاتيح على العربي — حوّلها للإنجليزي (Alt + Shift)'); if (e && e.getModifierState && e.getModifierState('CapsLock')) w.push('⚠️ زر الحروف الكبيرة Caps Lock شغّال'); $('lwarn').textContent = w.join(' — '); }
 $('lp').addEventListener('keyup', lwarn); $('lu').addEventListener('keyup', lwarn); $('lp').addEventListener('input', () => lwarn());
@@ -170,7 +170,7 @@ async function load() {
     }
   } catch (e) { toast(e.message); }
 }
-$('ub').onclick = () => { off = 0; load(); }; $('uq').onkeydown = (e) => e.key === 'Enter' && $('ub').click();
+$('ub').onclick = () => { off = 0; load(); }; $('uq').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ub').click(); });
 $('uprev').onclick = () => { off = Math.max(0, off - 50); load(); }; $('unext').onclick = () => { off += 50; load(); };
 document.addEventListener('click', async (e) => {
   const tr = e.target.closest('[data-u]'); const ub = e.target.closest('[data-unban]'), uu = e.target.closest('[data-uunban]'), cl = e.target.closest('[data-close]');
