@@ -521,6 +521,15 @@ html,body{background:#0b0a16}
 .pc.w{color:#fbfbf7;-webkit-text-stroke:1.3px #2a2015;text-shadow:0 2px 3px rgba(0,0,0,.45)}.pc.b{color:#1d1d1d;-webkit-text-stroke:.8px #000;text-shadow:0 1px 0 rgba(255,255,255,.25),0 2px 3px rgba(0,0,0,.4)}
 .pc.moving{z-index:3;transform:scale(1.12)}
 .chlog{display:flex;gap:6px;overflow-x:auto;width:min(96vw,560px);padding:4px 2px;scrollbar-width:none;direction:rtl}.chlog::-webkit-scrollbar{display:none}.chlog span{flex:0 0 auto;font-size:13px;padding:3px 8px;border-radius:8px;direction:ltr}.chlog .w{background:#ecd8b4;color:#222}.chlog .b{background:#2a2a3a;color:#eee}
+.frc{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}.frc:last-child{border:0}
+.frav{width:42px;height:42px;border-radius:50%;overflow:hidden;flex:0 0 auto;border:2px solid #3a3a55;position:relative}.frav.on{border-color:#39d353}.frav .avimg,.frav img,.frav svg{width:100%;height:100%;display:block}
+.frt{flex:1;min-width:0;display:flex;flex-direction:column}.frt b{font-size:15px}.frt small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frb{display:flex;gap:6px;align-items:center}.frb button{padding:7px 12px}
+.bnav button span{font-size:21px!important}.bnav button{font-size:11px}
+/* game tiles: names fully visible */
+.gt2{padding:10px 10px 10px 26px!important;align-items:center}.gt2 .gtx{gap:3px}.gt2 b{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:14px;line-height:1.25}
+.gt2 small{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.gt2 em{top:auto;bottom:7px;left:auto;right:auto;position:static;display:block;font-size:10px;margin-top:1px}
+.gt2 .gfav{top:6px;bottom:auto!important;left:5px!important}
 </style>
 </head>
 <body>
@@ -574,6 +583,12 @@ html,body{background:#0b0a16}
 <div id="rList"></div>
 </div>
 </section>
+<section id="tabFriends" class="hidden">
+<div class="box"><h2 style="margin:0 0 10px">➕ أضف صديق</h2>
+<div class="row"><input id="fAdd" placeholder="اسم اللاعب" autocomplete="off"><button class="gold" id="fAddB">إضافة</button></div></div>
+<div class="box hidden" id="fInBox"><h2 style="margin:0 0 8px">📩 طلبات صداقة</h2><div id="fIn"></div></div>
+<div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">👥 أصدقائي</h2><button class="small ghost" id="fRef">تحديث</button></div><div id="fList"></div><div id="fOut"></div></div>
+</section>
 <section id="tabTop" class="hidden">
 <div class="box">
 <div class="row" style="justify-content:space-between"><h2 style="margin:0">المتصدرين</h2><button class="small ghost" id="bLb">تحديث</button></div>
@@ -582,14 +597,14 @@ html,body{background:#0b0a16}
 </div>
 </section>
 </div>
-<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
+<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Friends"><span>👥</span>الأصدقاء</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
 </div>
 
 <div id="waiting" class="hidden"><div class="wrap">
   <div class="topbar">
     <button class="small ghost" id="wLeave">→ رجوع</button>
     <div style="font-weight:800" id="wGame"></div>
-    <button class="small gold" id="wShare">مشاركة 🔗</button>
+    <button class="small ghost" id="wFr">👥 ادعُ</button><button class="small gold" id="wShare">مشاركة 🔗</button>
   </div>
   <div class="box" style="text-align:center">
     <div class="meta">كود الطاولة</div>
@@ -850,7 +865,9 @@ function connect() {
   };
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
-    if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); }
+    if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); loadFriends(); }
+    else if (m.t === 'friends') { loadFriends(); }
+    else if (m.t === 'invite') { SND.play('trump'); openModal('invite', `<h3>📨 دعوة</h3><p style="text-align:center;font-size:16px;line-height:1.7"><b>${esc(m.from)}</b> عازمك تلعب معه <b>${esc(m.game)}</b></p><div class="row"><button class="gold" style="flex:1" data-fjoin="${esc(m.code)}">انضم 🎮</button><button class="ghost" style="flex:1" onclick="closeOverlay()">لا هلق</button></div>`); }
     else if (m.t === 'banned') { manualClose = true; localStorage.removeItem('tok'); token = ''; room = null; show('auth'); openModal('ban', `<h3>⛔ محظور</h3><p style="text-align:center;color:var(--muted);line-height:1.7">${esc(m.msg || '')}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); }
     else if (m.t === 'notice') { if (m.big) openModal('notice', `<h3>📢 من الإدارة</h3><p style="text-align:center;font-size:16px;line-height:1.7">${esc(m.msg.replace(/^📢 /, ''))}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); else toast(m.msg); SND.play('trump'); }
     else if (m.t === 'lobby') {
@@ -952,7 +969,8 @@ document.querySelectorAll('.bnav button').forEach((b) => (b.onclick = () => {
   const t = b.dataset.tab;
   if (t === 'Look') { openStore(); return; }
   document.querySelectorAll('.bnav button').forEach((x) => x.classList.toggle('on', x === b));
-  for (const k of ['Home', 'Rooms', 'Top']) $('tab' + k).classList.toggle('hidden', k !== t);
+  for (const k of ['Home', 'Rooms', 'Top', 'Friends']) $('tab' + k).classList.toggle('hidden', k !== t);
+  if (t === 'Friends') loadFriends();
   if (t === 'Rooms') sendWs({ t: 'lobby' });
   if (t === 'Top') sendWs({ t: 'leaders' });
 }));
@@ -2474,6 +2492,41 @@ const RULES_HTML = `<div class="rules"><h3>القوانين المختصرة</h3
 <p>الكراسي الفاضية يلعب فيها بوت، وإذا انقطع نت لاعب أكثر من 10 ثواني أو تأخر 40 ثانية بدوره، يلعب البوت عنه لين يرجع.</p></div>`;
 
 
+
+// ===== friends =====
+let FR = { friends: [], incoming: [], outgoing: [] };
+async function frApi(data) {
+  const r = await fetch('/api/friends', { method: data ? 'POST' : 'GET', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: data ? JSON.stringify(data) : undefined });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'خطأ'); return j;
+}
+function frCard(f, btns) {
+  const st = f.online ? (f.room ? `🎮 عم يلعب ${esc(f.room.game)}${f.room.status === 'waiting' ? ' (بانتظار لاعبين)' : ''}` : '🟢 متصل') : '⚪ مو متصل';
+  return `<div class="frc"><div class="frav ${f.online ? 'on' : ''}">${avPic({ uid: f.id, ph: f.ph, name: f.username, av: f.av })}</div><div class="frt"><b>${esc(f.username)}</b><small>${st}</small></div><div class="frb">${btns}</div></div>`;
+}
+async function loadFriends() {
+  try { FR = await frApi(); } catch { return; }
+  const inRoom = !!room;
+  $('fInBox').classList.toggle('hidden', !FR.incoming.length);
+  $('fIn').innerHTML = FR.incoming.map((f) => frCard(f, `<button class="small gold" data-fa="accept" data-fid="${f.id}">قبول</button><button class="small ghost" data-fa="decline" data-fid="${f.id}">✕</button>`)).join('');
+  $('fList').innerHTML = FR.friends.length ? FR.friends.map((f) => frCard(f, `${f.room && !inRoom ? `<button class="small gold" data-fjoin="${f.room.code}">انضم</button>` : ''}${inRoom && f.online ? `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>` : ''}<button class="small ghost" data-fa="remove" data-fid="${f.id}" title="حذف">🗑️</button>`)).join('') : '<div class="meta" style="padding:12px 0">لسا ما عندك أصدقاء — ضيف أصحابك بأسمائهن 👆</div>';
+  $('fOut').innerHTML = FR.outgoing.length ? `<div class="meta" style="margin:10px 0 4px">طلبات بعتّها:</div>` + FR.outgoing.map((f) => frCard(f, `<span class="meta">بانتظار…</span><button class="small ghost" data-fa="cancel" data-fid="${f.id}">إلغاء</button>`)).join('') : '';
+  const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', FR.incoming.length > 0);
+}
+async function frAct(a) { try { const j = await frApi(a); if (j.note) toast(j.note); loadFriends(); if (overlayKind === 'finv') openInvite(); } catch (e) { toast(e.message); } }
+$('fAddB').onclick = () => { const v = $('fAdd').value.trim(); if (!v) return; $('fAdd').value = ''; frAct({ action: 'add', username: v }); };
+$('fAdd').addEventListener('keydown', (e) => e.key === 'Enter' && $('fAddB').click());
+$('fRef').onclick = loadFriends;
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-fa]'); if (b) { if (b.dataset.fa === 'remove' && !confirm('أكيد بدك تحذفه من أصدقائك؟')) return; frAct({ action: b.dataset.fa, id: +b.dataset.fid }); return; }
+  const j = ev.target.closest('[data-fjoin]'); if (j) { closeOverlay(); sendWs({ t: 'join', code: j.dataset.fjoin }); }
+});
+async function openInvite() {
+  try { FR = await frApi(); } catch {}
+  const on = FR.friends.filter((f) => f.online);
+  openModal('finv', `<h3>👥 ادعُ أصدقاءك</h3>${on.length ? on.map((f) => frCard(f, f.room && room && f.room.code === room.code ? '<span class="meta">معك ✓</span>' : `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>`)).join('') : `<div class="meta" style="text-align:center;padding:10px">${FR.friends.length ? 'ما في حدا من أصدقاءك متصل هلق' : 'لسا ما عندك أصدقاء — ضيفهن من تبويب «الأصدقاء» بالصالة'}</div>`}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+}
+$('wFr').onclick = openInvite;
+
 // ===== per-game rules =====
 const RULES = {
   trix: ['٤ لاعبين، كل واحد لنفسه. في ٤ ممالك، وكل لاعب بيصير ملك مملكة وبيختار فيها الخمس لعبات بالترتيب اللي بدّه. لازم تتبع النقشة إذا معك.',
@@ -2764,7 +2817,7 @@ if (token) connect(); else show('auth');
     $('gCats').innerHTML = CATS.map(([k, n, ic]) => (k === 'fav' && !F.length ? '' : `<button data-gc2="${k}" class="${k === cat ? 'on' : ''}">${ic} ${n}<i>${k === 'all' ? GAMES.length : k === 'fav' ? F.length : GAMES.filter((g) => g.cat === k).length}</i></button>`)).join('');
     const list = GAMES.map((g, i) => [g, i]).filter(([g]) => (cat === 'all' ? true : cat === 'fav' ? F.includes(g.g) : g.cat === cat));
     if (cat === 'all') list.sort((a, b) => (F.includes(b[0].g) ? 1 : 0) - (F.includes(a[0].g) ? 1 : 0));
-    $('gGrid').innerHTML = list.map(([g, i]) => `<button class="gt2 c-${g.cat} ${i === gi ? 'on' : ''}" data-gi="${i}"><span class="gic">${g.ic}</span><span class="gtx"><b>${g.n}</b><small>${g.d}</small></span><em>👤 ${g.pl}</em><span class="gfav ${F.includes(g.g) ? 'on' : ''}" data-fav="${g.g}" role="button" aria-label="مفضلة">${F.includes(g.g) ? '★' : '☆'}</span></button>`).join('');
+    $('gGrid').innerHTML = list.map(([g, i]) => `<button class="gt2 c-${g.cat} ${i === gi ? 'on' : ''}" data-gi="${i}"><span class="gic">${g.ic}</span><span class="gtx"><b>${g.n}</b><small>${g.d}</small><em>👤 ${g.pl}</em></span><span class="gfav ${F.includes(g.g) ? 'on' : ''}" data-fav="${g.g}" role="button" aria-label="مفضلة">${F.includes(g.g) ? '★' : '☆'}</span></button>`).join('');
     const G = GAMES[gi]; $('pbIc').textContent = G.ic; $('pbName').textContent = G.n; $('pbDesc').textContent = G.d; $('bCreate').textContent = '▶ العب';
   };
   window.renderGames = R;

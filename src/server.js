@@ -82,6 +82,7 @@ if (Bun.env.DATABASE_URL) {
   await sql`alter table users add column if not exists last_seen timestamptz`;
   await sql`create table if not exists admins (id serial primary key, username text not null unique, pass text not null, role text not null default 'mod', created_at timestamptz not null default now())`;
   await sql`alter table admins add column if not exists player_id int`;
+  await sql`create table if not exists friends (a int not null, b int not null, status text not null default 'pending', created_at timestamptz not null default now(), primary key (a, b))`;
   await sql`create table if not exists bans (id serial primary key, kind text not null, value text not null, reason text, until timestamptz, created_at timestamptz not null default now())`;
   console.log('Postgres connected');
 } else console.log('No DATABASE_URL — using in-memory store');
@@ -137,6 +138,25 @@ async function leaderboard() {
   if (sql) return (await sql`select id, username, points, games, wins, avatar, ph from users order by points desc, wins desc limit 30`);
   return [...mem.users.values()].sort((a, b) => b.points - a.points).slice(0, 30).map(pub);
 }
+
+// ================== Friends ==================
+const memFriends = []; // {a,b,status}
+async function frRows(uid) { if (sql) return await sql`select a, b, status from friends where a = ${uid} or b = ${uid}`; return memFriends.filter((f) => f.a === uid || f.b === uid); }
+async function frGet(x, y) { if (sql) return (await sql`select a, b, status from friends where (a = ${x} and b = ${y}) or (a = ${y} and b = ${x})`)[0]; return memFriends.find((f) => (f.a === x && f.b === y) || (f.a === y && f.b === x)); }
+async function frSet(a, b, status) { if (sql) await sql`insert into friends (a, b, status) values (${a}, ${b}, ${status}) on conflict (a, b) do update set status = ${status}`; else { const f = memFriends.find((r) => r.a === a && r.b === b); if (f) f.status = status; else memFriends.push({ a, b, status }); } }
+async function frDel(x, y) { if (sql) await sql`delete from friends where (a = ${x} and b = ${y}) or (a = ${y} and b = ${x})`; else for (let i = memFriends.length - 1; i >= 0; i--) { const f = memFriends[i]; if ((f.a === x && f.b === y) || (f.a === y && f.b === x)) memFriends.splice(i, 1); } }
+async function friendsOf(uid) {
+  const rows = await frRows(uid), out = { friends: [], incoming: [], outgoing: [] };
+  for (const r of rows) {
+    const other = r.a === uid ? r.b : r.a; const u = await getUser(other); if (!u) continue;
+    const code = userRoom.get(other), room = code && rooms.get(code);
+    const card = { id: u.id, username: u.username, av: u.avatar || null, ph: +u.ph || 0, level: undefined, online: clients.has(other), room: room ? { code, game: GAME_NAMES[room.game] || room.game, status: room.status, priv: room.priv } : null };
+    if (r.status === 'accepted') out.friends.push(card); else if (r.b === uid) out.incoming.push(card); else out.outgoing.push(card);
+  }
+  out.friends.sort((x, y) => (y.online ? 1 : 0) - (x.online ? 1 : 0) || x.username.localeCompare(y.username, 'ar'));
+  return out;
+}
+const pokeFriends = (uid) => { const c = clients.get(uid); if (c) send(c, { t: 'friends' }); };
 
 // ================== Bans / admin helpers ==================
 const memBans = []; let memBanId = 1;
@@ -567,6 +587,33 @@ const server = Bun.serve({
       const u = await getUser(+url.pathname.slice(3));
       if (!u || !u.photo) return new Response('not found', { status: 404 });
       return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
+    }
+    if (url.pathname === '/api/friends') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      const me = p && (await getUser(p.id)); if (!me) return json({ error: 'unauthorized' }, 401);
+      if (req.method === 'GET') return json(await friendsOf(me.id));
+      const a = await body(req);
+      if (a.action === 'add') {
+        const t = await findUser(String(a.username || '').trim()); if (!t) return json({ error: 'ما في لاعب بهالاسم' }, 404);
+        if (t.id === me.id) return json({ error: 'ما فيك تضيف حالك 😄' }, 400);
+        const ex = await frGet(me.id, t.id);
+        if (ex && ex.status === 'accepted') return json({ error: 'هو صديقك أصلاً' }, 400);
+        if (ex && ex.a === t.id) { await frSet(t.id, me.id, 'accepted'); pokeFriends(t.id); const c = clients.get(t.id); if (c) send(c, { t: 'notice', msg: `🤝 ${me.username} قبل طلب صداقتك` }); return json({ ok: true, note: `صرتوا أصدقاء مع ${t.username} 🤝` }); }
+        if ((await frRows(me.id)).length >= 200) return json({ error: 'وصلت للحد الأقصى' }, 400);
+        await frSet(me.id, t.id, 'pending'); pokeFriends(t.id);
+        const c = clients.get(t.id); if (c) send(c, { t: 'notice', msg: `👋 ${me.username} بعتلك طلب صداقة` });
+        return json({ ok: true, note: `انبعت طلب الصداقة لـ${t.username}` });
+      }
+      const oid = +a.id; const ex = oid && (await frGet(me.id, oid)); if (!ex) return json({ error: 'مو موجود' }, 404);
+      if (a.action === 'accept') { if (ex.b !== me.id) return json({ error: 'ما في طلب' }, 400); await frSet(ex.a, ex.b, 'accepted'); pokeFriends(oid); const c = clients.get(oid); if (c) send(c, { t: 'notice', msg: `🤝 ${me.username} قبل طلب صداقتك` }); return json({ ok: true }); }
+      if (a.action === 'decline' || a.action === 'remove' || a.action === 'cancel') { await frDel(me.id, oid); pokeFriends(oid); return json({ ok: true }); }
+      if (a.action === 'invite') {
+        if (ex.status !== 'accepted') return json({ error: 'لازم تكونوا أصدقاء' }, 400);
+        const code = userRoom.get(me.id), r = code && rooms.get(code); if (!r) return json({ error: 'افتح طاولة أول' }, 400);
+        const c = clients.get(oid); if (!c) return json({ error: 'صديقك مو متصل هلق' }, 400);
+        send(c, { t: 'invite', from: me.username, code, game: GAME_NAMES[r.game] || r.game }); return json({ ok: true, note: 'انبعتت الدعوة 📨' });
+      }
+      return json({ error: 'أمر غلط' }, 400);
     }
     if (url.pathname === '/api/favs' && req.method === 'POST') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
