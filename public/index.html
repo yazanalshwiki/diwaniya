@@ -530,6 +530,15 @@ html,body{background:#0b0a16}
 .gt2{padding:10px 10px 10px 26px!important;align-items:center}.gt2 .gtx{gap:3px}.gt2 b{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:14px;line-height:1.25}
 .gt2 small{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.gt2 em{top:auto;bottom:7px;left:auto;right:auto;position:static;display:block;font-size:10px;margin-top:1px}
 .gt2 .gfav{top:6px;bottom:auto!important;left:5px!important}
+.lstrip{width:100%;display:flex;justify-content:center}.ldot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.lstat{text-align:center;font-size:15px;min-height:24px;color:#d8d8e8}.lstat b{color:#fff}
+.lwrapb{width:min(96vw,58vh,580px)}.ldb{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #fffdf7,0 0 0 8px #2b2a44,0 18px 40px rgba(0,0,0,.6);transform:rotate(var(--rot));direction:ltr}.ldb svg{width:100%;height:100%;display:block}
+.ltoks{position:absolute;inset:0}
+.ltk{position:absolute;width:5.6%;height:5.6%;transform:translate(-50%,-56%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,var(--c) 32%,var(--d) 100%);box-shadow:0 3px 0 var(--d),0 5px 8px rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;transition:left .14s ease,top .14s ease;z-index:2}
+.ltk.sm{width:4.4%;height:4.4%}.ltk i{font-style:normal;font-size:min(2.6vw,13px);font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.ltk.can{z-index:4;cursor:pointer;animation:lpulse .8s ease-in-out infinite alternate}@keyframes lpulse{from{box-shadow:0 3px 0 var(--d),0 0 0 3px #fff,0 0 14px 4px #fff}to{box-shadow:0 3px 0 var(--d),0 0 0 5px #ffd24d,0 0 22px 8px rgba(255,210,77,.8)}}
+.ldice{display:flex;flex-direction:column;align-items:center;gap:4px}.ldie{background:none;border:0;padding:6px;border-radius:18px;box-shadow:0 0 0 3px var(--c)}.ldie .die{width:58px;height:58px}.ldie.can{animation:pulseb .8s infinite alternate;cursor:pointer}.ldie.spin .die{animation:droll .5s linear infinite}.ldie:disabled{opacity:.85}
+.lhint{font-size:12px;color:var(--muted);min-height:16px}
 </style>
 </head>
 <body>
@@ -2162,6 +2171,7 @@ function pips(n) { const P = { 0: [], 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3,
 alt.rolls = {};
 function renderUI(e) {
   if (e.game === 'chess' && e.chess) return renderChess(e);
+  if (e.game === 'ludo' && e.ludo) return renderLudo(e);
   altShell(e);
   const u = e.ui || { blocks: [] }, mine = room.mySeat;
   const strip = altStrip(e, (i) => `<div class="mpc">${(u.players && u.players[i] && u.players[i].badge) || ''}</div><div class="mpx">${(u.players && u.players[i] && u.players[i].sub) || ''}</div>`);
@@ -2244,6 +2254,78 @@ function paintChess(e, pending) {
   $('alt').querySelector('.chstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (c.check ? '<b class="red">⚠️ كش! لازم تحمي الملك</b>' : chs.sel >= 0 ? 'اختار وين بدك تحركها' : '<b>دورك</b> — اختار قطعة') : `دور ${esc(turnName)}${c.check ? ' — <b class="red">كش!</b>' : ''}`;
   $('alt').querySelector('.chlog').innerHTML = c.log.map((m, k) => `<span class="${m.s === 0 ? 'w' : 'b'}">${esc(m.txt)}</span>`).join('');
   const lg = $('alt').querySelector('.chlog'); lg.scrollLeft = -lg.scrollWidth;
+}
+
+// ----- لودو: proper board -----
+const LCOL = ['#e53935', '#1e88e5', '#43a047', '#fbc02d'];
+const LDARK = ['#a31a17', '#0f5aa6', '#256d29', '#c99400'];
+const LP = (() => { const P = []; const seg = (r, c, dr, dc, n) => { for (let i = 0; i < n; i++) P.push([r + dr * i, c + dc * i]); };
+  seg(13, 6, -1, 0, 5); seg(8, 5, 0, -1, 6); P.push([7, 0]); seg(6, 0, 0, 1, 6); seg(5, 6, -1, 0, 6); P.push([0, 7]); seg(0, 8, 1, 0, 6); seg(6, 9, 0, 1, 6); P.push([7, 14]); seg(8, 14, 0, -1, 6); seg(9, 8, 1, 0, 6); P.push([14, 7]); seg(14, 6, -1, 0, 1); return P.slice(0, 52); })();
+const LHOME = [[[13, 7], [12, 7], [11, 7], [10, 7], [9, 7], [8, 7]], [[7, 1], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6]], [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7]], [[7, 13], [7, 12], [7, 11], [7, 10], [7, 9], [7, 8]]];
+const LYARD = [[[10.5, 1.5], [10.5, 3.5], [12.5, 1.5], [12.5, 3.5]], [[1.5, 1.5], [1.5, 3.5], [3.5, 1.5], [3.5, 3.5]], [[1.5, 10.5], [1.5, 12.5], [3.5, 10.5], [3.5, 12.5]], [[10.5, 10.5], [10.5, 12.5], [12.5, 10.5], [12.5, 12.5]]];
+const LFIN = [[8.1, 7], [7, 5.9], [5.9, 7], [7, 8.1]];
+const LSAFE = [0, 8, 13, 21, 26, 34, 39, 47];
+function ludoCell(s, p, k) { if (p < 0) return LYARD[s][k]; if (p <= 50) return LP[(p + 13 * s) % 52]; if (p < 57) return LHOME[s][p - 51]; return LFIN[s]; }
+function ludoBoardSvg() {
+  const C = 40; let g = '';
+  const rect = (r, c, fill, extra = '') => `<rect x="${c * C}" y="${r * C}" width="${C}" height="${C}" fill="${fill}" stroke="#c9c2b4" stroke-width="1" ${extra}/>`;
+  const yardPos = [[9, 0], [0, 0], [0, 9], [9, 9]];
+  yardPos.forEach(([r, c], s) => {
+    g += `<rect x="${c * C}" y="${r * C}" width="${6 * C}" height="${6 * C}" fill="${LCOL[s]}"/>`;
+    g += `<rect x="${c * C + 26}" y="${r * C + 26}" width="${6 * C - 52}" height="${6 * C - 52}" rx="22" fill="#fffdf7" stroke="${LDARK[s]}" stroke-width="3"/>`;
+    LYARD[s].forEach(([yr, yc]) => { g += `<circle cx="${(yc + 0.5) * C}" cy="${(yr + 0.5) * C}" r="${C * 0.62}" fill="${LCOL[s]}" opacity=".22"/><circle cx="${(yc + 0.5) * C}" cy="${(yr + 0.5) * C}" r="${C * 0.62}" fill="none" stroke="${LCOL[s]}" stroke-width="2.5"/>`; });
+  });
+  LP.forEach(([r, c], k) => { const st = k % 13 === 0 ? k / 13 : -1; g += rect(r, c, st >= 0 ? LCOL[st] : '#fffdf7'); if (LSAFE.includes(k) && st < 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="26" fill="#b7ad98">★</text>`; if (st >= 0) g += `<text x="${(c + 0.5) * C}" y="${(r + 0.5) * C + 9}" text-anchor="middle" font-size="24" fill="#fff" opacity=".85">★</text>`; });
+  LHOME.forEach((h, s) => h.forEach(([r, c]) => (g += rect(r, c, LCOL[s]))));
+  const m = 6 * C, M = 9 * C, mid = 7.5 * C;
+  g += `<polygon points="${m},${M} ${M},${M} ${mid},${mid}" fill="${LCOL[0]}"/><polygon points="${m},${m} ${m},${M} ${mid},${mid}" fill="${LCOL[1]}"/><polygon points="${m},${m} ${M},${m} ${mid},${mid}" fill="${LCOL[2]}"/><polygon points="${M},${m} ${M},${M} ${mid},${mid}" fill="${LCOL[3]}"/>`;
+  g += `<circle cx="${mid}" cy="${mid}" r="18" fill="#fffdf7" opacity=".9"/><text x="${mid}" y="${mid + 8}" text-anchor="middle" font-size="22">🏁</text>`;
+  return `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="600" fill="#fffdf7"/>${g}</svg>`;
+}
+const lud = { code: '', lastId: 0, shown: null, anim: null, roll: 0 };
+function renderLudo(e) {
+  altShell(e);
+  const L = e.ludo, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
+  if (lud.code !== room.code || !$('alt').querySelector('.ldb')) {
+    lud.code = room.code; lud.lastId = L.last ? L.last.id : 0; lud.shown = L.t.map((r) => r.slice()); lud.roll = L.rollId;
+    $('alt').innerHTML = `<div class="lstrip"></div><div class="lstat"></div><div class="lwrapb"><div class="ldb" style="--rot:${-90 * rot}deg">${ludoBoardSvg()}<div class="ltoks"></div></div></div><div class="ldice"></div>`;
+    $('alt').querySelector('.ltoks').addEventListener('click', (ev) => { const b = ev.target.closest('[data-lk]'); if (!b || !b.classList.contains('can')) return; sendWs({ t: 'act', a: { type: 'move', k: +b.dataset.lk } }); b.classList.remove('can'); SND.play('tick'); });
+    $('alt').querySelector('.ldice').addEventListener('click', (ev) => { if (ev.target.closest('.ldie.can')) { sendWs({ t: 'act', a: { type: 'roll' } }); ev.target.closest('.ldie').classList.add('spin'); } });
+  }
+  const done = (i) => L.t[i].filter((x) => x === 57).length;
+  $('alt').querySelector('.lstrip').innerHTML = altStrip(e, (i) => `<div class="mpc"><i class="ldot" style="background:${LCOL[i]}"></i> ${done(i)}/4 🏁</div>`);
+  // animate last move step by step
+  if (L.last && L.last.id !== lud.lastId && !lud.anim) {
+    const m = L.last; lud.lastId = m.id;
+    const steps = m.from < 0 ? [0] : Array.from({ length: m.to - m.from }, (_, i) => m.from + i + 1);
+    let k = 0;
+    lud.anim = setInterval(() => {
+      lud.shown[m.s][m.k] = steps[k]; SND.play(k === steps.length - 1 ? 'move' : 'tick'); paintLudo(room.engine);
+      if (++k >= steps.length) { clearInterval(lud.anim); lud.anim = null; if (m.cap) SND.play('capture'); lud.shown = room.engine.ludo.t.map((r) => r.slice()); paintLudo(room.engine); }
+    }, 150);
+  } else if (!lud.anim) lud.shown = L.t.map((r) => r.slice());
+  paintLudo(e);
+  if (L.rollId !== lud.roll) { lud.roll = L.rollId; SND.play('pop'); }
+  altMe(e, '', e.turn === mine && !e.over, L.rolled ? 'حرّك حجر 👆' : 'ارمي الزهر 🎲');
+}
+function paintLudo(e) {
+  const L = e.ludo, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
+  const my = e.turn === mine && !e.over && !lud.anim;
+  const byCell = {};
+  lud.shown.forEach((ts, s) => ts.forEach((p, k) => { const [r, c] = ludoCell(s, p, k); const key = p < 0 ? `y${s}${k}` : `${r},${c}`; (byCell[key] ||= []).push({ s, k, r, c, p }); }));
+  let h = '';
+  for (const list of Object.values(byCell)) list.forEach((o, n) => {
+    const off = list.length > 1 ? [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]][n % 4] : [0, 0];
+    const x = ((o.c + 0.5 + off[0]) / 15) * 100, y = ((o.r + 0.5 + off[1]) / 15) * 100;
+    const can = my && o.s === mine && L.mv.includes(o.k);
+    h += `<b class="ltk${can ? ' can' : ''}${list.length > 1 ? ' sm' : ''}" data-lk="${o.k}" data-ls="${o.s}" style="left:${x}%;top:${y}%;--c:${LCOL[o.s]};--d:${LDARK[o.s]}"><i style="transform:rotate(${90 * rot}deg)">${o.s === mine ? o.k + 1 : ''}</i></b>`;
+  });
+  $('alt').querySelector('.ltoks').innerHTML = h;
+  const cur = e.turn >= 0 ? e.turn : L.cur;
+  const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
+  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (L.rolled ? '<b>اختار حجر من الحجار اللي عم تضوي</b>' : '<b>دورك</b> — اكبس عالزهر') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+  const canRoll = my && !L.rolled;
+  $('alt').querySelector('.ldice').innerHTML = `<button class="ldie ${canRoll ? 'can' : ''}" style="--c:${LCOL[cur] || '#888'}" ${canRoll ? '' : 'disabled'}>${diceHtml(L.die || 6)}</button><div class="lhint">${canRoll ? 'اكبس لترمي' : L.die ? `طلع ${L.die}${L.die === 6 ? ' — بتلعب كمان!' : ''}` : ''}</div>`;
 }
 
 // ----- ارسم وخمّن -----

@@ -268,15 +268,20 @@ export class Ludo extends UIGame {
       this.die = d6(); this.rolled = true; this.rollId++; this.bump();
       if (this.die === 6) this.sixes++; else this.sixes = 0;
       if (this.sixes === 3) { this.msg = `${this.nm(seat)} جاب ٣ ستات — راح دوره`; this.sixes = 0; return this.passTurn(seat); }
-      if (!this.movable(seat).length) { this.msg = `${this.nm(seat)} جاب ${this.die} وما في حركة`; return this.passTurn(seat); }
-      this.msg = `${this.nm(seat)} جاب ${this.die}`; return;
+      const mv = this.movable(seat);
+      if (!mv.length) { this.msg = `${this.nm(seat)} جاب ${this.die} وما في حركة`; return this.passTurn(seat); }
+      this.msg = `${this.nm(seat)} جاب ${this.die}`;
+      const same = mv.every((k) => this.t[seat][k] === this.t[seat][mv[0]]);
+      if (mv.length === 1 || same) this.wait(750, () => { this.turn = seat; this.act(seat, { type: 'move', k: mv[0] }); });
+      return;
     }
     if (a.type === 'move') {
       if (!this.rolled) throw new Error('ارمي أول'); const k = +a.k; if (!this.canMove(seat, k, this.die)) throw new Error('هالحجر ما بيتحرك');
       const p = this.t[seat][k]; const np = p < 0 ? 0 : p + this.die; this.t[seat][k] = np; this.bump();
+      this.lastMv = { s: seat, k, from: p, to: np, id: (this.lastMv ? this.lastMv.id : 0) + 1, cap: null };
       let extra = this.die === 6; let note = '';
       const ab = this.abs(seat, np);
-      if (ab !== null && !SAFE.includes(ab)) for (let o = 0; o < 4; o++) if (o !== seat) for (let j = 0; j < 4; j++) if (this.abs(o, this.t[o][j]) === ab) { this.t[o][j] = -1; extra = true; note = ` 💥 أكل حجر ${this.nm(o)}`; }
+      if (ab !== null && !SAFE.includes(ab)) for (let o = 0; o < 4; o++) if (o !== seat) for (let j = 0; j < 4; j++) if (this.abs(o, this.t[o][j]) === ab) { this.t[o][j] = -1; extra = true; note = ` 💥 أكل حجر ${this.nm(o)}`; this.lastMv.cap = { s: o, k: j }; }
       if (np === 57) { extra = true; note = ' 🏁 وصّل حجر'; }
       this.scores = this.t.map((ts) => ts.filter((x) => x === 57).length);
       this.msg = `${this.nm(seat)} حرّك${note}`;
@@ -298,6 +303,11 @@ export class Ludo extends UIGame {
       if (v > bv) { bv = v; best = k; }
     }
     return { type: 'move', k: best };
+  }
+  view(seat) {
+    const v = super.view(seat);
+    v.ludo = { t: this.t, die: this.die, rolled: this.rolled, rollId: this.rollId, mv: seat === this.turn && this.rolled && !this.over ? this.movable(seat) : [], last: this.lastMv || null, cur: this.turn >= 0 ? this.turn : this.turnSave };
+    return v;
   }
   // 15x15 board coordinates for the 52 track squares starting at red's start (bottom-left arm going up)
   static path() {
