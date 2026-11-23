@@ -1,5 +1,5 @@
 import { SQL } from 'bun';
-import { createGame, GAME_NAMES } from './engine.js';
+import { createGame, GAME_NAMES, seatCount } from './engine.js';
 
 // static files: page + sounds (CC0 Kenney Casino Audio + recorded voice lines)
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -174,7 +174,7 @@ function roomView(r, uid) {
     }),
     chat: r.chat.slice(-40),
     voice: [...r.voice],
-    deadline: r.deadline || null,
+    deadline: r.deadline || (eng && eng.deadline) || null,
     engine: eng ? eng.view(mySeat) : null,
     result: r.result || null,
   };
@@ -290,7 +290,7 @@ async function handle(ws, m) {
       }
       removeFromRoom(uid);
       const room = { code: newCode(), game: m.game, priv: !!m.priv, host: uid, status: 'waiting', vip, turnMs,
-        seats: [{ uid, name, av, ph }, null, null, null], watchers: new Set(), voice: new Set(), chat: [], engine: null, timer: null, created: Date.now() };
+        seats: [{ uid, name, av, ph }, ...Array(seatCount(m.game) - 1).fill(null)], watchers: new Set(), voice: new Set(), chat: [], engine: null, timer: null, created: Date.now() };
       rooms.set(room.code, room);
       userRoom.set(uid, room.code);
       sysChat(room, `${name} فتح الطاولة`);
@@ -317,7 +317,7 @@ async function handle(ws, m) {
     case 'sit': {
       if (!r || r.status !== 'waiting') throw new Error('ما تقدر تغير مكانك الحين');
       const to = +m.seat;
-      if (!(to >= 0 && to < 4) || r.seats[to]) throw new Error('الكرسي مشغول');
+      if (!(to >= 0 && to < r.seats.length) || r.seats[to]) throw new Error('الكرسي مشغول');
       const from = seatOf(r, uid);
       if (from >= 0) r.seats[from] = null; else r.watchers.delete(uid);
       r.seats[to] = { uid, name, av, ph };
@@ -327,7 +327,7 @@ async function handle(ws, m) {
     case 'addBot': case 'kick': {
       if (!r || r.host !== uid || r.status !== 'waiting') throw new Error('بس صاحب الطاولة يقدر');
       const i = +m.seat;
-      if (!(i >= 0 && i < 4)) throw new Error('كرسي غلط');
+      if (!(i >= 0 && i < r.seats.length)) throw new Error('كرسي غلط');
       if (m.t === 'addBot') { if (r.seats[i]) throw new Error('الكرسي مشغول'); r.seats[i] = { bot: true, name: botName(r) }; }
       else {
         const s = r.seats[i];
@@ -342,7 +342,7 @@ async function handle(ws, m) {
       if (!r || r.host !== uid) throw new Error('بس صاحب الطاولة يقدر يبدأ');
       if (m.t === 'start' && r.status !== 'waiting') throw new Error('اللعبة بدأت');
       if (m.t === 'rematch' && r.status !== 'finished') throw new Error('اللعبة ما خلصت');
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < r.seats.length; i++) {
         const s = r.seats[i];
         if (!s || s.left) {
           if (s && s.left) userRoom.get(s.uid) === r.code && userRoom.delete(s.uid);
@@ -350,6 +350,8 @@ async function handle(ws, m) {
         }
       }
       r.engine = createGame(r.game);
+      r.engine.names = r.seats.map((x) => x.name); r.engine.isHuman = (i) => !r.seats[i].bot; r.engine.isBot = (i) => controlledByBot(r, i);
+      if (r.engine.init) r.engine.init();
       if (r.engine.type === 'mono') { r.engine.names = r.seats.map((x) => x.name); r.engine.isHuman = (i) => !r.seats[i].bot; }
       r.status = 'playing';
       r.result = null;
@@ -362,6 +364,7 @@ async function handle(ws, m) {
       const i = seatOf(r, uid);
       if (i < 0) throw new Error('أنت متفرج');
       r.engine.act(i, m.a || {});
+      if (r.engine.endsAt && Date.now() >= r.engine.endsAt && r.engine.tick) r.engine.tick();
       afterChange(r);
       break;
     }
@@ -560,6 +563,7 @@ const server = Bun.serve({
       if (!(await f.exists())) return new Response('not found', { status: 404 });
       return new Response(f, { headers: { 'content-type': 'image/webp', 'cache-control': 'public, max-age=604800' } });
     }
+    if (url.pathname === '/js/poolphys.js') return new Response(Bun.file(ROOT + 'src/poolphys.js'), { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     if (url.pathname === '/vendor/moyasar.js' || url.pathname === '/vendor/moyasar.css') {
       const f = Bun.file(ROOT + 'public' + url.pathname);
       return new Response(f, { headers: { 'content-type': url.pathname.endsWith('.js') ? 'application/javascript' : 'text/css', 'cache-control': 'public, max-age=86400' } });

@@ -1,4 +1,9 @@
 import { Mono } from './mono.js';
+import { XO } from './xo.js';
+import { Pool } from './pool.js';
+import { Guess } from './guess.js';
+import { Words } from './words.js';
+export const seatCount = (g) => (g === 'xo' || g === 'pool' ? 2 : 4);
 // ================== Card helpers ==================
 export const SUITS = ['S', 'H', 'D', 'C'];
 export const suit = (c) => c[0];
@@ -696,8 +701,12 @@ export function createGame(type) {
   if (type === 'trix') return new Trix();
   if (type === 'trixc') return new Trix('complex');
   if (type === 'mono') return new Mono();
+  if (type === 'xo') return new XO();
+  if (type === 'pool') return new Pool();
+  if (type === 'guess') return new Guess();
+  if (type === 'words') return new Words();
   if (type === 'trixp') return new Trix('classic', true);
   if (type === 'trixcp') return new Trix('complex', true);
   throw new Error('لعبة غير معروفة');
 }
-export const GAME_NAMES = { t41: 'طرنيب ٤١', t61: 'طرنيب ٦١', trix: 'تركس', trixc: 'تركس كمبلكس', trixp: 'تركس شراكة', trixcp: 'كمبلكس شراكة', mono: 'عقارات الديوانية' };
+export const GAME_NAMES = { t41: 'طرنيب ٤١', t61: 'طرنيب ٦١', trix: 'تركس', trixc: 'تركس كمبلكس', trixp: 'تركس شراكة', trixcp: 'كمبلكس شراكة', mono: 'عقارات الديوانية', xo: 'إكس أو', pool: 'بلياردو', guess: 'خمّن المشهور', words: 'اسم جماد حيوان نبات بلاد' };
