@@ -734,9 +734,11 @@ button.ghost{border-color:rgba(190,180,255,.3)!important;background:rgba(255,255
 .jxbk s:nth-child(1){transform:rotate(-14deg)}.jxbk s:nth-child(2){transform:rotate(-5deg) translateY(-2px)}.jxbk s:nth-child(3){transform:rotate(5deg) translateY(-2px)}.jxbk s:nth-child(4){transform:rotate(14deg)}
 .jxnm{background:rgba(0,0,0,.6)!important;font-weight:600!important;font-size:10.5px!important;padding:1px 8px!important}
 .jxhand{background:linear-gradient(180deg,transparent,rgba(0,0,0,.35));width:100%;padding:10px 0 8px!important;border-radius:20px 20px 0 0}
-.jxhand .c{width:clamp(62px,19vw,84px)!important;height:clamp(88px,27vw,120px)!important;margin:0 -8px!important}
+.jxhand .c{width:clamp(62px,19vw,84px)!important;height:clamp(88px,27vw,120px)!important;margin:0 -4px!important;transform:none}.jxhand .c.sel{transform:translateY(-18px) scale(1.06)!important}
 .jxmb{width:4.1%!important;height:4.1%!important}
 .jxpc .c,.jxflc .c{width:clamp(44px,11vw,60px)!important;height:clamp(63px,15.7vw,86px)!important}
+
+#table.isalt .alt:has(.jxg){background:radial-gradient(circle at 50% 38%,transparent 0 46vmin,rgba(255,255,255,.035) 46vmin 46.4vmin,transparent 46.4vmin 52vmin,rgba(255,255,255,.03) 52vmin 52.3vmin,transparent 52.3vmin),repeating-conic-gradient(from 0deg at 50% 38%,rgba(255,255,255,.025) 0 4deg,transparent 4deg 12deg),radial-gradient(ellipse at 50% 38%,#1d7a4c 0,#125737 40%,#0a3522 75%,#071f15 100%)!important}
 </style>
 </head>
 <body>
@@ -2626,8 +2628,9 @@ const JG = (() => {
 })();
 function jXY(s, p, k) { if (p < 0) return JG.base[s][k]; if (p >= 76) return JG.lane[s][p - 76]; return JG.track[((19 * s + 9 + p) % 76 - 8 + 76) % 76]; }
 function jBoardSvg() {
+  const P = 'jb' + Math.random().toString(36).slice(2, 7);
   let g = '';
-  const hole = (x, y, r, tint) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="url(#jhole)"/>${tint ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${tint}" opacity=".55"/>` : ''}`;
+  const hole = (x, y, r, tint) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="url(#${P}jhole)"/>${tint ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${tint}" opacity=".55"/>` : ''}`;
   JG.track.forEach(([x, y], i) => { const st = [0, 1, 2, 3].find((s) => JG.start(s) === i); g += hole(x, y, 10, st != null ? JDARK[st] : null); if (st != null) g += `<circle cx="${x}" cy="${y}" r="12.5" fill="none" stroke="${JCOL[st]}" stroke-width="2.2" opacity=".9"/>`; });
   for (let s = 0; s < 4; s++) { JG.lane[s].forEach(([x, y]) => (g += hole(x, y, 10.5, JDARK[s]))); JG.base[s].forEach(([x, y]) => (g += hole(x, y, 10, JDARK[s]))); }
   // center octagon recess
@@ -2635,13 +2638,13 @@ function jBoardSvg() {
   const oc2 = [...Array(8)].map((_, i) => { const a = Math.PI / 8 + (i * Math.PI) / 4; return `${300 + 80 * Math.cos(a)},${300 + 80 * Math.sin(a)}`; }).join(' ');
   const dots = [...Array(120)].map((_, i) => { const a = (i / 120) * Math.PI * 2; return `<circle cx="${300 + 279 * Math.cos(a)}" cy="${300 + 279 * Math.sin(a)}" r="1.6" fill="#3a2010" opacity=".55"/>`; }).join('');
   return `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"><defs>
-  <radialGradient id="jwood" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#a87a55"/><stop offset=".6" stop-color="#8d6142"/><stop offset="1" stop-color="#6b4429"/></radialGradient>
-  <radialGradient id="jhole" cx=".5" cy=".38" r=".62"><stop offset="0" stop-color="#1c0f07"/><stop offset=".75" stop-color="#2e190c"/><stop offset="1" stop-color="#7a5236"/></radialGradient>
-  <radialGradient id="jrec" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#4a2c18"/><stop offset="1" stop-color="#2c170a"/></radialGradient>
-  <pattern id="jgrain" width="600" height="14" patternUnits="userSpaceOnUse"><path d="M0 7 Q150 3 300 8 T600 6" stroke="#5a3a22" stroke-width="1" fill="none" opacity=".18"/></pattern></defs>
-  <circle cx="300" cy="306" r="296" fill="#000" opacity=".35"/><circle cx="300" cy="300" r="296" fill="#5a3a24"/><circle cx="300" cy="300" r="290" fill="url(#jwood)"/><circle cx="300" cy="300" r="290" fill="url(#jgrain)"/>
+  <radialGradient id="${P}jwood" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#a87a55"/><stop offset=".6" stop-color="#8d6142"/><stop offset="1" stop-color="#6b4429"/></radialGradient>
+  <radialGradient id="${P}jhole" cx=".5" cy=".38" r=".62"><stop offset="0" stop-color="#1c0f07"/><stop offset=".75" stop-color="#2e190c"/><stop offset="1" stop-color="#7a5236"/></radialGradient>
+  <radialGradient id="${P}jrec" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#4a2c18"/><stop offset="1" stop-color="#2c170a"/></radialGradient>
+  <pattern id="${P}jgrain" width="600" height="14" patternUnits="userSpaceOnUse"><path d="M0 7 Q150 3 300 8 T600 6" stroke="#5a3a22" stroke-width="1" fill="none" opacity=".18"/></pattern></defs>
+  <circle cx="300" cy="306" r="296" fill="#000" opacity=".35"/><circle cx="300" cy="300" r="296" fill="#5a3a24"/><circle cx="300" cy="300" r="290" fill="url(#${P}jwood)"/><circle cx="300" cy="300" r="290" fill="url(#${P}jgrain)"/>
   <circle cx="300" cy="300" r="284" fill="none" stroke="#c49a74" stroke-opacity=".35" stroke-width="1.5"/><circle cx="300" cy="300" r="273" fill="none" stroke="#3a2010" stroke-opacity=".25" stroke-width="1"/>${dots}
-  ${g}<polygon points="${oc}" fill="#c49a74" opacity=".25"/><polygon points="${oc}" fill="url(#jrec)" transform="translate(0 2)"/><polygon points="${oc2}" fill="none" stroke="#000" stroke-opacity=".25" stroke-width="3"/></svg>`;
+  ${g}<polygon points="${oc}" fill="#c49a74" opacity=".25"/><polygon points="${oc}" fill="url(#${P}jrec)" transform="translate(0 2)"/><polygon points="${oc2}" fill="none" stroke="#000" stroke-opacity=".25" stroke-width="3"/></svg>`;
 }
 const jkd = { code: '', lastId: 0, shown: null, anim: null, sel: -1, filt: null, pileN: 0 };
 const jPos = (i, mine) => ['bot', 'left', 'top', 'right'][(i - mine + 4) % 4];
