@@ -613,8 +613,15 @@ const server = Bun.serve({
       const me = p && (await getUser(p.id)); if (!me) return json({ error: 'unauthorized' }, 401);
       if (req.method === 'GET') return json(await friendsOf(me.id));
       const a = await body(req);
+      if (a.action === 'search') {
+        const q = keyOf(String(a.q || '')).normalize('NFKC'); if (q.length < 2) return json({ list: [] });
+        let list = sql ? await sql`select id, username, avatar, ph from users where uname_key like ${'%' + q + '%'} or lower(username) like ${'%' + q + '%'} order by (uname_key = ${q}) desc, length(username), id limit 15`
+          : [...mem.users.values()].filter((u) => u.uname_key.includes(q)).slice(0, 15);
+        const rel = await frRows(me.id);
+        return json({ list: list.filter((u) => u.id !== me.id).map((u) => { const r = rel.find((f) => f.a === u.id || f.b === u.id); return { id: u.id, username: u.username, av: u.avatar || null, ph: +u.ph || 0, online: clients.has(u.id), rel: r ? (r.status === 'accepted' ? 'friend' : r.a === me.id ? 'sent' : 'incoming') : null }; }) });
+      }
       if (a.action === 'add') {
-        const t = await findUser(String(a.username || '').trim()); if (!t) return json({ error: 'ما في لاعب بهالاسم' }, 404);
+        const t = a.id ? await getUser(+a.id) : await findUser(String(a.username || '').trim()); if (!t) return json({ error: 'ما في لاعب بهالاسم' }, 404);
         if (t.id === me.id) return json({ error: 'ما فيك تضيف حالك 😄' }, 400);
         const ex = await frGet(me.id, t.id);
         if (ex && ex.status === 'accepted') return json({ error: 'هو صديقك أصلاً' }, 400);
@@ -776,7 +783,7 @@ const server = Bun.serve({
       if (ap === 'users') {
         const q = String(url.searchParams.get('q') || '').trim(), off = Math.max(0, +url.searchParams.get('o') || 0);
         let list;
-        if (sql) list = q ? await sql`select id, username, points, games, wins, created_at, last_seen, last_ip, last_device, banned_until, ban_reason, email from users where uname_key like ${'%' + keyOf(q) + '%'} or id::text = ${q} or last_ip = ${q} or email ilike ${'%' + q + '%'} order by id desc limit 50 offset ${off}`
+        if (sql) list = q ? await sql`select id, username, points, games, wins, created_at, last_seen, last_ip, last_device, banned_until, ban_reason, email from users where uname_key like ${'%' + keyOf(q) + '%'} or lower(username) like ${'%' + keyOf(q) + '%'} or id::text = ${q} or last_ip = ${q} or email ilike ${'%' + q + '%'} order by id desc limit 50 offset ${off}`
           : await sql`select id, username, points, games, wins, created_at, last_seen, last_ip, last_device, banned_until, ban_reason, email from users order by coalesce(last_seen, created_at) desc limit 50 offset ${off}`;
         else list = [...mem.users.values()].filter((u) => !q || u.uname_key.includes(keyOf(q)) || String(u.id) === q || u.last_ip === q).reverse().slice(off, off + 50).map((u) => ({ ...u, pass: undefined, photo: undefined }));
         return json({ list: list.map((u) => ({ ...u, online: clients.has(u.id), room: userRoom.get(u.id) || null })) });

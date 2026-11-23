@@ -681,7 +681,7 @@ body.chatopen #vcBar{bottom:calc(76px + env(safe-area-inset-bottom))}#table:not(
 <div id="cmVoice" class="hidden"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">الغرف الصوتية</h2><button class="small gold" id="cmNewV">➕ غرفة صوتية</button></div><p class="meta" style="margin:0 0 6px">احكي مع الشباب بالصوت وأنت بتتنقّل بالموقع 🎧</p><div id="vcList"></div></div></div>
 <div id="cmFr" class="hidden">
 <div class="box"><h2 style="margin:0 0 10px">➕ أضف صديق</h2>
-<div class="row"><input id="fAdd" placeholder="اسم اللاعب" autocomplete="off"><button class="gold" id="fAddB">إضافة</button></div></div>
+<div class="row"><input id="fAdd" placeholder="ابحث باسم اللاعب (ولو جزء منه)" autocomplete="off"><button class="gold" id="fAddB">بحث 🔍</button></div><div id="fRes"></div></div>
 <div class="box hidden" id="fInBox"><h2 style="margin:0 0 8px">📩 طلبات صداقة</h2><div id="fIn"></div></div>
 <div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">👥 أصدقائي</h2><button class="small ghost" id="fRef">تحديث</button></div><div id="fList"></div><div id="fOut"></div></div>
 </div>
@@ -2838,7 +2838,16 @@ async function loadFriends() {
   const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', FR.incoming.length > 0); const fb = document.querySelector('.cmtabs [data-ct="fr"]'); if (fb) fb.dataset.n = FR.incoming.length || '';
 }
 async function frAct(a) { try { const j = await frApi(a); if (j.note) toast(j.note); loadFriends(); if (overlayKind === 'finv') openInvite(); } catch (e) { toast(e.message); } }
-$('fAddB').onclick = () => { const v = $('fAdd').value.trim(); if (!v) return; $('fAdd').value = ''; frAct({ action: 'add', username: v }); };
+async function frSearch() {
+  const v = $('fAdd').value.trim(); if (v.length < 2) { $('fRes').innerHTML = v ? '<div class="meta" style="padding:6px 0">اكتب حرفين على الأقل</div>' : ''; return; }
+  let j; try { j = await frApi({ action: 'search', q: v }); } catch (e) { toast(e.message); return; }
+  if ($('fAdd').value.trim() !== v) return;
+  $('fRes').innerHTML = j.list.length ? j.list.map((u) => frCard({ id: u.id, username: u.username, av: u.av, ph: u.ph, online: u.online }, u.rel === 'friend' ? '<span class="meta">صديقك ✓</span>' : u.rel === 'sent' ? '<span class="meta">انبعت الطلب</span>' : u.rel === 'incoming' ? `<button class="small gold" data-fa="accept" data-fid="${u.id}">قبول</button>` : `<button class="small gold" data-fadd="${u.id}">➕ إضافة</button>`)).join('') : '<div class="meta" style="padding:6px 0">ما لقينا حدا بهالاسم</div>';
+}
+let frSearchT = null;
+$('fAdd').addEventListener('input', () => { clearTimeout(frSearchT); frSearchT = setTimeout(frSearch, 350); });
+$('fAddB').onclick = frSearch;
+document.addEventListener('click', async (ev) => { const b = ev.target.closest('[data-fadd]'); if (!b) return; try { const j = await frApi({ action: 'add', id: +b.dataset.fadd }); if (j.note) toast(j.note); b.outerHTML = '<span class="meta">انبعت الطلب ✓</span>'; loadFriends(); } catch (e) { toast(e.message); } });
 $('fAdd').addEventListener('keydown', (e) => e.key === 'Enter' && $('fAddB').click());
 $('fRef').onclick = loadFriends;
 document.addEventListener('click', (ev) => {
