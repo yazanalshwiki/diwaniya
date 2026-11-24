@@ -743,6 +743,12 @@ button.ghost{border-color:rgba(190,180,255,.3)!important;background:rgba(255,255
 .jxp{position:absolute}.jxp .jxbk{position:absolute;top:-4px;left:calc(50% + 16px);margin:0!important;transform:none!important;z-index:-1}
 .jxp[data-pos=right] .jxbk,.jxp[data-pos=left] .jxbk{left:50%;right:auto;top:-18px;translate:-50% 0}
 .jxp[data-pos=left]{left:2px!important}.jxp[data-pos=right]{right:2px!important}
+
+.jxw{width:min(100vw - 6px,54vh,620px)!important;margin:34px 0 26px!important}
+.jxp[data-pos=top]{top:-40px!important}
+.jxp[data-pos=left] .jxav,.jxp[data-pos=right] .jxav{width:44px!important;height:44px!important}
+.jxp[data-pos=left]{left:-2px!important;transform:translateY(-50%)!important}.jxp[data-pos=right]{right:-2px!important;transform:translateY(-50%)!important}
+.jxhand{padding:6px 0 10px!important}.jxhand .c{width:clamp(58px,17vw,80px)!important;height:clamp(82px,24vw,112px)!important}
 </style>
 </head>
 <body>
@@ -2625,7 +2631,7 @@ const JG = (() => {
   for (let s = 0; s < 4; s++) {
     const ta = seatAng(s) - Math.PI / 4, rt = rf(ta);
     lane.push([0, 1, 2, 3].map((h) => [300 + (rt - 29 * (h + 1)) * Math.cos(ta), 300 + (rt - 29 * (h + 1)) * Math.sin(ta)]));
-    const ba = seatAng(s) - 0.33, cx = 300 + 212 * Math.cos(ba), cy = 300 + 212 * Math.sin(ba);
+    const ba = seatAng(s), cx = 300 + 176 * Math.cos(ba), cy = 300 + 176 * Math.sin(ba);
     base.push([[0, -17], [17, 0], [0, 17], [-17, 0]].map(([dx, dy]) => [cx + dx, cy + dy]));
   }
   return { track, lane, base, tip: (s) => 19 * s, start: (s) => 19 * s + 1 };
