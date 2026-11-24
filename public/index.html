@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#2d2685">
+<meta name="theme-color" content="#1a2238">
 <link rel="icon" type="image/png" href="/img/favicon.png?v=3">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=3">
 <link rel="manifest" href="/manifest.json?v=3">
@@ -749,6 +749,54 @@ button.ghost{border-color:rgba(190,180,255,.3)!important;background:rgba(255,255
 .jxp[data-pos=left] .jxav,.jxp[data-pos=right] .jxav{width:44px!important;height:44px!important}
 .jxp[data-pos=left]{left:-2px!important;transform:translateY(-50%)!important}.jxp[data-pos=right]{right:-2px!important;transform:translateY(-50%)!important}
 .jxhand{padding:6px 0 10px!important}.jxhand .c{width:clamp(58px,17vw,80px)!important;height:clamp(82px,24vw,112px)!important}
+
+/* ===== executive theme (calm, premium) — overrides the neon layer ===== */
+:root{--bg:#1b2540;--panel:rgba(255,255,255,.045);--panel2:#25324f;--line:rgba(255,255,255,.09);--muted:#9aa6bf;--acc:#cfab55;--acc2:#b48d34}
+html{background:#1b2540!important}
+.appbg{background:linear-gradient(165deg,#1a2238 0%,#1e2a47 45%,#22324f 100%)!important}
+.appbg .nr,.appbg .nl,.appbg .ns,.appbg .nfloor{display:none!important}
+.appbg i{filter:blur(90px)!important;animation-duration:40s!important}.appbg i:nth-child(1){background:#3a4f7d!important;opacity:.35!important}.appbg i:nth-child(2){background:#cfab55!important;opacity:.07!important}.appbg i:nth-child(3){background:#2c3f66!important;opacity:.4!important}
+.appbg::after{background-image:none!important;background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.05),transparent 60%)!important}
+input{background:rgba(10,15,30,.35)!important;border-color:rgba(255,255,255,.12)!important}input:focus{border-color:var(--acc)!important;box-shadow:0 0 0 3px rgba(207,171,85,.15)!important}
+button.gold{background:linear-gradient(180deg,#d8b866,#b8913a)!important;color:#17120a!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 12px rgba(0,0,0,.25)!important;font-weight:600!important;letter-spacing:.2px}
+button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,255,255,.03)!important;color:#e6e9f0}
+.box{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+#lobby .lhead{background:rgba(18,25,44,.85)!important;border-bottom:1px solid rgba(255,255,255,.07)!important;box-shadow:none}
+.hero2 h1{background:none!important;color:#f1ead8!important;-webkit-text-fill-color:#f1ead8;font-weight:600!important;letter-spacing:.3px}.hero2 p{color:var(--muted)!important}
+.gsearch{background:rgba(10,15,30,.35)!important;border:1px solid rgba(255,255,255,.1)!important;box-shadow:none!important}.gsearch:focus-within{border-color:var(--acc)!important;box-shadow:0 0 0 3px rgba(207,171,85,.12)!important}
+.lcats button{background:transparent!important;border:1px solid rgba(255,255,255,.12)!important;color:#c9d0de!important;font-weight:500!important}
+.lcats button.on{background:rgba(207,171,85,.14)!important;border-color:rgba(207,171,85,.6)!important;color:#f1dca6!important;box-shadow:none!important}
+.gt2{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;backdrop-filter:none!important;box-shadow:none!important;transition:border-color .2s,background .2s}
+.gt2:hover{border-color:rgba(207,171,85,.45)!important;background:rgba(255,255,255,.06)!important;box-shadow:none!important;transform:none}
+.gt2.on,.gt2.sel{border-color:var(--acc)!important;background:rgba(207,171,85,.08)!important;box-shadow:0 0 0 1px rgba(207,171,85,.35)!important}
+.gt2 b{color:#eef1f6!important;font-weight:600!important}.gt2 small,.gt2 em{color:#8f9ab1!important}
+.gt2 .gic{background:rgba(255,255,255,.05)!important;border:1px solid rgba(207,171,85,.3)!important;box-shadow:none!important;text-shadow:0 0 0 #e9dfc6!important}.gt2 .gic::after{display:none}
+.gfav{color:#6f7a92}.gfav.on{color:var(--acc)!important}
+.playbar{background:rgba(18,25,44,.94)!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 -8px 24px rgba(0,0,0,.3)!important}
+.bnav{background:#141b2f!important;border-top:1px solid rgba(255,255,255,.06)!important;box-shadow:none!important}
+.bnav button{color:#8f9ab1}.bnav button.on{color:#e0c27a!important;text-shadow:none!important}
+.cmtabs{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.08)!important}.cmtabs button.on{background:rgba(207,171,85,.16)!important;color:#f1dca6!important}
+.cmav{background:rgba(255,255,255,.05)!important;border-color:rgba(255,255,255,.08)!important}
+/* waiting room — calm */
+.codebig{text-shadow:none!important;color:#e0c27a!important}
+.seats::before{background:radial-gradient(ellipse at 50% 40%,#1d5a43,#123a2c 70%,#0c2a20)!important;box-shadow:0 0 0 1px rgba(207,171,85,.45),inset 0 0 40px rgba(0,0,0,.35)!important}
+.seats.k-jack::before,.seats.k-ludo::before{box-shadow:0 0 0 1px rgba(207,171,85,.4)!important}
+.seats.k-duel::before{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))!important;box-shadow:0 0 0 1px rgba(255,255,255,.1)!important}
+.seats.k-party::before,.seats.k-dice::before{background:radial-gradient(circle,rgba(255,255,255,.05),rgba(255,255,255,.015) 70%)!important;box-shadow:0 0 0 1px rgba(207,171,85,.3)!important}
+.wc-ring{border:1px solid rgba(207,171,85,.6)!important;box-shadow:none!important;animation:none!important}
+.wc-ic{filter:none!important}.wc-vs{background:none!important;color:#e9dfc6!important;-webkit-text-fill-color:#e9dfc6;filter:none!important;font-style:normal!important;font-weight:600!important;letter-spacing:4px;font-size:34px!important}
+.wc-name{text-shadow:none!important;color:#d9c79a!important}.wc-chk{box-shadow:none!important}
+.sbox{background:rgba(16,22,40,.9)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:0 6px 16px rgba(0,0,0,.25)!important}
+.sbox.me{border-color:var(--acc)!important;box-shadow:0 6px 16px rgba(0,0,0,.25)!important}
+.sbox .avm{box-shadow:0 0 0 2px var(--sc)!important}
+.sbox .wsit{background:#2f3d5f!important;border:1px solid rgba(255,255,255,.15)}
+.wteam{box-shadow:none!important}
+.wempty{border-color:rgba(255,255,255,.25)!important;color:#8f9ab1!important}
+
+.gt2 .gic{color:inherit!important;text-shadow:none!important;filter:saturate(.75);font-size:20px!important}
+.bnav button span{filter:grayscale(1) brightness(1.35);opacity:.75}.bnav button.on span{filter:grayscale(1) sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.05);opacity:1}
+.playbar .pbic,.playbar>div:first-child>span:first-child{filter:saturate(.7)}
+.bnav button span.bni{filter:none!important;opacity:1!important;font-size:0!important;display:block;width:23px;height:23px;margin:0 auto 2px}.bnav button span.bni svg{width:100%;height:100%;display:block}.bnav button.on span.bni{transform:none}
 </style>
 </head>
 <body>
@@ -823,7 +871,7 @@ button.ghost{border-color:rgba(190,180,255,.3)!important;background:rgba(255,255
 </div>
 </section>
 </div>
-<nav class="bnav"><button data-tab="Home" class="on"><span>🏠</span>الرئيسية</button><button data-tab="Rooms"><span>🃏</span>الطاولات</button><button data-tab="Top"><span>🏆</span>المتصدرين</button><button data-tab="Friends"><span>💬</span>المجتمع</button><button data-tab="Look"><span>🛍️</span>المتجر</button></nav>
+<nav class="bnav"><button data-tab="Home" class="on"><span class="bni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>الرئيسية</button><button data-tab="Rooms"><span class="bni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg></span>الطاولات</button><button data-tab="Top"><span class="bni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>المتصدرين</button><button data-tab="Friends"><span class="bni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></svg></span>المجتمع</button><button data-tab="Look"><span class="bni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>المتجر</button></nav>
 </div>
 
 <div id="waiting" class="hidden"><div class="wrap">
@@ -1289,8 +1337,8 @@ function renderWaiting() {
   S.className = `seats k-${kind} n${room.seats.length}`;
   $('wHint').textContent = team ? 'أرسل الكود لأصحابك — اللي قبالك هو شريكك 🤝' : room.seats.length === 2 ? 'أرسل الكود لخصمك وتحدّوا بعض ⚔️' : 'أرسل الكود أو الرابط لأصحابك';
   S.innerHTML = `<div class="wcenter">${waitCenter(kind, room.game)}</div>` + room.seats.map((s, i) => {
-    const p = pos(i), col = kind === 'jack' ? JCOL[i] : kind === 'ludo' ? LCOL[i] : team ? (i % 2 ? '#22e4ff' : '#ff3df2') : '#a99cff';
-    const tb = team ? `<span class="wteam" style="--tc:${i % 2 ? '#22e4ff' : '#ff3df2'}">فريق ${i % 2 ? '٢' : '١'}</span>` : '';
+    const p = pos(i), col = kind === 'jack' ? JCOL[i] : kind === 'ludo' ? LCOL[i] : team ? (i % 2 ? '#8fa8cf' : '#cfab55') : '#8fa8cf';
+    const tb = team ? `<span class="wteam" style="--tc:${i % 2 ? '#8fa8cf' : '#cfab55'}">فريق ${i % 2 ? '٢' : '١'}</span>` : '';
     let inner;
     if (s) {
       inner = `<div class="avm">${avPic(s)}</div><div class="nm">${s.bot ? '🤖 ' : ''}${esc(s.name)}${s.uid === room.hostId ? ' 👑' : ''}</div>${tb}`;
@@ -3573,7 +3621,7 @@ if (token) connect(); else show('auth');
   const R = () => {
     const F = favs();
     if (cat === 'fav' && !F.length) cat = 'all';
-    $('gCats').innerHTML = CATS.map(([k, n, ic]) => (k === 'fav' && !F.length ? '' : `<button data-gc2="${k}" class="${k === cat ? 'on' : ''}">${ic} ${n}<i>${k === 'all' ? GAMES.length : k === 'fav' ? F.length : GAMES.filter((g) => g.cat === k).length}</i></button>`)).join('');
+    $('gCats').innerHTML = CATS.map(([k, n, ic]) => (k === 'fav' && !F.length ? '' : `<button data-gc2="${k}" class="${k === cat ? 'on' : ''}">${n}<i>${k === 'all' ? GAMES.length : k === 'fav' ? F.length : GAMES.filter((g) => g.cat === k).length}</i></button>`)).join('');
     const q = norm($('gQ').value);
     const catName = { cards: 'ورق كوتشينة', dice: 'نرد زهر', chal: 'تحدي ذكاء', party: 'جمعات حفلة اسئلة' };
     const list = GAMES.map((g, i) => [g, i]).filter(([g]) => (q ? norm(g.n + ' ' + g.d + ' ' + catName[g.cat] + ' ' + g.g + (g.g.startsWith('trix') ? ' تركس تريكس' : '') + (g.g === 'pool' ? ' بلياردو بليارد' : '') + (g.g === 'jackaroo' ? ' جكارو جاكرو' : '')).includes(q) : cat === 'all' ? true : cat === 'fav' ? F.includes(g.g) : g.cat === cat));
