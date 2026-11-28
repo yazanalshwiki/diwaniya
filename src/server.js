@@ -7,6 +7,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const SND_FILES = {};
 { const fs = await import('fs'); for (const f of fs.readdirSync(ROOT + 'assets')) if (f.endsWith('.mp3')) SND_FILES[f.slice(0, -4)] = fs.readFileSync(ROOT + 'assets/' + f); }
 let html = await Bun.file(ROOT + 'public/index.html').text();
+let pageGz = null;
 const PORT = +(Bun.env.PORT || 3000);
 const SECRET = Bun.env.APP_SECRET || Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('');
 const hmac = (data) => new Bun.CryptoHasher('sha256', SECRET).update(data).digest('base64url');
@@ -172,8 +173,11 @@ function fixJson(u) {
   }
   return u;
 }
+let UCOLS = '*';
+async function userCols() { if (UCOLS !== '*' || !sql) return; try { const c = (await sql`select column_name from information_schema.columns where table_name = 'users' and table_schema = current_schema()`).map((x) => x.column_name).filter((x) => x !== 'photo'); if (c.length) UCOLS = c.map((x) => '"' + x + '"').join(', '); } catch {} }
+async function getPhoto(id) { if (sql) return (await sql`select photo from users where id = ${id}`)[0]?.photo; const u = mem.users.get(id); return u && u.photo; }
 async function getUser(id) {
-  if (sql) return fixJson((await sql`select * from users where id = ${id}`)[0]);
+  if (sql) { await userCols(); return fixJson((await sql.unsafe(`select ${UCOLS} from users where id = $1`, [id]))[0]); }
   return mem.users.get(id);
 }
 async function createUser(username, pass) {
@@ -218,16 +222,18 @@ const pokeFriends = (uid) => { const c = clients.get(uid); if (c) send(c, { t: '
 // ================== Bans / admin helpers ==================
 const memBans = []; let memBanId = 1;
 const clientIP = (req, srv) => (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || req.headers.get('x-real-ip') || (srv && srv.requestIP(req) ? srv.requestIP(req).address : '') || '';
-async function listBans() {
-  if (sql) return await sql`select * from bans where until is null or until > now() order by id desc`;
+let bansCache = null, bansAt = 0;
+async function listBans(fresh) {
+  if (sql) { if (!fresh && bansCache && Date.now() - bansAt < 30000) return bansCache; bansCache = await sql`select * from bans where until is null or until > now() order by id desc`; bansAt = Date.now(); return bansCache; }
   return memBans.filter((b) => !b.until || new Date(b.until) > new Date());
 }
 async function addBan(kind, value, hours, reason) {
   const until = hours > 0 ? new Date(Date.now() + hours * 3600000) : null;
+  bansCache = null;
   if (sql) return (await sql`insert into bans (kind, value, reason, until) values (${kind}, ${value}, ${reason || null}, ${until}) returning *`)[0];
   const b = { id: memBanId++, kind, value, reason: reason || null, until, created_at: new Date() }; memBans.push(b); return b;
 }
-async function delBan(id) { if (sql) await sql`delete from bans where id = ${id}`; else { const i = memBans.findIndex((b) => b.id === id); if (i >= 0) memBans.splice(i, 1); } }
+async function delBan(id) { bansCache = null; if (sql) await sql`delete from bans where id = ${id}`; else { const i = memBans.findIndex((b) => b.id === id); if (i >= 0) memBans.splice(i, 1); } }
 const fmtUntil = (d) => (d ? 'لحد ' + new Date(d).toLocaleString('ar', { timeZone: 'Asia/Riyadh', dateStyle: 'medium', timeStyle: 'short' }) : 'بشكل دائم');
 async function banCheck(u, ip, dev) {
   if (u && u.banned_until && new Date(u.banned_until) > new Date()) return `حسابك محظور ${new Date(u.banned_until).getFullYear() > 2900 ? 'بشكل دائم' : fmtUntil(u.banned_until)}${u.ban_reason ? ' — السبب: ' + u.ban_reason : ''}`;
@@ -732,14 +738,16 @@ const server = Bun.serve({
       return json({ user: pub(u, true) });
     }
     if (url.pathname.startsWith('/p/')) {
-      const u = await getUser(+url.pathname.slice(3));
-      if (!u || !u.photo) return new Response('not found', { status: 404 });
-      return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
+      const ph = await getPhoto(+url.pathname.slice(3) || 0);
+      if (!ph) return new Response('not found', { status: 404 });
+      return new Response(Buffer.from(ph, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
     }
     if (url.pathname === '/api/health') {
       let pending = [];
       if (sql) try { const h = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k)); pending = MIGS.filter(([t, c]) => !h.has(t + '.' + c)).map(([t, c]) => t + '.' + c); } catch {}
-      return json({ ok: true, db: !!sql, pending, rooms: rooms.size });
+      let dbms = null; if (sql) { const t = performance.now(); try { await sql`select 1`; dbms = Math.round(performance.now() - t); } catch {} }
+      let um = null; if (sql) { const t = performance.now(); try { await getUser(1); um = Math.round(performance.now() - t); } catch {} }
+      return json({ ok: true, db: !!sql, dbms, um, pending, rooms: rooms.size, clients: clients.size, mem: Math.round(process.memoryUsage().rss / 1e6) });
     }
     if (url.pathname === '/api/design' && req.method === 'POST') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
@@ -1009,6 +1017,8 @@ const server = Bun.serve({
     }
     if (url.pathname === '/health') return new Response('ok');
     const origin = (req.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')) + '://' + (req.headers.get('x-forwarded-host') || req.headers.get('host'));
+    const page = html.replace('content="/img/og.png?v=3"', `content="${origin}/img/og.png?v=3"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`);
+    if ((req.headers.get('accept-encoding') || '').includes('gzip')) { if (!pageGz || pageGz.k !== page) pageGz = { k: page, b: Bun.gzipSync(page) }; return new Response(pageGz.b, { headers: { 'content-type': 'text/html; charset=utf-8', 'content-encoding': 'gzip', vary: 'accept-encoding', 'cache-control': 'no-cache' } }); }
     return new Response(html.replace('content="/img/og.png?v=3"', `content="${origin}/img/og.png?v=3"`).replace('<meta property="og:type"', `<meta property="og:url" content="${origin}/">\n<meta property="og:type"`), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
   },
   websocket: {

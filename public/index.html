@@ -1165,6 +1165,7 @@ const suitHtml = (s, size) => `<span style="color:${'HD'.includes(s) ? '#e0283c'
 
 let token = localStorage.getItem('tok') || '';
 const DEV = (() => { try { let d = localStorage.getItem('dev'); if (!d) { d = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); localStorage.setItem('dev', d); } return d; } catch { return ''; } })();
+let connT = null;
 let me = null, ws = null, room = null, lobbyRooms = [], pendingJoin = null, reconnectT = null, manualClose = false;
 let lastChatLen = 0, unread = 0, drawerOpen = false, tickT = null, overlayKind = null, dismissedHand = null;
 let handKey = '', panelKey = '', sentKey = '', preSel = null, dropFly = null;
@@ -1196,7 +1197,7 @@ $('aGo').onclick = async () => {
     connect();
   } catch { $('aErr').textContent = 'تعذر الاتصال بالسيرفر'; }
 };
-function logout() { localStorage.removeItem('tok'); token = ''; manualClose = true; ws && ws.close(); show('auth'); }
+function logout() { localStorage.removeItem('meC'); localStorage.removeItem('tok'); token = ''; manualClose = true; ws && ws.close(); show('auth'); }
 
 const TAB = (() => { try { let t = sessionStorage.getItem('tab'); if (!t) { t = Math.random().toString(36).slice(2, 10); sessionStorage.setItem('tab', t); } return t; } catch { return Math.random().toString(36).slice(2, 10); } })();
 function connect(force) {
@@ -1209,14 +1210,14 @@ function connect(force) {
   const sock = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}&d=${encodeURIComponent(DEV)}&tab=${TAB}`);
   ws = sock;
   let opened = false;
-  sock.onopen = () => { opened = true; $('conn').classList.add('hidden'); };
+  sock.onopen = () => { opened = true; clearTimeout(connT); $('conn').classList.add('hidden'); };
   sock.onclose = async () => {
     if (sock !== ws || manualClose) return;
     if (!opened) {
       const r = await fetch('/api/me', { headers: { authorization: 'Bearer ' + token } }).catch(() => null);
       if (r && r.status === 401) { localStorage.removeItem('tok'); token = ''; show('auth'); return; }
     }
-    $('conn').classList.remove('hidden');
+    clearTimeout(connT); connT = setTimeout(() => { if (!ws || ws.readyState !== 1) $('conn').classList.remove('hidden'); }, 2500);
     reconnectT = setTimeout(connect, 1500);
   };
   sock.onmessage = (ev) => {
@@ -1224,7 +1225,7 @@ function connect(force) {
     lastMsgAt = Date.now();
     const m = JSON.parse(ev.data);
     if (m.t === 'pong') return;
-    if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); loadFriends(); }
+    if (m.t === 'me') { me = m.user; try { localStorage.setItem('meC', JSON.stringify(m.user)); } catch {} renderMe(); if (window.renderGames) renderGames(); loadFriends(); }
     else if (m.t === 'friends') { loadFriends(); }
     else if (m.t === 'cmsg') cmOnMsg(m);
     else if (m.t === 'cdel') { if (CM.open && CM.open.id === m.ch) { CM.msgs = CM.msgs.filter((x) => x.id !== m.id); cmPaint(); } }
@@ -3928,7 +3929,10 @@ function uploadPhoto(file) {
 }
 
 { const pq = new URLSearchParams(location.search).get('pay'); if (pq) { history.replaceState(null, '', location.pathname); setTimeout(() => { toast(pq === 'paid' ? '✅ تم الدفع وانضافت النقاط' : '❌ الدفع ما اكتمل، ما انسحب شيء'); SND.play(pq === 'paid' ? 'win' : 'bad'); }, 1200); } }
-if (token) connect(); else show('auth');
+if (token) {
+  try { const c = JSON.parse(localStorage.getItem('meC') || 'null'); if (c && !me) { me = c; renderMe(); if (window.renderGames) renderGames(); renderLobby(); show('lobby'); } } catch {}
+  connect();
+} else show('auth');
 </script><script>
 (() => {
   const CATS = [['fav', 'المفضلة', '⭐'], ['all', 'الكل', '✨'], ['cards', 'ورق', '🃏'], ['dice', 'نرد', '🎲'], ['chal', 'تحدي', '♟️'], ['party', 'جمعات', '🎉']];
