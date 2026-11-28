@@ -53,6 +53,8 @@ let sql = null;
 const mem = { users: new Map(), nextId: 1 };
 if (Bun.env.DATABASE_URL) {
   sql = new SQL(Bun.env.DATABASE_URL);
+  console.log('DB init…');
+  const wd = setTimeout(async () => { try { const x = new SQL(Bun.env.DATABASE_URL, { max: 1 }); const r = await x`select pid, state, wait_event_type, left(query, 80) as q, now() - xact_start as age from pg_stat_activity where datname = current_database()`; console.log('DB watchdog', JSON.stringify(r)); } catch (e) { console.error('watchdog', e.message); } }, 25000);
   await sql`create table if not exists users (
     id serial primary key,
     username text not null,
@@ -62,33 +64,52 @@ if (Bun.env.DATABASE_URL) {
     games int not null default 0,
     wins int not null default 0,
     created_at timestamptz not null default now())`;
+  console.log('DB step 1');
   await sql`create table if not exists matches (
     id serial primary key, game text not null, players jsonb not null, winners jsonb not null,
     finished_at timestamptz not null default now())`;
+  console.log('DB step 2');
   await sql`create table if not exists payments (
     id text primary key, uid int not null, pkg text not null, amount int not null, coins int not null,
     created_at timestamptz not null default now())`;
-  await sql`alter table users add column if not exists avatar text`;
-  await sql`alter table users add column if not exists email text`;
-  await sql`alter table users add column if not exists photo text`;
-  await sql`alter table users add column if not exists ph bigint not null default 0`;
-  await sql`alter table users add column if not exists items jsonb not null default '[]'`;
-  await sql`alter table users add column if not exists equip jsonb not null default '{}'`;
-  await sql`alter table users add column if not exists last_daily date`;
-  await sql`alter table users add column if not exists favs jsonb not null default '[]'`;
-  await sql`alter table users add column if not exists banned_until timestamptz`;
-  await sql`alter table users add column if not exists ban_reason text`;
-  await sql`alter table users add column if not exists design jsonb`;
-  await sql`alter table users add column if not exists design_block boolean not null default false`;
+  console.log('DB step 3');
   await sql`create table if not exists reports (id serial primary key, target int not null, reporter int not null, kind text not null, data jsonb, room text, status text not null default 'open', created_at timestamptz not null default now())`;
-  await sql`alter table users add column if not exists last_ip text`;
-  await sql`alter table users add column if not exists last_device text`;
-  await sql`alter table users add column if not exists last_seen timestamptz`;
+  console.log('DB step 4');
   await sql`create table if not exists admins (id serial primary key, username text not null unique, pass text not null, role text not null default 'mod', created_at timestamptz not null default now())`;
-  await sql`alter table admins add column if not exists player_id int`;
+  console.log('DB step 5');
   await sql`create table if not exists friends (a int not null, b int not null, status text not null default 'pending', created_at timestamptz not null default now(), primary key (a, b))`;
+  console.log('DB step 6');
   await sql`create table if not exists bans (id serial primary key, kind text not null, value text not null, reason text, until timestamptz, created_at timestamptz not null default now())`;
-  console.log('Postgres connected');
+  console.log('DB step 7');
+
+  const have = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k));
+  for (const [t, c, d] of [
+    ['users', 'avatar', `text`],
+    ['users', 'email', `text`],
+    ['users', 'photo', `text`],
+    ['users', 'ph', `bigint not null default 0`],
+    ['users', 'items', `jsonb not null default '[]'`],
+    ['users', 'equip', `jsonb not null default '{}'`],
+    ['users', 'last_daily', `date`],
+    ['users', 'favs', `jsonb not null default '[]'`],
+    ['users', 'banned_until', `timestamptz`],
+    ['users', 'ban_reason', `text`],
+    ['users', 'design', `jsonb`],
+    ['users', 'design_block', `boolean not null default false`],
+    ['users', 'last_ip', `text`],
+    ['users', 'last_device', `text`],
+    ['users', 'last_seen', `timestamptz`],
+    ['admins', 'player_id', `int`]
+  ]) if (!have.has(t + '.' + c)) {
+    const q = `set lock_timeout = '6s'; alter table ${t} add column if not exists ${c} ${d}`;
+    try { await sql.unsafe(q).simple(); console.log('added column', t, c); }
+    catch (e) {
+      console.error('migration wait', t, c, e.message);
+      try { const k = await sql`select pg_terminate_backend(pid) as k from pg_stat_activity where datname = current_database() and pid <> pg_backend_pid() and state like 'idle in transaction%'`; console.log('cleared stuck sessions', k.length); } catch {}
+      try { await sql.unsafe(q).simple(); console.log('added column', t, c); } catch (e2) { console.error('migration failed', t, c, e2.message); }
+    }
+  }
+  clearTimeout(wd); console.log('Postgres connected');
 } else console.log('No DATABASE_URL — using in-memory store');
 
 const pub = (u, self) => u && { id: u.id, username: u.username, points: u.points, games: u.games, wins: u.wins, avatar: u.avatar || null, ph: +u.ph || 0,
