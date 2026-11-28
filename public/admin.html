@@ -61,7 +61,7 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
   <header>
     <div class="hbar"><img src="/img/logo.png?v=3" alt=""><b>لوحة الإدارة</b><span class="sp"></span><span class="muted" id="who"></span><button class="gold" id="play">🎮 العب</button><button id="refresh">🔄</button><button id="out">خروج</button></div>
     <nav id="tabs">
-      <button data-t="dash" class="on">📊 نظرة عامة</button><button data-t="users">👥 اللاعبين</button><button data-t="bans">⛔ الحظر</button><button data-t="rooms">🃏 الطاولات</button><button data-t="bc">📢 إعلان</button><button data-t="set">⚙️ الإعدادات</button>
+      <button data-t="dash" class="on">📊 نظرة عامة</button><button data-t="users">👥 اللاعبين</button><button data-t="bans">⛔ الحظر</button><button data-t="rooms">🃏 الطاولات</button><button data-t="rep">🚩 البلاغات</button><button data-t="bc">📢 إعلان</button><button data-t="set">⚙️ الإعدادات</button>
     </nav>
   </header>
   <main>
@@ -69,6 +69,7 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
       <div class="cards" id="stats"></div>
       <div class="panel"><h3>🔥 أكتر ألعاب انلعبت (آخر ٧ أيام)</h3><div id="top"></div></div>
     </section>
+    <section id="t-rep" class="hidden"><div class="panel" style="margin-top:0"><h3>🚩 بلاغات تصاميم الطاولات</h3><p class="muted" style="font-size:12px">بعد ٣ بلاغات من لاعبين مختلفين التصميم بيختفي تلقائياً من الطاولة لحتى تقرر.</p><div id="reps"></div></div></section>
     <section id="t-users" class="hidden">
       <details class="panel" style="margin-top:0;margin-bottom:12px"><summary style="cursor:pointer;font-weight:800">➕ إضافة لاعب جديد</summary>
         <div class="row" style="margin-top:10px"><input id="nu" placeholder="اسم اللاعب"><input id="np" placeholder="كلمة السر" autocomplete="off"><input id="nc" type="number" placeholder="الرصيد (اختياري)"><button class="gold" id="ngo">إضافة</button></div></details>
@@ -139,10 +140,17 @@ $('out').onclick = () => { sessionStorage.removeItem('atok'); tok = ''; showLogi
 let tab = 'dash';
 $('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('main>section').forEach((s) => s.classList.toggle('hidden', s.id !== 't-' + tab)); load(); };
 $('refresh').onclick = () => load();
+document.addEventListener('click', async (e) => { const b = e.target.closest('[data-rp]'); if (!b) return; if (b.dataset.rp !== 'dismiss' && !confirm('متأكد؟')) return; try { await api('reports', { id: +b.dataset.id, action: b.dataset.rp }); toast('تم'); load(); } catch (x) { toast(x.message); } });
 let ME = null;
 async function start() { $('login').classList.add('hidden'); $('app').classList.remove('hidden'); try { ME = (await api('me')).me; $('pl').textContent = ME.player ? 'مربوط بـ: ' + ME.player : 'حتى الآن غير مربوط'; $('who').textContent = '👤 ' + ME.username + (ME.role === 'owner' ? ' (مالك)' : ' (مشرف)'); } catch {} load(); }
 async function load() {
   try {
+    if (tab === 'rep') {
+      const j = await api('reports'); const L = j.reports || j.list || j;
+      const fd = (d) => { if (!d) return ''; const g = `radial-gradient(ellipse at 50% 40%,${d.c1},${d.c2})`; return `<div style="width:220px;height:110px;border-radius:30px;background:${g};border:4px solid ${d.neon};box-shadow:0 0 14px ${d.neon};display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">${d.img ? `<img src="${d.img}" style="max-width:60%;max-height:60%">` : ''}${d.text ? `<b style="color:${d.tc}">${esc(d.text)}</b>` : ''}</div>`; };
+      $('reps').innerHTML = !L.length ? '<p class="muted">ما في بلاغات 👌</p>' : L.map((r) => { const d = (typeof r.data === 'string' ? JSON.parse(r.data) : r.data) || {}; return `<div class="panel" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;opacity:${r.status === 'open' ? 1 : 0.5}">${fd(d.design)}<div style="flex:1;min-width:180px"><b>صاحب التصميم: ${esc(r.target_name || '#' + r.target)}</b><div class="muted" style="font-size:12px">بلّغ: ${esc(r.reporter_name || '#' + r.reporter)} · ${ago(r.created_at)} · طاولة ${esc(r.room || '—')} · بلاغات مفتوحة: ${r.cnt}</div>${d.why ? `<div style="margin-top:6px">السبب: ${esc(d.why)}</div>` : ''}</div>${r.status === 'open' ? `<div class="row"><button data-rp="remove" data-id="${r.id}">🗑️ شيل التصميم</button><button class="red" data-rp="block" data-id="${r.id}">⛔ شيل + امنعه يصمم</button><button data-rp="dismiss" data-id="${r.id}">✔️ تجاهل</button></div>` : '<span class="muted">✓ انحلّت</span>'}</div>`; }).join('');
+      return;
+    }
     if (tab === 'dash') {
       const s = await api('stats');
       const C = [['🟢 متصلين الآن', s.online, 'g'], ['🃏 طاولات مفتوحة', s.rooms], ['▶️ يلعبوا', s.live, 'g'], ['👥 كل اللاعبين', s.users], ['🆕 جداد (٢٤ س)', s.new24, 'y'], ['📅 نشطين (٢٤ س)', s.active24], ['🎮 ألعاب (٢٤ س)', s.games24], ['🎮 كل الألعاب', s.games], ['🪙 مجموع الكوينز', Number(s.coins).toLocaleString('en')], ['💳 مدفوعات', s.payments], ['💰 الإيرادات (ر.س)', s.revenue, 'y'], ['⛔ محظورين', s.banned, 'r']];

@@ -852,6 +852,23 @@ button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,25
 .woseg{display:flex;gap:6px}.wopt{flex:1;font:inherit;font-size:13px;font-weight:600;padding:9px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfe4ee;cursor:pointer}
 .wopt.on{background:rgba(207,171,85,.16);border-color:rgba(207,171,85,.7);color:#f1dca6}.wopt:disabled{cursor:default;opacity:.85}.wopt:disabled:not(.on){opacity:.45}
 .wonote{font-size:11.5px;color:#e0c27a}
+
+#table.tb-custom .felt{position:absolute}.fdes{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:.55;gap:4px}
+.fdes img{max-width:46%;max-height:46%;object-fit:contain;filter:drop-shadow(0 0 6px var(--dneon,#fff))}.fdes b{font-size:clamp(14px,4vw,24px);font-weight:700;letter-spacing:.5px;text-shadow:0 0 10px currentColor,0 0 2px #000}
+#table.dglow .felt,.dzprev.dglow .felt,.dzmini.dglow .felt{box-shadow:0 0 0 3px var(--dneon),0 0 22px 4px var(--dneon),0 0 60px 6px color-mix(in srgb,var(--dneon) 40%,transparent),inset 0 0 40px rgba(0,0,0,.45)!important}
+#table.dpulse .felt,.dzprev.dpulse .felt{animation:dpul 2.2s ease-in-out infinite}@keyframes dpul{50%{box-shadow:0 0 0 3px var(--dneon),0 0 34px 10px var(--dneon),0 0 90px 14px color-mix(in srgb,var(--dneon) 45%,transparent),inset 0 0 40px rgba(0,0,0,.45)}}
+.dzprev{position:relative;height:150px;border-radius:16px;background:#0c1222;margin-bottom:12px;padding:18px 24px}.dzprev .felt{position:absolute;inset:18px 24px;border-radius:40px;border:4px solid transparent;background:var(--felt) padding-box,var(--rim) border-box}
+.dzmini .felt{background:var(--felt) padding-box,var(--rim) border-box!important}.dzmini .fdes b{font-size:10px}
+.dzg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.dzg label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9aa6bf}.dzg label span{display:flex;gap:6px;align-items:center}
+.dzg input[type=color]{width:44px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:none;padding:2px}.dzg input:not([type]){flex:1;min-width:0;padding:7px 9px}
+.dzt{flex-direction:row!important;align-items:center;gap:8px!important;color:#dfe4ee!important;font-size:13px!important}
+.dzsec{font-size:12px;color:#9aa6bf;margin:6px 0 4px}.dzpats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}.dzpats button{font:inherit;font-size:12px;padding:6px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfe4ee}.dzpats button.on{border-color:#cfab55;background:rgba(207,171,85,.15)}
+.dzdraw{display:flex;flex-direction:column;gap:6px;align-items:center}.dzdraw canvas{width:100%;max-width:330px;aspect-ratio:2;border-radius:12px;background:repeating-conic-gradient(#1b2338 0 25%,#212a42 0 50%) 50%/20px 20px;touch-action:none;border:1px solid rgba(255,255,255,.12)}
+.dzbr{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.dzbr button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;font-size:14px;background:rgba(255,255,255,.06)}.dzbr button.on{border-color:#cfab55;box-shadow:0 0 0 2px #cfab55}
+.dznote{font-size:11.5px;color:#e0c27a;line-height:1.6;margin:10px 0}
+.dzcta{width:100%;display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:right;padding:14px;border-radius:14px;margin-bottom:12px;border:1px solid rgba(207,171,85,.55);background:linear-gradient(135deg,rgba(207,171,85,.18),rgba(34,228,255,.08));color:#f1ead8;cursor:pointer}
+.dzcta b{font-size:15px}.dzcta small{grid-column:1;color:#b9c2d4;font-size:12px;line-height:1.6}.dzcta em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;font-weight:700;color:#e0c27a}
+.seats.dz::before{background:var(--felt)!important;border-radius:32px!important;inset:0!important;box-shadow:0 0 0 3px var(--dneon),0 0 26px var(--dneon),inset 0 0 50px rgba(0,0,0,.45)!important}
 </style>
 </head>
 <body>
@@ -1338,6 +1355,7 @@ $('bRef').onclick = () => sendWs({ t: 'lobby' });
 $('bLb').onclick = () => sendWs({ t: 'leaders' });
 
 function renderRoom() {
+  try { applyDesign(); } catch {}
   if (!room) return;
   if (room.status === 'waiting') { closeOverlay(); renderWaiting(); show('waiting'); }
   else { show('table'); renderTable(); }
@@ -1407,7 +1425,7 @@ function renderWaiting() {
   const S = $('wSeats'), kind = waitKind(room.game), team = TEAM_GAMES.includes(room.game);
   const mine = room.mySeat >= 0 ? room.mySeat : 0;
   const pos = (i) => (room.seats.length === 2 ? (i === mine ? 0 : 2) : kind === 'jack' ? [0, 3, 2, 1][(i - mine + 4) % 4] : posOf(i));
-  S.className = `seats k-${kind} n${room.seats.length}`;
+  S.className = `seats k-${kind} n${room.seats.length}${room.design ? " dz" + (room.design.glow ? " dglow" : "") : ""}`;
   $('wHint').textContent = team ? 'أرسل الكود لأصحابك — اللي قبالك هو شريكك 🤝' : room.seats.length === 2 ? 'أرسل الكود لخصمك وتحدّوا بعض ⚔️' : 'أرسل الكود أو الرابط لأصحابك';
   S.innerHTML = `<div class="wcenter">${waitCenter(kind, room.game)}</div>` + room.seats.map((s, i) => {
     const p = pos(i), col = kind === 'jack' ? JCOL[i] : kind === 'ludo' ? LCOL[i] : team ? (i % 2 ? '#8fa8cf' : '#cfab55') : '#8fa8cf';
@@ -3627,16 +3645,106 @@ const look = {};
 for (const k in LOOKS) { let v = null; try { v = localStorage.getItem('look_' + k); } catch {} look[k] = LOOKS[k].some((o) => o[0] === v) ? v : LOOKS[k][0][0]; }
 function applyLook() {
   const el = $('table');
-  for (const k in LOOKS) { [...el.classList].filter((c) => c.startsWith(k + '-')).forEach((c) => el.classList.remove(c)); el.classList.add(k + '-' + look[k]); }
+  for (const k in LOOKS) { [...el.classList].filter((c) => c.startsWith(k + '-')).forEach((c) => el.classList.remove(c)); el.classList.add(k + '-' + (k === 'tb' && look.tb === 'custom' ? 'sky' : look[k])); }
+  if (typeof applyDesign === 'function') applyDesign();
 }
 applyLook();
 const FX_KEYS = ['laugh', 'burn', 'clap', 'cry', 'angry', 'scream', 'kiss', 'party'];
 function price(id) { return me && me.catalog && me.catalog[id] != null ? me.catalog[id] : 0; }
-function ownsItem(id) { return price(id) === 0 || !!(me && me.items && me.items.includes(id)); }
+function ownsItem(id) { if (id === 'tb:custom') return !!(me && me.design); return price(id) === 0 || !!(me && me.items && me.items.includes(id)); }
 function syncLook() {
-  if (me && me.equip) for (const k in LOOKS) { const v = me.equip[k]; look[k] = v && LOOKS[k].some((o) => o[0] === v) ? v : LOOKS[k][0][0]; }
+  if (me && me.equip) for (const k in LOOKS) { const v = me.equip[k]; look[k] = v && (LOOKS[k].some((o) => o[0] === v) || (k === 'tb' && v === 'custom' && me.design)) ? v : LOOKS[k][0][0]; }
   applyLook();
 }
+// ===== صمّم طاولتك =====
+const DPAT = {
+  none: () => '',
+  diamond: (c) => `<path d="M20 0L40 20L20 40L0 20Z" fill="none" stroke="${c}" stroke-width="1.2"/>`,
+  dots: (c) => `<circle cx="10" cy="10" r="2.2" fill="${c}"/><circle cx="30" cy="30" r="2.2" fill="${c}"/>`,
+  suits: (c) => `<text x="4" y="16" font-size="13" fill="${c}">♠</text><text x="24" y="16" font-size="13" fill="${c}">♥</text><text x="4" y="36" font-size="13" fill="${c}">♦</text><text x="24" y="36" font-size="13" fill="${c}">♣</text>`,
+  stars: (c) => `<path d="M10 4l1.8 4.2 4.5.4-3.4 3 1 4.4L10 13.7 6.1 16l1-4.4-3.4-3 4.5-.4z" fill="${c}"/><path d="M30 24l1.2 2.8 3 .3-2.3 2 .7 3L30 30.6 27.4 32l.7-3-2.3-2 3-.3z" fill="${c}"/>`,
+  arabesque: (c) => `<g fill="none" stroke="${c}" stroke-width="1.1"><rect x="12" y="12" width="16" height="16"/><rect x="12" y="12" width="16" height="16" transform="rotate(45 20 20)"/><circle cx="20" cy="20" r="4"/></g>`,
+  lines: (c) => `<path d="M0 40L40 0M-10 10L10 -10M30 50L50 30" stroke="${c}" stroke-width="1.2"/>`,
+};
+const DPAT_N = { none: 'بدون', diamond: 'معيّنات', dots: 'نقاط', suits: 'رموز الورق', stars: 'نجوم', arabesque: 'زخرفة عربية', lines: 'خطوط' };
+function designBg(d) {
+  const pat = d.pat && d.pat !== 'none' ? `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' opacity='.22'>${DPAT[d.pat](d.patc || '#fff')}</svg>`)}") repeat, ` : '';
+  return `${pat}radial-gradient(ellipse at 50% 40%,${d.c1},${d.c2})`;
+}
+function designStyle(d) {
+  return `--felt:${designBg(d)};--rim:linear-gradient(150deg,${d.neon},#ffffff 40%,${d.neon} 70%);--r1:#05060a;--r2:${d.neon};--r3:#05060a;--dneon:${d.neon};--ledc:${d.neon},#ffffff,${d.neon},${d.neon},#ffffff,${d.neon};--ledf1:${d.neon};--ledf2:${d.neon}99`;
+}
+function designOverlay(d) { return `${d.img ? `<img src="${d.img}" alt="">` : ''}${d.text ? `<b style="color:${d.tc}">${esc(d.text)}</b>` : ''}`; }
+function effDesign() { return (room && room.design) || (look.tb === 'custom' && me && me.design) || null; }
+function applyDesign() {
+  const t = $('table'), f = $('felt'), d = effDesign(); if (!t || !f) return;
+  const ws = $('wSeats'), rd = room && room.design;
+  if (ws) { ws.classList.toggle('dz', !!rd); if (rd) ws.setAttribute('style', designStyle(rd)); else ws.removeAttribute('style'); ws.classList.toggle('dglow', !!(rd && rd.glow)); }
+  let ov = f.querySelector('.fdes');
+  if (!d) { t.classList.remove('tb-custom', 'dglow', 'dpulse'); t.style.cssText = t.style.cssText.replace(/--[a-z0-9]+:[^;]+;?/gi, ''); if (ov) ov.remove(); return; }
+  [...t.classList].filter((c) => c.startsWith('tb-')).forEach((c) => t.classList.remove(c));
+  t.classList.add('tb-custom'); t.classList.toggle('dglow', !!d.glow); t.classList.toggle('dpulse', !!d.pulse);
+  t.setAttribute('style', designStyle(d));
+  if (!ov) { ov = document.createElement('div'); ov.className = 'fdes'; f.appendChild(ov); }
+  const key = (d.img || '').length + '|' + d.text + d.tc; if (ov.__k !== key) { ov.__k = key; ov.innerHTML = designOverlay(d); }
+}
+let dz = null;
+function openDesigner() {
+  if (me && me.designBlocked) { toast('تصميمك انشال بسبب بلاغات — تواصل مع الإدارة'); return; }
+  dz = { c1: '#1d5a43', c2: '#0c2a20', neon: '#22e4ff', glow: true, pulse: false, pat: 'suits', patc: '#ffffff', text: '', tc: '#ffd24d', img: null, ...(me && me.design ? me.design : {}) };
+  const price = (me && me.designPrice) || 2000;
+  openModal('design', `<h3>🎨 صمّم طاولتك</h3>
+  <div class="dzprev" id="dzPrev"><div class="felt"><div class="fdes"></div></div></div>
+  <div class="dzg">
+    <label>لون الطاولة<span><input type="color" id="dzC1"><input type="color" id="dzC2"></span></label>
+    <label>لون النيون<span><input type="color" id="dzN"></span></label>
+    <label class="dzt"><input type="checkbox" id="dzGl"> توهّج نيون</label>
+    <label class="dzt"><input type="checkbox" id="dzPu"> نيون نابض</label>
+  </div>
+  <div class="dzsec">النقشة</div><div class="dzpats" id="dzPats">${Object.keys(DPAT).map((k) => `<button data-dp="${k}">${DPAT_N[k]}</button>`).join('')}</div>
+  <div class="dzg"><label>لون النقشة<span><input type="color" id="dzPc"></span></label><label>كتابة بالنص<span><input id="dzTx" maxlength="16" placeholder="مثلاً: ديوانية أبو فهد"><input type="color" id="dzTc"></span></label></div>
+  <div class="dzsec">ارسم شعارك (اختياري)</div>
+  <div class="dzdraw"><canvas id="dzCv" width="300" height="150"></canvas><div class="dzbr">${['#ffffff', '#ffd24d', '#ff3df2', '#22e4ff', '#39d353', '#ff5a4d', '#000000'].map((c, i) => `<button data-dc="${c}" style="background:${c}" class="${i ? '' : 'on'}"></button>`).join('')}<button data-dw="3">✏️</button><button data-dw="8">🖌️</button><button id="dzClr">🗑️</button></div></div>
+  <p class="dznote">⚠️ أي تصميم فيه إساءة أو محتوى غير لائق يقدر اللاعبين يبلّغوا عنه، وتنشال وتنحظر من التصميم.</p>
+  <button class="gold" style="width:100%" id="dzSave">احفظ وطبّق — ${price.toLocaleString('en')} 🪙</button>
+  <button class="ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">إلغاء</button>`);
+  const set = (id, v) => ($(id).value = v);
+  set('dzC1', dz.c1); set('dzC2', dz.c2); set('dzN', dz.neon); set('dzPc', dz.patc); set('dzTx', dz.text); set('dzTc', dz.tc);
+  $('dzGl').checked = dz.glow; $('dzPu').checked = dz.pulse;
+  const cv = $('dzCv'), cx = cv.getContext('2d'); let col = '#ffffff', w = 4, drawing = false, dirty = false;
+  if (dz.img) { const im = new Image(); im.onload = () => cx.drawImage(im, 0, 0); im.src = dz.img; }
+  cx.lineCap = 'round'; cx.lineJoin = 'round';
+  const pt = (e) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * cv.width, ((e.clientY - r.top) / r.height) * cv.height]; };
+  cv.onpointerdown = (e) => { drawing = true; cv.setPointerCapture(e.pointerId); const [x, y] = pt(e); cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + 0.1, y); cx.strokeStyle = col; cx.lineWidth = w; cx.stroke(); dirty = true; };
+  cv.onpointermove = (e) => { if (!drawing) return; const [x, y] = pt(e); cx.lineTo(x, y); cx.stroke(); };
+  cv.onpointerup = () => { if (!drawing) return; drawing = false; dz.img = cv.toDataURL('image/png'); paintDz(); };
+  $('dzClr').onclick = () => { cx.clearRect(0, 0, cv.width, cv.height); dz.img = null; paintDz(); };
+  document.querySelectorAll('[data-dc]').forEach((b) => (b.onclick = () => { col = b.dataset.dc; document.querySelectorAll('[data-dc]').forEach((x) => x.classList.toggle('on', x === b)); }));
+  document.querySelectorAll('[data-dw]').forEach((b) => (b.onclick = () => (w = +b.dataset.dw)));
+  document.querySelectorAll('[data-dp]').forEach((b) => (b.onclick = () => { dz.pat = b.dataset.dp; paintDz(); }));
+  const rd = () => { dz.c1 = $('dzC1').value; dz.c2 = $('dzC2').value; dz.neon = $('dzN').value; dz.patc = $('dzPc').value; dz.text = $('dzTx').value; dz.tc = $('dzTc').value; dz.glow = $('dzGl').checked; dz.pulse = $('dzPu').checked; paintDz(); };
+  ['dzC1', 'dzC2', 'dzN', 'dzPc', 'dzTx', 'dzTc', 'dzGl', 'dzPu'].forEach((id) => $(id).addEventListener('input', rd));
+  $('dzSave').onclick = async () => {
+    if (!confirm(`حفظ التصميم بـ ${price} نقطة؟`)) return;
+    try {
+      const r = await fetch('/api/design', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ design: dz }) });
+      const j = await r.json(); if (!r.ok) { toast(j.error || 'خطأ'); return; }
+      me = j.user; renderMe(); syncLook(); SND.play('win'); toast('🎨 تصميمك صار على طاولتك'); closeOverlay();
+    } catch { toast('تعذر الاتصال'); }
+  };
+  paintDz();
+}
+function paintDz() {
+  const p = $('dzPrev'); if (!p) return;
+  p.setAttribute('style', designStyle(dz)); p.classList.toggle('dglow', dz.glow); p.classList.toggle('dpulse', dz.pulse);
+  p.querySelector('.fdes').innerHTML = designOverlay(dz);
+  document.querySelectorAll('[data-dp]').forEach((b) => b.classList.toggle('on', b.dataset.dp === dz.pat));
+}
+async function reportDesign() {
+  const why = prompt('ليش بدك تبلّغ عن تصميم الطاولة؟ (اختياري)') ; if (why === null) return;
+  try { const r = await fetch('/api/report', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ why }) }); const j = await r.json(); toast(r.ok ? '🚩 وصل البلاغ للإدارة، شكراً' : j.error || 'خطأ'); } catch { toast('تعذر الاتصال'); }
+}
+
 let storeTab = 'cards';
 function openLook(which) { openStore(which === 'tb' ? 'tb' : 'cards'); }
 function openStore(tab) {
@@ -3650,7 +3758,7 @@ function openStore(tab) {
   let h = '';
   if (storeTab === 'cards') h = '<div class="lkt">وجه الورق</div><div class="lk">' + LOOKS.cs.map(([v, n]) => item('cs:' + v, `<div class="cprev cs-${v}">${['S14', 'H13', 'D12', 'C10'].map((c) => cardHtml(c, '', 'style="--cw:38px"')).join('')}</div>`, n)).join('') +
     '</div><div class="lkt">ظهر الورق</div><div class="lk">' + LOOKS.bk.map(([v, n]) => item('bk:' + v, `<div class="bprev bk-${v}"><i></i><i></i></div>`, n)).join('') + '</div>';
-  else if (storeTab === 'tb') h = '<div class="lk">' + LOOKS.tb.map(([v, n]) => item('tb:' + v, `<div class="tprev tb-${v}"><div class="felt"></div></div>`, n)).join('') + '</div>';
+  else if (storeTab === 'tb') h = `<button class="dzcta" data-dz="1"><b>🎨 صمّم طاولتك بنفسك</b><small>ألوان، نيون، نقشات، كتابة ورسمة خاصة فيك — بتطلع لكل اللي بيلعبوا على طاولتك</small><em>${((me && me.designPrice) || 2000).toLocaleString('en')} 🪙</em></button>` + '<div class="lk">' + (me && me.design ? `<button class="lkb ${look.tb === 'custom' ? 'on' : ''}" data-buy="tb:custom"><div class="tprev dzmini ${me.design.glow ? 'dglow' : ''}" style="${esc(designStyle(me.design))}"><div class="felt"><div class="fdes">${designOverlay(me.design)}</div></div></div><span>طاولتي ✨</span>${look.tb === 'custom' ? '<em class="st-on">✓ مستعمل</em>' : '<em class="st-own">استعمل</em>'}</button>` : '') + LOOKS.tb.map(([v, n]) => item('tb:' + v, `<div class="tprev tb-${v}"><div class="felt"></div></div>`, n)).join('') + '</div>';
   else if (storeTab === 'fx') h = '<div class="lk lk4">' + FX_KEYS.map((k) => item('fx:' + k, `<div class="fxprev">${FXE[k].e}</div>`, FXE[k].l)).join('') + '</div><p class="st-note">التفاعلات تطلع لكل اللي على الطاولة مع صوت 🔊</p><div class="lkt">باقة إيموجيات الديوانية الفاخرة (${LUX.length} إيموجي)</div><div class="lk" style="grid-template-columns:1fr">' + item('emo:lux', `<div class="luxprev">${LUX.slice(0, 12).map(([k]) => `<img src="/img/emo/${k}.webp">`).join('')}</div>`, 'الباقة كاملة للأبد') + '</div>';
   else if (storeTab === 'coins') {
     const P = packsInfo;
@@ -3696,9 +3804,10 @@ async function storeOp(op, id) {
   } catch { toast('تعذر الاتصال'); }
 }
 function openMenu() {
-  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="store">🛍️ المتجر</button><button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${!room && me && me.isAdmin ? '<button data-m="admin">🛠️ لوحة الإدارة</button>' : ''}${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+  openModal('menu', `<h3>القائمة</h3><div class="mlist">${room ? '<button data-m="home">🏠 رجوع للصالة</button>' : ''}<button data-m="store">🛍️ المتجر</button><button data-m="cards">🃏 شكل الورق</button><button data-m="tb">🎨 شكل الطاولة</button>${room && room.engine ? '<button data-m="res">📋 جدول النتائج</button>' : ''}<button data-m="rules">📖 القوانين</button>${room && room.design && !room.isHost ? '<button data-m="report">🚩 بلّغ عن تصميم الطاولة</button>' : ''}${!room && me && me.isAdmin ? '<button data-m="admin">🛠️ لوحة الإدارة</button>' : ''}${room ? '' : '<button data-m="prof">👤 ملفي الشخصي</button><button data-m="av">🙂 غيّر شخصيتك</button><button data-m="out">🚪 تسجيل خروج</button>'}</div><button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 function menuAct(m) {
+  if (m === 'report') { closeOverlay(); return reportDesign(); }
   if (m === 'home') {
     closeOverlay();
     if (room && room.status === 'playing' && room.mySeat >= 0 && !confirm('متأكد تريد تطلع؟ بوت يكمل مكانك')) return;
@@ -3716,6 +3825,7 @@ $('modal').addEventListener('click', (ev) => {
   const st = ev.target.closest('[data-stab]'); if (st) { SND.play('pop'); openStore(st.dataset.stab); return; }
   const pk = ev.target.closest('[data-pack]'); if (pk) { buyPack(pk.dataset.pack); return; }
   if (ev.target.closest('[data-daily]')) { storeOp('daily'); return; }
+  if (ev.target.closest('[data-dz]')) { openDesigner(); return; }
   const b = ev.target.closest('[data-buy]');
   if (b) {
     const id = b.dataset.buy, [k] = id.split(':');

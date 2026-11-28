@@ -78,6 +78,9 @@ if (Bun.env.DATABASE_URL) {
   await sql`alter table users add column if not exists favs jsonb not null default '[]'`;
   await sql`alter table users add column if not exists banned_until timestamptz`;
   await sql`alter table users add column if not exists ban_reason text`;
+  await sql`alter table users add column if not exists design jsonb`;
+  await sql`alter table users add column if not exists design_block boolean not null default false`;
+  await sql`create table if not exists reports (id serial primary key, target int not null, reporter int not null, kind text not null, data jsonb, room text, status text not null default 'open', created_at timestamptz not null default now())`;
   await sql`alter table users add column if not exists last_ip text`;
   await sql`alter table users add column if not exists last_device text`;
   await sql`alter table users add column if not exists last_seen timestamptz`;
@@ -89,7 +92,7 @@ if (Bun.env.DATABASE_URL) {
 } else console.log('No DATABASE_URL — using in-memory store');
 
 const pub = (u, self) => u && { id: u.id, username: u.username, points: u.points, games: u.games, wins: u.wins, avatar: u.avatar || null, ph: +u.ph || 0,
-  ...(self ? { email: u.email || '', favs: u.favs || [], items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
+  ...(self ? { design: u.design || null, designBlocked: !!u.design_block, designPrice: DESIGN_PRICE, email: u.email || '', favs: u.favs || [], items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
 async function patchUser(id, f) {
   if (sql) {
     if ('email' in f) await sql`update users set email = ${f.email} where id = ${id}`;
@@ -99,6 +102,8 @@ async function patchUser(id, f) {
     if ('items' in f) await sql`update users set items = ${JSON.stringify(f.items)}::jsonb where id = ${id}`;
     if ('equip' in f) await sql`update users set equip = ${JSON.stringify(f.equip)}::jsonb where id = ${id}`;
     if ('favs' in f) await sql`update users set favs = ${JSON.stringify(f.favs)}::jsonb where id = ${id}`;
+    if ('design' in f) await sql`update users set design = ${f.design ? JSON.stringify(f.design) : null}::jsonb where id = ${id}`;
+    if ('design_block' in f) await sql`update users set design_block = ${!!f.design_block} where id = ${id}`;
     if ('points' in f) await sql`update users set points = ${f.points} where id = ${id}`;
     if ('last_daily' in f) await sql`update users set last_daily = ${f.last_daily} where id = ${id}`;
     if ('banned_until' in f) await sql`update users set banned_until = ${f.banned_until}, ban_reason = ${f.ban_reason || null} where id = ${id}`;
@@ -125,6 +130,7 @@ async function findUser(name) {
 }
 function fixJson(u) {
   if (!u) return u;
+  if (typeof u.design === 'string') { try { u.design = JSON.parse(u.design); } catch { u.design = null; } }
   for (const [k, d] of [['equip', {}], ['items', []], ['favs', []]]) {
     let v = u[k]; if (typeof v === 'string') { try { v = JSON.parse(v); } catch { v = d; } }
     if (k === 'equip' && (Array.isArray(v) || typeof v !== 'object' || !v)) v = {};
@@ -240,6 +246,17 @@ function newCode() {
 const COMM = makeCommunity({ sql, clients, send: (w, m) => send(w, m), getUser, frGet, isAdminPlayer: (u) => isAdminPlayer(u) });
 await COMM.init();
 const send = (ws, m) => { try { ws && ws.readyState === 1 && ws.send(JSON.stringify(m)); } catch {} };
+const DESIGN_PRICE = 2000;
+const HEX = /^#[0-9a-f]{6}$/i;
+function cleanDesign(d) {
+  if (!d || typeof d !== 'object') return null;
+  const c = (x, f) => (HEX.test(String(x || '')) ? String(x) : f);
+  const o = { c1: c(d.c1, '#1d5a43'), c2: c(d.c2, '#0c2a20'), neon: c(d.neon, '#22e4ff'), glow: !!d.glow, pulse: !!d.pulse,
+    pat: ['none', 'diamond', 'dots', 'suits', 'stars', 'arabesque', 'lines'].includes(d.pat) ? d.pat : 'none', patc: c(d.patc, '#ffffff'),
+    text: String(d.text || '').replace(/[<>]/g, '').slice(0, 16), tc: c(d.tc, '#ffd24d'), img: null };
+  if (typeof d.img === 'string' && d.img.startsWith('data:image/png;base64,') && d.img.length < 140000) o.img = d.img;
+  return o;
+}
 const SPEED = { slow: 1.8, normal: 1.35, fast: 1 };
 const FLEX_GAMES = new Set(['ludo', 'snakes', 'pig', 'yatzy', 'liar', 'memory', 'hilo', 'words', 'draw', 'guess', 'trivia', 'tf', 'flags', 'capitals', 'proverbs', 'dishes', 'scramble', 'math', 'wyr']);
 const humanSeats = (r) => r.seats.map((s, i) => [s, i]).filter(([s]) => s && !s.bot);
@@ -256,7 +273,7 @@ function roomView(r, uid) {
   const eng = r.engine;
   return {
     code: r.code, game: r.game, gameName: GAME_NAMES[r.game], status: r.status, priv: r.priv,
-    hostId: r.host, isHost: r.host === uid, mySeat, vip: !!r.vip, turnMs: r.turnMs || TURN_MS, speed: r.speed || 'normal', fill: r.fill || 'none',
+    hostId: r.host, isHost: r.host === uid, mySeat, design: r.design || null, vip: !!r.vip, turnMs: r.turnMs || TURN_MS, speed: r.speed || 'normal', fill: r.fill || 'none',
     seats: r.seats.map((s) => s && {
       name: s.name, bot: !!s.bot, uid: s.uid || null, av: s.av || null, ph: s.ph || 0,
       away: !s.bot && (s.left || !isConnected(s.uid)),
@@ -292,6 +309,9 @@ function lobbyList() {
   })).slice(0, 50);
 }
 
+async function setRoomDesign(r) {
+  try { const u = await getUser(r.host); r.design = u && !u.design_block && u.design && u.equip && u.equip.tb === 'custom' ? u.design : null; } catch { r.design = null; }
+}
 function attachHooks(r) {
   const e = r.engine; if (!e) return;
   e.names = r.seats.map((x) => (x ? x.name : '')); e.isHuman = (i) => !!r.seats[i] && !r.seats[i].bot; e.isBot = (i) => !!r.seats[i] && controlledByBot(r, i);
@@ -407,7 +427,7 @@ function removeFromRoom(uid) {
   }
   const remaining = humanSeats(r).filter(([s]) => !s.left);
   if (!remaining.length && !r.watchers.size) { clearTimeout(r.timer); rooms.delete(code); dropRoomState(code); lobbyDirty(); return; }
-  if (r.host === uid) r.host = remaining.length ? remaining[0][0].uid : r.host;
+  if (r.host === uid) { r.host = remaining.length ? remaining[0][0].uid : r.host; setRoomDesign(r).then(() => broadcast(r)); }
   schedule(r);
   broadcast(r);
 }
@@ -436,6 +456,7 @@ async function handle(ws, m) {
         seats: [{ uid, name, av, ph }, ...Array(seatCount(m.game) - 1).fill(null)], watchers: new Set(), voice: new Set(), chat: [], engine: null, timer: null, created: Date.now() };
       rooms.set(room.code, room);
       userRoom.set(uid, room.code);
+      await setRoomDesign(room);
       sysChat(room, `${name} فتح الطاولة`);
       broadcast(room);
       break;
@@ -669,17 +690,44 @@ const server = Bun.serve({
         const [k] = id.split(':'); if (['cs', 'bk', 'tb'].includes(k)) u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: id.split(':')[1] } });
       } else if (b.op === 'equip') {
         const [k, v] = id.split(':');
-        if (!['cs', 'bk', 'tb'].includes(k) || CATALOG[id] === undefined) return json({ error: 'غرض غير موجود' }, 400);
-        if (!owns(u, id)) return json({ error: 'يجب تشتريه أول' }, 400);
+        if (id === 'tb:custom') { if (!u.design || u.design_block) return json({ error: 'صمّم طاولتك أولاً' }, 400); }
+        else if (!['cs', 'bk', 'tb'].includes(k) || CATALOG[id] === undefined) return json({ error: 'غرض غير موجود' }, 400);
+        else if (!owns(u, id)) return json({ error: 'يجب تشتريه أول' }, 400);
         u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: v } });
       } else return json({ error: 'طلب غلط' }, 400);
       const ws = clients.get(u.id); if (ws) send(ws, { t: 'me', user: pub(u, true) });
+      for (const r of rooms.values()) if (r.host === u.id) setRoomDesign(r).then(() => broadcast(r));
       return json({ user: pub(u, true) });
     }
     if (url.pathname.startsWith('/p/')) {
       const u = await getUser(+url.pathname.slice(3));
       if (!u || !u.photo) return new Response('not found', { status: 404 });
       return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
+    }
+    if (url.pathname === '/api/design' && req.method === 'POST') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      let u = p && (await getUser(p.id)); if (!u) return json({ error: 'unauthorized' }, 401);
+      if (u.design_block) return json({ error: 'تصميمك انشال بسبب بلاغات — تواصل مع الإدارة' }, 403);
+      const d = cleanDesign((await body(req)).design); if (!d) return json({ error: 'تصميم غير صالح' }, 400);
+      if (u.points < DESIGN_PRICE) return json({ error: `تحتاج ${DESIGN_PRICE} نقطة 🪙` }, 400);
+      u = await patchUser(u.id, { points: u.points - DESIGN_PRICE, design: d });
+      u = await patchUser(u.id, { equip: { ...(u.equip || {}), tb: 'custom' } });
+      for (const r of rooms.values()) if (r.host === u.id) { r.design = d; broadcast(r); }
+      const c = clients.get(u.id); if (c) send(c, { t: 'me', user: pub(u, true) });
+      return json({ user: pub(u, true) });
+    }
+    if (url.pathname === '/api/report' && req.method === 'POST') {
+      const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
+      const me = p && (await getUser(p.id)); if (!me) return json({ error: 'unauthorized' }, 401);
+      const r = rooms.get(userRoom.get(me.id)); if (!r || !r.design || r.host === me.id) return json({ error: 'لا يوجد تصميم لتبلّغ عنه' }, 400);
+      const why = String((await body(req)).why || '').slice(0, 200);
+      if (sql) {
+        const dup = await sql`select 1 from reports where target = ${r.host} and reporter = ${me.id} and status = 'open'`;
+        if (!dup.length) await sql`insert into reports (target, reporter, kind, data, room) values (${r.host}, ${me.id}, 'design', ${JSON.stringify({ design: r.design, why })}::jsonb, ${r.code})`;
+        const n = (await sql`select count(distinct reporter)::int as n from reports where target = ${r.host} and status = 'open'`)[0].n;
+        if (n >= 3) { r.design = null; r.designHidden = true; broadcast(r); }
+      }
+      return json({ ok: true });
     }
     if (url.pathname === '/api/community') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
@@ -898,6 +946,22 @@ const server = Bun.serve({
         }
         const users = sql ? await sql`select id, username, banned_until, ban_reason from users where banned_until > now() order by banned_until desc limit 100` : [...mem.users.values()].filter((u) => u.banned_until && new Date(u.banned_until) > new Date());
         return json({ bans: await listBans(), users });
+      }
+      if (ap === 'reports') {
+        if (!sql) return json({ list: [] });
+        if (req.method === 'POST') {
+          const a = await body(req); const rows = await sql`select * from reports where id = ${+a.id}`; const rp = rows[0]; if (!rp) return json({ error: 'غير موجود' }, 404);
+          if (a.action === 'remove' || a.action === 'block') {
+            await patchUser(rp.target, { design: null, ...(a.action === 'block' ? { design_block: true } : {}) });
+            const tu = await getUser(rp.target); if (tu && tu.equip && tu.equip.tb === 'custom') await patchUser(rp.target, { equip: { ...tu.equip, tb: 'sky' } });
+            for (const r of rooms.values()) if (r.host === rp.target) { r.design = null; broadcast(r); }
+            const c = clients.get(rp.target); if (c) { const u2 = await getUser(rp.target); send(c, { t: 'me', user: pub(u2, true) }); send(c, { t: 'notice', msg: '🚩 الإدارة شالت تصميم طاولتك بسبب مخالفة', big: true }); }
+          }
+          await sql`update reports set status = 'done' where target = ${rp.target} and status = 'open'`;
+          return json({ ok: true });
+        }
+        const list = await sql`select r.id, r.target, r.reporter, r.data, r.room, r.status, r.created_at, t.username as target_name, p.username as reporter_name, (select count(*)::int from reports x where x.target = r.target and x.status = 'open') as cnt from reports r left join users t on t.id = r.target left join users p on p.id = r.reporter order by (r.status = 'open') desc, r.id desc limit 100`;
+        return json({ list: list.map((x) => ({ ...x, data: typeof x.data === 'string' ? JSON.parse(x.data) : x.data })) });
       }
       if (ap === 'rooms') {
         if (req.method === 'POST') { const a = await body(req); const r = rooms.get(String(a.code || '')); if (!r) return json({ error: 'الطاولة غير موجودة' }, 404); for (const s of r.seats) if (s && s.uid) { const c = clients.get(s.uid); userRoom.delete(s.uid); if (c) send(c, { t: 'left', reason: 'الإدارة سكّرت الطاولة' }); } clearTimeout(r.timer); rooms.delete(r.code); dropRoomState(r.code); lobbyDirty(); return json({ ok: true }); }
