@@ -12,13 +12,13 @@ export class Snakes extends UIGame {
     const d = d6(); this.die = d; this.rollId++; this.bump();
     const from = this.pos[seat];
     let p = from + d; let note = `${this.nm(seat)} جاب ${d}`;
-    if (p > 100) { p = from; note += ' — بدّه رقم مضبوط ليوصل 100'; }
+    if (p > 100) { p = from; note += ' — يحتاج رقم مضبوط ليوصل 100'; }
     const mid = p;
     const j = JUMPS[p]; if (j) { note += j > p ? ` 🪜 طلع لـ${j}` : ` 🐍 نزل لـ${j}`; p = j; }
     this.lastMv = { s: seat, from, mid, to: p, d, id: (this.lastMv ? this.lastMv.id : 0) + 1 };
     this.pos[seat] = p; this.msg = note; this.scores = this.pos.slice();
     if (p === 100) return this.end([seat], `🏆 ${this.nm(seat)} وصل للـ100!`);
-    if (d === 6) { this.msg += ' — ٦! بيلعب كمان'; return; }
+    if (d === 6) { this.msg += ' — ٦! يلعب مرة ثانية'; return; }
     this.wait(600, () => { this.turn = this.next(seat); });
   }
   botAction() { return { type: 'roll' }; }
@@ -35,7 +35,7 @@ export class Snakes extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: `${TOK(i)} ${this.pos[i]}` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : this.msg || 'أول واحد بيوصل 100 بيربح', cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : this.msg || 'أول واحد يوصل 100 يربح', cls: 'lead' },
         { k: 'board', r: 10, c: 10, theme: 'snakes', cells, html: true },
         { k: 'row', items: [{ k: 'dice', d: [this.die || 1], roll: this.rollId }, my ? { k: 'btns', b: [{ t: '🎲 ارمي الزهر', a: { type: 'roll' }, cls: 'gold big' }] } : { k: 'text', t: `دور ${this.nm(this.turn)}` }] },
       ],
@@ -71,11 +71,11 @@ export class Pig extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: `⭐ ${this.scores[i]}`, sub: i === this.turn && this.pot ? `+${this.pot}` : '' })),
       blocks: [
-        { k: 'text', t: `أول واحد بيجمع ${this.target} بيربح — ارمي قد ما بدك، بس إذا طلع ١ بتخسر اللي جمعته بهالدور`, cls: 'hint' },
+        { k: 'text', t: `أول واحد يجمع ${this.target} يربح — ارمي قد ما تريد، فقط إذا طلع ١ تخسر اللي جمعته بهالدور`, cls: 'hint' },
         { k: 'dice', d: [this.die || 6], roll: this.rollId, big: true },
         { k: 'text', t: this.over ? this.msg : this.msg || `دور ${this.nm(this.turn)}`, cls: 'lead' },
-        { k: 'text', t: `بهالدور: <b>${this.pot}</b>${this.turn >= 0 && this.pot ? ` — إذا خبّى بيصير معه <b>${this.scores[this.turn] + this.pot}</b>` : ''}`, cls: 'big' },
-        my ? { k: 'btns', b: [{ t: '🎲 ارمي كمان', a: { type: 'roll' }, cls: 'gold big' }, { t: `💰 خبّي ${this.pot}`, a: { type: 'hold' }, cls: 'green big', dis: !this.pot }] } : null,
+        { k: 'text', t: `بهالدور: <b>${this.pot}</b>${this.turn >= 0 && this.pot ? ` — إذا خبّى يصير معه <b>${this.scores[this.turn] + this.pot}</b>` : ''}`, cls: 'big' },
+        my ? { k: 'btns', b: [{ t: '🎲 ارمي مرة ثانية', a: { type: 'roll' }, cls: 'gold big' }, { t: `💰 خبّي ${this.pot}`, a: { type: 'hold' }, cls: 'green big', dis: !this.pot }] } : null,
         { k: 'table', cls: 'pigt', rows: [0, 1, 2, 3].filter((i) => !this.out(i)).map((i) => ({ c: [this.nm(i), `<span class="pgb"><i style="width:${Math.min(100, (this.scores[i] / this.target) * 100)}%;background:${PCOL[i]}"></i>${i === this.turn && this.pot ? `<u style="left:${Math.min(100, (this.scores[i] / this.target) * 100)}%;width:${Math.min(100 - (this.scores[i] / this.target) * 100, (this.pot / this.target) * 100)}%"></u>` : ''}</span>`, `<b>${this.scores[i]}</b>/${this.target}`], cls: i === this.turn ? 'cur' : '' })) },
       ],
     };
@@ -84,7 +84,7 @@ export class Pig extends UIGame {
 
 // ---------------- خمسات (يتزي) ----------------
 const YC = [['ones', 'الواحدات'], ['twos', 'التنينات'], ['threes', 'التلاتات'], ['fours', 'الأربعات'], ['fives', 'الخمسات'], ['sixes', 'الستات'],
-  ['k3', 'تلاتة متل بعض'], ['k4', 'أربعة متل بعض'], ['fh', 'فل هاوس (٣+٢)'], ['ss', 'سلسلة صغيرة (٤)'], ['ls', 'سلسلة كبيرة (٥)'], ['yz', 'خمسات! (٥ متل بعض)'], ['ch', 'مجموع حر']];
+  ['k3', 'ثلاثة مثل بعض'], ['k4', 'أربعة مثل بعض'], ['fh', 'فل هاوس (٣+٢)'], ['ss', 'سلسلة صغيرة (٤)'], ['ls', 'سلسلة كبيرة (٥)'], ['yz', 'خمسات! (٥ مثل بعض)'], ['ch', 'مجموع حر']];
 function yscore(cat, d) {
   const cnt = [0, 0, 0, 0, 0, 0, 0]; d.forEach((x) => cnt[x]++); const sum = d.reduce((a, b) => a + b, 0); const m = Math.max(...cnt);
   const has = (seq) => seq.every((x) => cnt[x]);
@@ -131,7 +131,7 @@ export class Yatzy extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: `⭐ ${this.total(i)}` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? (this.rolls ? `رمية ${this.rolls} من ٣ — اكبس على الزهرات اللي بدك تخليها 🔒 وارمي الباقي، أو اختار خانة من الجدول (الأرقام الذهبية = نقاطك إذا اخترتها)` : 'دورك — ارمي الزهر 🎲 (عندك ٣ رميات)') : this.msg || `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? (this.rolls ? `رمية ${this.rolls} من ٣ — اضغط على الزهرات اللي تريد تخليها 🔒 وارمي الباقي، أو اختار خانة من الجدول (الأرقام الذهبية = نقاطك إذا اخترتها)` : 'دورك — ارمي الزهر 🎲 (عندك ٣ رميات)') : this.msg || `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'dice', d: this.dice, held: this.held, act: my && this.rolls ? 'hold' : null, roll: this.rollId },
         my ? { k: 'btns', b: [{ t: `🎲 ارمي (${3 - this.rolls})`, a: { type: 'roll' }, cls: 'gold', dis: this.rolls >= 3 }] } : null,
         { k: 'table', rows, cls: 'ysheet' },
@@ -159,12 +159,12 @@ export class Liar extends UIGame {
   act(seat, a) {
     this.check(seat);
     if (a.type === 'bid') {
-      const q = +a.q, f = +a.f; if (!this.bids().some(([x, y]) => x === q && y === f)) throw new Error('مزايدة مو مسموحة');
+      const q = +a.q, f = +a.f; if (!this.bids().some(([x, y]) => x === q && y === f)) throw new Error('مزايدة غير مسموحة');
       this.bid = [q, f, seat]; this.msg = `${this.nm(seat)}: «في ${q} × ${'⚀⚁⚂⚃⚄⚅'[f - 1]}»`; this.bump();
       this.turn = this.next(seat, (i) => !this.cnt[i]); return;
     }
     if (a.type === 'liar') {
-      if (!this.bid) throw new Error('ما في مزايدة لسا');
+      if (!this.bid) throw new Error('لا يوجد مزايدة حتى الآن');
       const [q, f, who] = this.bid; const real = this.countFace(f); const lieer = real >= q ? seat : who;
       this.cnt[lieer]--; this.reveal = { dice: this.dice.map((d) => d.slice()), q, f, real, loser: lieer, caller: seat };
       this.msg = `${this.nm(seat)} قال «كذاب!» — كان في ${real} × ${'⚀⚁⚂⚃⚄⚅'[f - 1]} — ${this.nm(lieer)} خسر زهر`; this.bump();
@@ -189,8 +189,8 @@ export class Liar extends UIGame {
       blocks.push({ k: 'text', t: this.msg, cls: 'lead' });
       this.reveal.dice.forEach((d, i) => { if (d.length) blocks.push({ k: 'dice', d, small: true, label: this.nm(i), mark: this.reveal.f }); });
     } else {
-      blocks.push({ k: 'text', t: this.bid ? `آخر مزايدة: <b>${this.bid[0]} × ${F[this.bid[1] - 1]}</b> من ${this.nm(this.bid[2])}` : 'ما حدا زايد لسا', cls: 'lead' });
-      blocks.push({ k: 'text', t: `الزهر كله: ${this.total()} • الـ⚀ جوكر بتنحسب مع أي رقم`, cls: 'hint' });
+      blocks.push({ k: 'text', t: this.bid ? `آخر مزايدة: <b>${this.bid[0]} × ${F[this.bid[1] - 1]}</b> من ${this.nm(this.bid[2])}` : 'لا أحد زايد حتى الآن', cls: 'lead' });
+      blocks.push({ k: 'text', t: `الزهر كله: ${this.total()} • الـ⚀ جوكر تنحسب مع أي رقم`, cls: 'hint' });
       if (seat >= 0 && this.cnt[seat]) blocks.push({ k: 'dice', d: this.dice[seat], label: 'زهرك (مخبّى عن الكل)' });
       if (my) {
         blocks.push({ k: 'btns', cls: 'bids', b: this.bids().slice(0, 15).map(([q, f]) => ({ t: `${q} × ${F[f - 1]}`, a: { type: 'bid', q, f }, cls: 'ghost' })) });
@@ -227,11 +227,11 @@ export class Domino extends UIGame {
   }
   act(seat, a) {
     this.check(seat);
-    if (a.type === 'pass') { if (this.playable(seat).length) throw new Error('عندك حجر بيركب'); this.passes++; this.msg = `${this.nm(seat)} دق 👊`; this.bump();
+    if (a.type === 'pass') { if (this.playable(seat).length) throw new Error('عندك حجر يركب'); this.passes++; this.msg = `${this.nm(seat)} دق 👊`; this.bump();
       if (this.passes >= 4) { const w = [0, 1, 2, 3].sort((x, y) => this.pips(x) - this.pips(y))[0]; return this.roundEnd(w, 'اللعبة تسكّرت'); }
       this.turn = this.next(seat); return; }
     const i = +a.i; const t = this.hands[seat][i]; if (!t) throw new Error('حجر غلط');
-    const f = this.fits(t); if (!f.length) throw new Error('هالحجر ما بيركب');
+    const f = this.fits(t); if (!f.length) throw new Error('هالحجر ما يركب');
     const side = a.side && f.includes(a.side) ? a.side : f[0];
     this.place(seat, i, side); this.msg = '';
     if (!this.hands[seat].length) return this.roundEnd(seat, `${this.nm(seat)} خلّص حجاره`);
@@ -246,11 +246,11 @@ export class Domino extends UIGame {
     const my = seat === this.turn && !this.over; const p = my ? this.playable(seat) : [];
     const both = my ? p.filter((i) => this.fits(this.hands[seat][i]).length === 2 && this.ends && this.ends[0] !== this.ends[1]) : [];
     return {
-      players: [0, 1, 2, 3].map((i) => ({ badge: `⭐ ${this.scores[i]}`, sub: `${this.hands[i].length} حجار` })),
+      players: [0, 1, 2, 3].map((i) => ({ badge: `⭐ ${this.scores[i]}`, sub: `${this.hands[i].length} أحجار` })),
       blocks: [
         { k: 'text', t: this.over ? this.msg : this.msg || (my ? 'دورك — اختار حجر' : `دور ${this.nm(this.turn)}`), cls: 'lead' },
         { k: 'dom', tiles: this.chain, label: this.ends ? `الطرفين: ${this.ends[0]} و ${this.ends[1]}` : 'الطاولة فاضية' },
-        seat >= 0 ? { k: 'dom', tiles: this.hands[seat], click: p, act: 'tile', mine: true, label: both.length ? 'حجر بيركب عالطرفين: رح ينحط عالطرف الأول، أو استعمل الأزرار' : 'حجارك' } : null,
+        seat >= 0 ? { k: 'dom', tiles: this.hands[seat], click: p, act: 'tile', mine: true, label: both.length ? 'حجر يركب على الطرفين: سوف ينحط على الطرف الأول، أو استعمل الأزرار' : 'حجارك' } : null,
         my && both.length ? { k: 'btns', b: both.flatMap((i) => [{ t: `[${this.hands[seat][i].join('|')}] ◀ يسار`, a: { type: 'tile', i, side: 'L' }, cls: 'ghost' }, { t: `[${this.hands[seat][i].join('|')}] يمين ▶`, a: { type: 'tile', i, side: 'R' }, cls: 'ghost' }]) } : null,
         my && !p.length ? { k: 'btns', b: [{ t: '👊 دق (ما معي)', a: { type: 'pass' }, cls: 'gold big' }] } : null,
       ],
@@ -282,7 +282,7 @@ export class Ludo extends UIGame {
       return;
     }
     if (a.type === 'move') {
-      if (!this.rolled) throw new Error('ارمي أول'); const k = +a.k; if (!this.canMove(seat, k, this.die)) throw new Error('هالحجر ما بيتحرك');
+      if (!this.rolled) throw new Error('ارمي أول'); const k = +a.k; if (!this.canMove(seat, k, this.die)) throw new Error('هالحجر ما يتحرك');
       const p = this.t[seat][k]; const np = p < 0 ? 0 : p + this.die; this.t[seat][k] = np; this.bump();
       this.lastMv = { s: seat, k, from: p, to: np, id: (this.lastMv ? this.lastMv.id : 0) + 1, cap: null };
       let extra = this.die === 6; let note = '';
@@ -294,7 +294,7 @@ export class Ludo extends UIGame {
       if (this.done(seat)) return this.end([seat], `🏆 ${this.nm(seat)} وصّل كل حجاره!`);
       this.rolled = false;
       if (!extra) return this.passTurn(seat);
-      this.msg += ' — بيلعب كمان'; return;
+      this.msg += ' — يلعب مرة ثانية'; return;
     }
     throw new Error('حركة غلط');
   }

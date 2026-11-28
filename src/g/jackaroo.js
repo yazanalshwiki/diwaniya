@@ -99,7 +99,7 @@ export class Jackaroo extends UIGame {
     switch (m.kind) {
       case 'out': return 'نزّل كرة للقاعدة';
       case 'fwd': return `كرة ${m.k + 1} ← ${m.n}`;
-      case 'back': return `كرة ${m.k + 1} لورا ٤`;
+      case 'back': return `كرة ${m.k + 1} للخلف ٤`;
       case 'split': return `كرة ${m.k + 1}: ${m.n} + كرة ${m.k2 + 1}: ${m.n2}`;
       case 'swap': return `بدّل كرة ${m.k + 1} مع ${this.nm(m.t)}`;
       case 'discard': return '🔥 ارمي هالورقة';
@@ -110,7 +110,7 @@ export class Jackaroo extends UIGame {
     this.check(seat);
     if (a.type !== 'play') throw new Error('حركة غلط');
     const ms = this.moves(seat); const m = ms.find((x) => x.key === a.key);
-    if (!m) throw new Error('ما بتزبط هالحركة');
+    if (!m) throw new Error('ما تزبط هالحركة');
     const card = this.hands[seat][m.c];
     this.hands[seat].splice(m.c, 1); this.played[seat] = card; this.bump(); (this.pile ||= []).push({ c: card, r: Math.round(Math.random() * 50 - 25), s: seat }); if (this.pile.length > 7) this.pile.shift();
     this.p = m.r.P; this.burnFx = null;

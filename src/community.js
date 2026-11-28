@@ -62,7 +62,7 @@ export function makeCommunity({ sql, clients, send, getUser, frGet, isAdminPlaye
         const kind = a.kind === 'voice' ? 'voice' : 'text', priv = !!a.priv;
         const mine = [...chans.values()].filter((x) => x.owner === uid && x.kind !== 'dm');
         if (mine.length >= 10) throw new Error('عندك ١٠ غرف — احذف وحدة لتفتح جديدة');
-        if (!priv && mine.filter((x) => !x.priv).length >= 2) throw new Error('بتقدر تفتح غرفتين عامّتين بس — جرّب خاصة');
+        if (!priv && mine.filter((x) => !x.priv).length >= 2) throw new Error('تقدر تفتح غرفتين عامّتين فقط — جرّب خاصة');
         const members = [];
         for (const id of (Array.isArray(a.invite) ? a.invite : []).slice(0, 30)) { const f = await frGet(uid, +id); if (f && f.status === 'accepted') members.push(+id); }
         const c2 = await newChan({ name, kind, priv, owner: uid, members: [uid, ...members] });
@@ -71,14 +71,14 @@ export function makeCommunity({ sql, clients, send, getUser, frGet, isAdminPlaye
         return { ok: true, id: c2.id };
       }
       case 'dm': {
-        const o = +a.uid; const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('المحادثة الخاصة مع الأصدقاء بس');
+        const o = +a.uid; const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('المحادثة الخاصة مع الأصدقاء فقط');
         let d = [...chans.values()].find((x) => x.kind === 'dm' && x.members.includes(uid) && x.members.includes(o));
         if (!d) { d = await newChan({ name: '', kind: 'dm', priv: true, owner: null, members: [uid, o] }); send(clients.get(o), { t: 'cchans' }); }
         return { ok: true, id: d.id };
       }
       case 'invite': {
-        if (!c || !c.priv || c.kind === 'dm' || !canSee(c, uid)) throw new Error('ما فيك تدعي هون');
-        const o = +a.uid; const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('بتقدر تضيف أصدقاءك بس');
+        if (!c || !c.priv || c.kind === 'dm' || !canSee(c, uid)) throw new Error('ما فيك تدعي هنا');
+        const o = +a.uid; const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('تقدر تضيف أصدقاءك فقط');
         if (!c.members.includes(o)) { c.members.push(o); await saveMembers(c); }
         const w = clients.get(o); if (w) { send(w, { t: 'cchans' }); send(w, { t: 'notice', msg: `📨 ${me.username} ضافك على «${c.name}»` }); }
         return { ok: true };
@@ -90,7 +90,7 @@ export function makeCommunity({ sql, clients, send, getUser, frGet, isAdminPlaye
         return { members: out };
       }
       case 'kick': {
-        if (!c || c.owner !== uid) throw new Error('بس صاحب الغرفة'); const o = +a.uid; c.members = c.members.filter((x) => x !== o); await saveMembers(c);
+        if (!c || c.owner !== uid) throw new Error('فقط صاحب الغرفة'); const o = +a.uid; c.members = c.members.filter((x) => x !== o); await saveMembers(c);
         if (userVc.get(o) === c.id) { vcLeave(o); send(clients.get(o), { t: 'vcend' }); } send(clients.get(o), { t: 'cchans' }); return { ok: true };
       }
       case 'leave': {
@@ -101,9 +101,9 @@ export function makeCommunity({ sql, clients, send, getUser, frGet, isAdminPlaye
         vcLeave(uid); return { ok: true };
       }
       case 'del': {
-        if (!c) throw new Error('مو موجودة');
+        if (!c) throw new Error('غير موجودة');
         const admin = await isAdminPlayer(uid);
-        if (c.owner !== uid && !admin) throw new Error('بس صاحب الغرفة بيقدر يحذفها');
+        if (c.owner !== uid && !admin) throw new Error('فقط صاحب الغرفة يقدر يحذفها');
         const aud = audience(c); for (const u of vc.get(c.id)?.keys() || []) { userVc.delete(u); send(clients.get(u), { t: 'vcend' }); } vc.delete(c.id);
         await delChan(c); for (const u of aud) send(clients.get(u), { t: 'cchans' }); return { ok: true };
       }
@@ -116,9 +116,9 @@ export function makeCommunity({ sql, clients, send, getUser, frGet, isAdminPlaye
     switch (m.t) {
       case 'cmsg': {
         const c = chans.get(+m.ch); if (!canSee(c, uid)) throw new Error('ما عندك صلاحية');
-        if (c.kind === 'dm') { const o = c.members.find((x) => x !== uid); const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('لازم تكونوا أصدقاء'); }
+        if (c.kind === 'dm') { const o = c.members.find((x) => x !== uid); const f = await frGet(uid, o); if (!f || f.status !== 'accepted') throw new Error('يجب تكونوا أصدقاء'); }
         const text = String(m.text || '').replace(/\s+/g, ' ').trim().slice(0, 400); if (!text) return true;
-        const now = Date.now(); if (now - (lastSend.get(uid) || 0) < 700) throw new Error('شوي شوي 😅'); lastSend.set(uid, now);
+        const now = Date.now(); if (now - (lastSend.get(uid) || 0) < 700) throw new Error('قليلاً قليلاً 😅'); lastSend.set(uid, now);
         let msg = { uid, name: me.name, av: me.av || null, ph: me.ph || 0, text, at: new Date() };
         if (sql) { const r = (await sql`insert into cmsgs (ch, uid, name, av, ph, text) values (${c.id}, ${uid}, ${msg.name}, ${msg.av}, ${msg.ph}, ${text}) returning id`)[0]; msg.id = r.id; await sql`update channels set last_at = now() where id = ${c.id}`; }
         else { msg.id = memMsgId++; const l = memMsgs.get(c.id) || []; l.push(msg); if (l.length > 300) l.shift(); memMsgs.set(c.id, l); }

@@ -57,7 +57,7 @@ export class Connect4 extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: `<i class="disc" style="background:${DISC[i]}"></i>` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? 'دورك — اكبس على أي عمود' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? 'دورك — اضغط على أي عمود' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 6, c: 7, act: 'cell', click, theme: 'c4', cells: this.b.map((v, i) => ({ disc: v >= 0 ? DISC[v] : null, cls: (i === this.last ? 'last ' : '') + (this.line.includes(i) ? 'win' : '') })) },
       ],
     };
@@ -111,7 +111,7 @@ export class Gomoku extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: `<i class="stone s${i}"></i>` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? 'دورك — أول واحد بيصفّ ٥ بيربح' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? 'دورك — أول واحد يصفّ ٥ يربح' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 13, c: 13, act: 'cell', theme: 'go', click: my ? this.b.map((v, i) => (v < 0 ? i : -1)).filter((i) => i >= 0) : [], cells: this.b.map((v, i) => ({ stone: v, cls: (i === this.last ? 'last ' : '') + (this.line.includes(i) ? 'win' : '') })) },
       ],
     };
@@ -132,7 +132,7 @@ export class Othello extends UIGame {
   count(p) { return this.b.filter((x) => x === p).length; }
   act(seat, a) {
     this.check(seat); const i = +a.i; const f = this.flips(this.b, i, seat);
-    if (!f.length) throw new Error('حركة مو مسموحة');
+    if (!f.length) throw new Error('حركة غير مسموحة');
     this.b[i] = seat; f.forEach((k) => (this.b[k] = seat)); this.last = i; this.bump();
     this.scores = [this.count(0), this.count(1)];
     if (this.moves(1 - seat).length) this.turn = 1 - seat;
@@ -150,7 +150,7 @@ export class Othello extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: `<i class="stone s${i}"></i> ${this.count(i)}` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? 'دورك — حط حجر يقلب أحجار الخصم' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? 'دورك — ضع حجر يقلب أحجار الخصم' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 8, c: 8, act: 'cell', theme: 'oth', click: ms, hl: ms, cells: this.b.map((v, i) => ({ stone: v, cls: i === this.last ? 'last' : '' })) },
       ],
     };
@@ -206,7 +206,7 @@ export class Dama extends UIGame {
     const m = ms.find((x) => x.from === this.sel && x.to === i);
     if (m) return this.doMove(seat, m);
     if (this.chain < 0 && ms.some((x) => x.from === i)) { this.sel = i; return; }
-    throw new Error(ms.some((x) => x.cap !== undefined) ? 'لازم تاكل!' : 'حركة مو مسموحة');
+    throw new Error(ms.some((x) => x.cap !== undefined) ? 'يجب تاكل!' : 'حركة غير مسموحة');
   }
   botAction(seat) {
     const ms = this.allMoves(seat);
@@ -231,7 +231,7 @@ export class Dama extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: `<i class="stone s${i}"></i> ${this.count(i)}` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? (this.chain >= 0 ? 'كمّل أكل بنفس الحجر!' : ms.some((m) => m.cap !== undefined) ? 'لازم تاكل — اختار الحجر' : 'اختار حجر وبعدين وين بدك تحركه') : `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? (this.chain >= 0 ? 'كمّل أكل بنفس الحجر!' : ms.some((m) => m.cap !== undefined) ? 'يجب تاكل — اختار الحجر' : 'اختار حجر ولاحقاً أين تريد تحركه') : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 8, c: 8, act: 'cell', theme: 'dama', sel: this.sel, click: my ? [...froms, ...targets] : [], hl: targets, flip: seat === 1,
           cells: this.b.map((v, i) => ({ stone: v ? v.p : -1, king: v && v.k, cls: this.last.includes(i) ? 'last' : '' })) },
       ],
@@ -273,7 +273,7 @@ export class Dots extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: `<i class="disc" style="background:${PCOL[i]}"></i> ${this.scores[i]}` })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? 'دورك — ارسم خط. إذا سكّرت مربع بتلعب كمان' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? 'دورك — ارسم خط. إذا سكّرت مربع تلعب مرة ثانية' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 9, c: 9, act: 'cell', theme: 'dots', click: my ? this.free() : [], cells },
       ],
     };
@@ -301,7 +301,7 @@ export class Mancala extends UIGame {
       this.scores = [this.p[6], this.p[13]]; return this.endByScore('خلصت الحبات');
     }
     this.scores = [this.p[6], this.p[13]];
-    if (!r.again) this.turn = 1 - seat; else this.msg = `${this.nm(seat)} خلّص بمخزنه — بيلعب كمان`;
+    if (!r.again) this.turn = 1 - seat; else this.msg = `${this.nm(seat)} خلّص بمخزنه — يلعب مرة ثانية`;
   }
   botAction(seat) {
     let best = -1e9, pick = null;
@@ -321,7 +321,7 @@ export class Mancala extends UIGame {
       blocks: [
         { k: 'text', t: this.over ? this.msg : my ? 'دورك — اختار حفرة من حفرك تحت' : `دور ${this.nm(this.turn)}`, cls: 'lead' },
         { k: 'board', r: 2, c: 8, act: 'cell', theme: 'man', map: idx, click: my ? this.own(seat).filter((x) => this.p[x]) : [], cells },
-        { k: 'text', t: 'الحبات بتتوزع وحدة وحدة. إذا آخر حبة وقعت بمخزنك بتلعب كمان، وإذا وقعت بحفرة فاضية إلك بتاكل اللي قبالها.', cls: 'hint' },
+        { k: 'text', t: 'الحبات تتوزع وحدة وحدة. إذا آخر حبة وقعت بمخزنك تلعب مرة ثانية، وإذا وقعت بحفرة فاضية لك تاكل اللي قبالها.', cls: 'hint' },
       ],
     };
   }

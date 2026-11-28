@@ -24,7 +24,7 @@ export const BOARD = [
   P('حي الزهراء', 4, 220),
   { k: 'rail', name: 'الميناء', price: 200 },
   P('حي الحمراء', 4, 240),
-  { k: 'gojail', name: 'روح عالسجن' },
+  { k: 'gojail', name: 'روح على السجن' },
   P('حي الخالدية', 5, 260),
   P('حي الشاطئ', 5, 280),
   { k: 'util', name: 'المياه', price: 150 },
@@ -46,10 +46,10 @@ const LUCK = [
   { t: 'ربحت مسابقة الحي 🏆', cash: 150 },
   { t: 'رجعلك مبلغ من البنك 💰', cash: 100 },
   { t: 'مخالفة ساهر 📸', cash: -50 },
-  { t: 'صيانة المكيفات بكل بيوتك 🛠️', repair: 25 },
-  { t: 'عزيمة! كل لاعب بيدفعلك 20 🍖', each: 20 },
+  { t: 'صيانة المكيفات بكل يوتك 🛠️', repair: 25 },
+  { t: 'عزيمة! كل لاعب يدفعلك 20 🍖', each: 20 },
   { t: 'تقدّم لنقطة الانطلاق ✨', goto: 0 },
-  { t: 'روح عالسجن 🚔', jail: true },
+  { t: 'روح على السجن 🚔', jail: true },
   { t: 'ارجع ٣ خانات ↩️', back: 3 },
   { t: 'روح لأقرب محطة 🚆', rail: true },
   { t: 'دفعت فاتورة الكهرباء 💡', cash: -40 },
@@ -88,7 +88,7 @@ export class Mono {
   check(seat) {
     if (this.over) throw new Error('اللعبة انتهت');
     if (this.pending) throw new Error('انتظر لحظة');
-    if (seat !== this.turn) throw new Error('مو دورك');
+    if (seat !== this.turn) throw new Error('غير دورك');
   }
   groupOf(i) { return BOARD[i].g; }
   hasSet(seat, g) { return GROUPS[g].every((i) => this.owner[i] === seat); }
@@ -124,9 +124,9 @@ export class Mono {
     this.check(seat);
     const p = this.players[seat];
     if (a.type === 'build') {
-      if (this.phase !== 'roll') throw new Error('بتبني قبل ما ترمي الزهر');
+      if (this.phase !== 'roll') throw new Error('تبني قبل ما ترمي الزهر');
       const i = +a.idx;
-      if (!this.buildable(seat).includes(i)) throw new Error('ما بتقدر تبني هون');
+      if (!this.buildable(seat).includes(i)) throw new Error('ما تقدر تبني هنا');
       const g = BOARD[i].g;
       p.cash -= HOUSE_COST[g]; this.level[i]++;
       this.say(`🏗️ ${this.nm(seat)} بنى ${this.level[i] === 5 ? 'فندق' : 'بيت'} بـ${BOARD[i].name}`);
@@ -151,7 +151,7 @@ export class Mono {
         this.phase = 'wait'; this.turn = -1; this.pending = { delay: 1100, fn: 'endTurn' }; this.cur = seat;
         return;
       }
-      if (doubles) { this.dbl++; if (this.dbl === 3) { this.say(`🚔 ${this.nm(seat)} ٣ دبل ورا بعض — عالسجن!`); this.cur = seat; this.sendJail(seat); this.phase = 'wait'; this.turn = -1; this.pending = { delay: 1200, fn: 'endTurn' }; return; } }
+      if (doubles) { this.dbl++; if (this.dbl === 3) { this.say(`🚔 ${this.nm(seat)} ٣ دبل ورا بعض — على السجن!`); this.cur = seat; this.sendJail(seat); this.phase = 'wait'; this.turn = -1; this.pending = { delay: 1200, fn: 'endTurn' }; return; } }
       else this.dbl = 0;
       this.moveBy(seat, d[0] + d[1], doubles);
       return;
@@ -174,7 +174,7 @@ export class Mono {
     const p = this.players[seat];
     const from = p.pos;
     const to = (from + steps + N) % N;
-    if (steps > 0 && to < from) { p.cash += GO_PAY; this.say(`✨ ${this.nm(seat)} مرق عالانطلاق +${GO_PAY}`); }
+    if (steps > 0 && to < from) { p.cash += GO_PAY; this.say(`✨ ${this.nm(seat)} مرق على الانطلاق +${GO_PAY}`); }
     p.pos = to;
     this.moveFx = { seat, from, steps, id: this.rollId * 10 + (this.moveFx ? (this.moveFx.id % 10) + 1 : 0) };
     this.cur = seat; this.again = again; this.lastRoll = this.dice[0] + this.dice[1];
@@ -187,7 +187,7 @@ export class Mono {
     if (s.k === 'prop' || s.k === 'rail' || s.k === 'util') {
       const o = this.owner[i];
       if (o < 0) {
-        if (p.cash >= s.price) { this.phase = 'buy'; this.turn = seat; this.msg = `بدك تشتري ${s.name} بـ${s.price}؟`; return; }
+        if (p.cash >= s.price) { this.phase = 'buy'; this.turn = seat; this.msg = `تريد تشتري ${s.name} بـ${s.price}؟`; return; }
         this.say(`💸 ${this.nm(seat)} ما معه يشتري ${s.name}`);
       } else if (o !== seat && !this.players[o].out) {
         const r = this.rent(i, this.lastRoll);
@@ -195,7 +195,7 @@ export class Mono {
         this.pay(seat, r, o);
       }
     } else if (s.k === 'tax') { this.say(`🏛️ ${this.nm(seat)} دفع ${s.name} ${s.amt}`); this.pay(seat, s.amt, -1); }
-    else if (s.k === 'gojail') { this.say(`🚔 ${this.nm(seat)} راح عالسجن`); this.sendJail(seat); this.again = false; }
+    else if (s.k === 'gojail') { this.say(`🚔 ${this.nm(seat)} راح على السجن`); this.sendJail(seat); this.again = false; }
     else if (s.k === 'luck') { this.drawLuck(seat); if (this.phase === 'moving' || this.phase === 'buy') return; }
     this.afterLand(seat);
   }
@@ -249,7 +249,7 @@ export class Mono {
     const seat = this.cur;
     const alive = this.alive();
     if (alive.length <= 1) return this.finish();
-    if (this.again && !this.players[seat].out && !this.players[seat].jailed) { this.again = false; this.phase = 'roll'; this.turn = seat; this.msg = 'دبل! ارمي كمان 🎲'; return; }
+    if (this.again && !this.players[seat].out && !this.players[seat].jailed) { this.again = false; this.phase = 'roll'; this.turn = seat; this.msg = 'دبل! ارمي مرة ثانية 🎲'; return; }
     this.again = false; this.dbl = 0;
     let n = seat;
     do { n = (n + 1) % 4; if (n === this.first) this.round++; } while (this.players[n].out);

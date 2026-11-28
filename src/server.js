@@ -31,7 +31,7 @@ const PACKS = { p1: { coins: 1000, sar: 5 }, p2: { coins: 5000, sar: 19 }, p3: {
 const MOYASAR_PK = Bun.env.MOYASAR_PUBLISHABLE_KEY || '', MOYASAR_SK = Bun.env.MOYASAR_SECRET_KEY || '';
 const memPaid = new Set();
 async function creditPayment(payId) {
-  if (!MOYASAR_SK) throw new Error('الدفع مو مفعّل لسا');
+  if (!MOYASAR_SK) throw new Error('الدفع غير مفعّل حتى الآن');
   const r = await fetch('https://api.moyasar.com/v1/payments/' + encodeURIComponent(payId), { headers: { authorization: 'Basic ' + Buffer.from(MOYASAR_SK + ':').toString('base64') } });
   if (!r.ok) throw new Error('ما لقينا عملية الدفع');
   const pay = await r.json();
@@ -123,8 +123,19 @@ async function findUser(name) {
   if (sql) return (await sql`select * from users where uname_key = ${keyOf(name)}`)[0];
   return [...mem.users.values()].find((u) => u.uname_key === keyOf(name));
 }
+function fixJson(u) {
+  if (!u) return u;
+  for (const [k, d] of [['equip', {}], ['items', []], ['favs', []]]) {
+    let v = u[k]; if (typeof v === 'string') { try { v = JSON.parse(v); } catch { v = d; } }
+    if (k === 'equip' && (Array.isArray(v) || typeof v !== 'object' || !v)) v = {};
+    if (k === 'equip') v = Object.fromEntries(Object.entries(v).filter(([x]) => ['cs', 'bk', 'tb'].includes(x)));
+    if (k !== 'equip' && !Array.isArray(v)) v = d;
+    u[k] = v;
+  }
+  return u;
+}
 async function getUser(id) {
-  if (sql) return (await sql`select * from users where id = ${id}`)[0];
+  if (sql) return fixJson((await sql`select * from users where id = ${id}`)[0]);
   return mem.users.get(id);
 }
 async function createUser(username, pass) {
@@ -258,6 +269,7 @@ function roomView(r, uid) {
   };
 }
 function broadcast(r) {
+  if (r.status === 'waiting') saveRoom(r);
   for (const [s] of humanSeats(r)) if (!s.left) send(clients.get(s.uid), { t: 'room', room: roomView(r, s.uid) });
   for (const uid of r.watchers) send(clients.get(uid), { t: 'room', room: roomView(r, uid) });
   lobbyDirty();
@@ -280,6 +292,51 @@ function lobbyList() {
   })).slice(0, 50);
 }
 
+function attachHooks(r) {
+  const e = r.engine; if (!e) return;
+  e.names = r.seats.map((x) => (x ? x.name : '')); e.isHuman = (i) => !!r.seats[i] && !r.seats[i].bot; e.isBot = (i) => !!r.seats[i] && controlledByBot(r, i);
+  e.isOut = (i) => !r.seats[i]; e.speed = SPEED[r.speed || 'normal'];
+}
+
+// ---- keep rooms across server restarts (deploys) so players come back to their game ----
+const rep = (k, v) => (v instanceof Set ? { __set: [...v] } : v instanceof Map ? { __map: [...v] } : typeof v === 'function' ? undefined : v);
+const rev = (k, v) => (v && typeof v === 'object' && v.__set ? new Set(v.__set) : v && typeof v === 'object' && v.__map ? new Map(v.__map) : v);
+const SKIP_KEYS = new Set(['names', 'isHuman', 'isBot', 'isOut', 'afterWait']);
+const saveQ = new Map();
+function saveRoom(r) {
+  if (!sql || !rooms.has(r.code)) return;
+  clearTimeout(saveQ.get(r.code));
+  saveQ.set(r.code, setTimeout(async () => {
+    saveQ.delete(r.code);
+    const e = r.engine;
+    if (e && e.pending && typeof e.afterWait === 'function') return saveRoom(r); // mid-animation closure; save at the next stable point
+    try {
+      const eng = e ? JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(e).filter(([k]) => !SKIP_KEYS.has(k))), rep)) : null;
+      const data = { code: r.code, game: r.game, priv: r.priv, host: r.host, status: r.status, vip: r.vip, turnMs: r.turnMs, speed: r.speed, fill: r.fill, result: r.result || null,
+        seats: r.seats.map((s) => s && { uid: s.uid || null, name: s.name, bot: !!s.bot, av: s.av || null, ph: s.ph || 0, left: !!s.left }), chat: r.chat.slice(-40), created: r.created, eng };
+      await sql`insert into room_state (code, data, at) values (${r.code}, ${JSON.stringify(data)}::jsonb, now()) on conflict (code) do update set data = excluded.data, at = now()`;
+    } catch (err) { console.error('saveRoom', err.message); }
+  }, 1500));
+}
+async function dropRoomState(code) { if (sql) try { await sql`delete from room_state where code = ${code}`; } catch {} }
+async function restoreRooms() {
+  if (!sql) return;
+  await sql`create table if not exists room_state (code text primary key, data jsonb not null, at timestamptz not null default now())`;
+  await sql`delete from room_state where at < now() - interval '3 hours'`;
+  const rows = await sql`select data from room_state`;
+  for (const { data } of rows) {
+    try {
+      const d = typeof data === 'string' ? JSON.parse(data) : data;
+      const r = { ...d, eng: undefined, watchers: new Set(), voice: new Set(), engine: null, timer: null };
+      r.seats = d.seats.map((s) => s && { ...s, awaySince: s.bot ? null : Date.now() });
+      if (d.eng) { const e = createGame(d.game); Object.assign(e, JSON.parse(JSON.stringify(d.eng), rev)); if (e.pending && e.afterWait === undefined && e.constructor.prototype.wait && !e.pending.fn && !e.endsAt) e.pending = null; r.engine = e; attachHooks(r); }
+      rooms.set(r.code, r);
+      for (const s of r.seats) if (s && s.uid && !s.left) userRoom.set(s.uid, r.code);
+    } catch (err) { console.error('restore room', err.message); }
+  }
+  if (rows.length) console.log('restored rooms:', rows.length);
+}
+
 function controlledByBot(r, i) {
   const s = r.seats[i];
   if (!s) return false;
@@ -292,6 +349,9 @@ function schedule(r) {
   r.deadline = null;
   const eng = r.engine;
   if (!eng || eng.over || r.status !== 'playing') return;
+  // nobody is here: pause instead of letting bots play the whole game
+  const hs = r.seats.filter((x) => x && !x.bot && !x.left);
+  if (hs.length && !hs.some((x) => isConnected(x.uid) || (x.awaySince && Date.now() - x.awaySince < AWAY_MS))) { r.timer = setTimeout(() => schedule(r), 5000); return; }
   if (eng.pending) {
     r.timer = setTimeout(() => { eng.tick(); afterChange(r); }, eng.pending.delay * (eng.endsAt ? 1 : SPEED[r.speed || 'normal']));
     return;
@@ -329,6 +389,7 @@ async function afterChange(r) {
   }
   schedule(r);
   broadcast(r);
+  saveRoom(r);
 }
 
 function removeFromRoom(uid) {
@@ -345,7 +406,7 @@ function removeFromRoom(uid) {
     else r.seats[i] = null;
   }
   const remaining = humanSeats(r).filter(([s]) => !s.left);
-  if (!remaining.length && !r.watchers.size) { clearTimeout(r.timer); rooms.delete(code); lobbyDirty(); return; }
+  if (!remaining.length && !r.watchers.size) { clearTimeout(r.timer); rooms.delete(code); dropRoomState(code); lobbyDirty(); return; }
   if (r.host === uid) r.host = remaining.length ? remaining[0][0].uid : r.host;
   schedule(r);
   broadcast(r);
@@ -354,6 +415,7 @@ function removeFromRoom(uid) {
 function sysChat(r, text) { r.chat.push({ sys: true, text, ts: Date.now() }); }
 
 async function handle(ws, m) {
+  if (m.t === 'ping') { send(ws, { t: 'pong' }); return; }
   const uid = ws.data.uid, name = ws.data.name, av = ws.data.av || null, ph = ws.data.ph || 0;
   if (m.t && (m.t[0] === 'c' && m.t !== 'create' && m.t !== 'chat' || m.t.startsWith('vc')) && (await COMM.ws(ws, m, { uid, name, av, ph }))) return;
   const code = userRoom.get(uid);
@@ -366,7 +428,7 @@ async function handle(ws, m) {
       let vip = false, turnMs = TURN_MS;
       if (m.vip) {
         const cu = await getUser(uid);
-        if (!cu || !owns(cu, 'vip:room')) throw new Error('غرف VIP بدها شراء من المتجر 👑');
+        if (!cu || !owns(cu, 'vip:room')) throw new Error('غرف VIP تحتاج شراء من المتجر 👑');
         vip = true; if ([20000, 40000, 60000, 90000].includes(+m.turnMs)) turnMs = +m.turnMs;
       }
       removeFromRoom(uid);
@@ -412,7 +474,7 @@ async function handle(ws, m) {
       broadcast(r); return;
     }
     case 'addBot': case 'kick': {
-      if (!r || r.host !== uid || r.status !== 'waiting') throw new Error('بس صاحب الطاولة يقدر');
+      if (!r || r.host !== uid || r.status !== 'waiting') throw new Error('فقط صاحب الطاولة يقدر');
       const i = +m.seat;
       if (!(i >= 0 && i < r.seats.length)) throw new Error('كرسي غلط');
       if (m.t === 'addBot') { if (r.seats[i]) throw new Error('الكرسي مشغول'); r.seats[i] = { bot: true, name: botName(r) }; }
@@ -426,7 +488,7 @@ async function handle(ws, m) {
       break;
     }
     case 'start': case 'rematch': {
-      if (!r || r.host !== uid) throw new Error('بس صاحب الطاولة يقدر يبدأ');
+      if (!r || r.host !== uid) throw new Error('فقط صاحب الطاولة يقدر يبدأ');
       if (m.t === 'start' && r.status !== 'waiting') throw new Error('اللعبة بدأت');
       if (m.t === 'rematch' && r.status !== 'finished') throw new Error('اللعبة ما خلصت');
       // games that work with 2+ players don't get forced bots: empty chairs simply sit the game out
@@ -440,9 +502,7 @@ async function handle(ws, m) {
         }
       }
       r.engine = createGame(r.game);
-      r.engine.names = r.seats.map((x) => (x ? x.name : '')); r.engine.isHuman = (i) => !!r.seats[i] && !r.seats[i].bot; r.engine.isBot = (i) => !!r.seats[i] && controlledByBot(r, i);
-      r.engine.isOut = (i) => !r.seats[i];
-      r.engine.speed = SPEED[r.speed || 'normal'];
+      attachHooks(r);
       if (r.engine.init) r.engine.init();
       if (r.engine.setOut) r.engine.setOut();
       if (r.engine.turn >= 0 && !r.seats[r.engine.turn] && r.engine.next) r.engine.turn = r.engine.next(r.engine.turn);
@@ -488,7 +548,7 @@ async function handle(ws, m) {
       }
       if (e[0] === '!' && CATALOG['fx:' + e.slice(1)] !== undefined) {
         const ru = await getUser(uid);
-        if (!ru || !owns(ru, 'fx:' + e.slice(1))) { send(ws, { t: 'error', msg: 'هالتفاعل بدك تشتريه من المتجر 🛍️' }); break; }
+        if (!ru || !owns(ru, 'fx:' + e.slice(1))) { send(ws, { t: 'error', msg: 'هالتفاعل تريد تشتريه من المتجر 🛍️' }); break; }
       }
       const seat = seatOf(r, uid);
       const msg = { t: 'react', seat, name, e };
@@ -530,7 +590,7 @@ setInterval(() => {
       clearTimeout(r.timer);
       for (const [s] of humanSeats(r)) if (userRoom.get(s.uid) === code) userRoom.delete(s.uid);
       for (const w of r.watchers) if (userRoom.get(w) === code) userRoom.delete(w);
-      rooms.delete(code);
+      rooms.delete(code); dropRoomState(code);
     }
   }
 }, 60000);
@@ -539,6 +599,7 @@ setInterval(() => {
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 async function body(req) { try { return await req.json(); } catch { return {}; } }
 
+try { await restoreRooms(); } catch (e) { console.error('restoreRooms', e.message); }
 const server = Bun.serve({
   port: PORT,
   async fetch(req, srv) {
@@ -551,16 +612,16 @@ const server = Bun.serve({
       const ip = clientIP(req, srv), dev = String(url.searchParams.get('d') || '').slice(0, 64);
       const ban = await banCheck(u, ip, dev);
       if (!ban) patchUser(u.id, { last_ip: ip, last_device: dev }).catch(() => {});
-      if (srv.upgrade(req, { data: { uid: u.id, name: u.username, av: u.avatar || null, ph: +u.ph || 0, ban } })) return;
+      if (srv.upgrade(req, { data: { uid: u.id, name: u.username, av: u.avatar || null, ph: +u.ph || 0, ban, tab: String(url.searchParams.get('tab') || '').slice(0, 16) } })) return;
       return new Response('upgrade failed', { status: 400 });
     }
     if (url.pathname === '/api/register' && req.method === 'POST') {
       const { username = '', email = '', password = '', device = '' } = await body(req); const dev = String(device).slice(0, 64);
       const n = String(username).trim().replace(/\s+/g, ' '); const em = String(email).trim().toLowerCase();
       if (!EMAIL_RE.test(em)) return json({ error: 'اكتب إيميل صحيح' }, 400);
-      if (n.includes('@')) return json({ error: 'الاسم ما لازم يكون فيه @' }, 400);
+      if (n.includes('@')) return json({ error: 'الاسم ما يجب يكون فيه @' }, 400);
       if (await findByEmail(em)) return json({ error: 'هالإيميل مسجّل من قبل — جرّب تسجّل دخول' }, 400);
-      if (n.length < 2 || n.length > 20) return json({ error: 'الاسم لازم يكون من 2 إلى 20 حرف' }, 400);
+      if (n.length < 2 || n.length > 20) return json({ error: 'الاسم يجب يكون من 2 إلى 20 حرف' }, 400);
       if (/^بوت/.test(n)) return json({ error: 'اختر اسم ثاني' }, 400);
       if (String(password).length < 4) return json({ error: 'كلمة المرور 4 أحرف على الأقل' }, 400);
       if (await findUser(n)) return json({ error: 'الاسم مستخدم، جرب اسم ثاني' }, 400);
@@ -601,15 +662,15 @@ const server = Bun.serve({
         if (u.last_daily && String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) === today) return json({ error: 'أخدت مكافأة اليوم، ارجع بكرا 🌙' }, 400);
         u = await patchUser(u.id, { points: u.points + DAILY_PTS, last_daily: today });
       } else if (b.op === 'buy') {
-        if (CATALOG[id] === undefined) return json({ error: 'غرض مو موجود' }, 400);
+        if (CATALOG[id] === undefined) return json({ error: 'غرض غير موجود' }, 400);
         if (owns(u, id)) return json({ error: 'عندك ياه من قبل' }, 400);
-        if (u.points < CATALOG[id]) return json({ error: 'نقاطك ما بتكفي 🪙' }, 400);
+        if (u.points < CATALOG[id]) return json({ error: 'نقاطك ما تكفي 🪙' }, 400);
         u = await patchUser(u.id, { points: u.points - CATALOG[id], items: [...(u.items || []), id] });
         const [k] = id.split(':'); if (['cs', 'bk', 'tb'].includes(k)) u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: id.split(':')[1] } });
       } else if (b.op === 'equip') {
         const [k, v] = id.split(':');
-        if (!['cs', 'bk', 'tb'].includes(k) || CATALOG[id] === undefined) return json({ error: 'غرض مو موجود' }, 400);
-        if (!owns(u, id)) return json({ error: 'لازم تشتريه أول' }, 400);
+        if (!['cs', 'bk', 'tb'].includes(k) || CATALOG[id] === undefined) return json({ error: 'غرض غير موجود' }, 400);
+        if (!owns(u, id)) return json({ error: 'يجب تشتريه أول' }, 400);
         u = await patchUser(u.id, { equip: { ...(u.equip || {}), [k]: v } });
       } else return json({ error: 'طلب غلط' }, 400);
       const ws = clients.get(u.id); if (ws) send(ws, { t: 'me', user: pub(u, true) });
@@ -638,7 +699,7 @@ const server = Bun.serve({
         return json({ list: list.filter((u) => u.id !== me.id).map((u) => { const r = rel.find((f) => f.a === u.id || f.b === u.id); return { id: u.id, username: u.username, av: u.avatar || null, ph: +u.ph || 0, online: clients.has(u.id), rel: r ? (r.status === 'accepted' ? 'friend' : r.a === me.id ? 'sent' : 'incoming') : null }; }) });
       }
       if (a.action === 'add') {
-        const t = a.id ? await getUser(+a.id) : await findUser(String(a.username || '').trim()); if (!t) return json({ error: 'ما في لاعب بهالاسم' }, 404);
+        const t = a.id ? await getUser(+a.id) : await findUser(String(a.username || '').trim()); if (!t) return json({ error: 'لا يوجد لاعب بهالاسم' }, 404);
         if (t.id === me.id) return json({ error: 'ما فيك تضيف حالك 😄' }, 400);
         const ex = await frGet(me.id, t.id);
         if (ex && ex.status === 'accepted') return json({ error: 'هو صديقك أصلاً' }, 400);
@@ -648,13 +709,13 @@ const server = Bun.serve({
         const c = clients.get(t.id); if (c) send(c, { t: 'notice', msg: `👋 ${me.username} بعتلك طلب صداقة` });
         return json({ ok: true, note: `انبعت طلب الصداقة لـ${t.username}` });
       }
-      const oid = +a.id; const ex = oid && (await frGet(me.id, oid)); if (!ex) return json({ error: 'مو موجود' }, 404);
-      if (a.action === 'accept') { if (ex.b !== me.id) return json({ error: 'ما في طلب' }, 400); await frSet(ex.a, ex.b, 'accepted'); pokeFriends(oid); const c = clients.get(oid); if (c) send(c, { t: 'notice', msg: `🤝 ${me.username} قبل طلب صداقتك` }); return json({ ok: true }); }
+      const oid = +a.id; const ex = oid && (await frGet(me.id, oid)); if (!ex) return json({ error: 'غير موجود' }, 404);
+      if (a.action === 'accept') { if (ex.b !== me.id) return json({ error: 'لا يوجد طلب' }, 400); await frSet(ex.a, ex.b, 'accepted'); pokeFriends(oid); const c = clients.get(oid); if (c) send(c, { t: 'notice', msg: `🤝 ${me.username} قبل طلب صداقتك` }); return json({ ok: true }); }
       if (a.action === 'decline' || a.action === 'remove' || a.action === 'cancel') { await frDel(me.id, oid); pokeFriends(oid); return json({ ok: true }); }
       if (a.action === 'invite') {
-        if (ex.status !== 'accepted') return json({ error: 'لازم تكونوا أصدقاء' }, 400);
+        if (ex.status !== 'accepted') return json({ error: 'يجب تكونوا أصدقاء' }, 400);
         const code = userRoom.get(me.id), r = code && rooms.get(code); if (!r) return json({ error: 'افتح طاولة أول' }, 400);
-        const c = clients.get(oid); if (!c) return json({ error: 'صديقك مو متصل هلق' }, 400);
+        const c = clients.get(oid); if (!c) return json({ error: 'صديقك غير متصل الآن' }, 400);
         send(c, { t: 'invite', from: me.username, code, game: GAME_NAMES[r.game] || r.game }); return json({ ok: true, note: 'انبعتت الدعوة 📨' });
       }
       return json({ error: 'أمر غلط' }, 400);
@@ -673,13 +734,13 @@ const server = Bun.serve({
       const b = await body(req), f = {};
       if (b.email !== undefined) {
         const e = String(b.email).trim().toLowerCase();
-        if (e && !/^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(e)) return json({ error: 'الإيميل مو صحيح' }, 400);
-        if (e) { const o = await findByEmail(e); if (o && o.id !== u.id) return json({ error: 'هالإيميل مستخدم بحساب تاني' }, 400); }
+        if (e && !/^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(e)) return json({ error: 'الإيميل غير صحيح' }, 400);
+        if (e) { const o = await findByEmail(e); if (o && o.id !== u.id) return json({ error: 'هالإيميل مستخدم بحساب ثاني' }, 400); }
         f.email = e || null;
       }
       if (b.username !== undefined && String(b.username).trim() !== u.username) {
         const n = String(b.username).trim().replace(/\s+/g, ' ');
-        if (n.length < 2 || n.length > 20) return json({ error: 'الاسم لازم يكون من 2 إلى 20 حرف' }, 400);
+        if (n.length < 2 || n.length > 20) return json({ error: 'الاسم يجب يكون من 2 إلى 20 حرف' }, 400);
         if (/^بوت/.test(n)) return json({ error: 'اختر اسم ثاني' }, 400);
         const o = await findUser(n); if (o && o.id !== u.id) return json({ error: 'الاسم مستخدم، جرب اسم ثاني' }, 400);
         if (userRoom.has(u.id)) return json({ error: 'اطلع من الطاولة أول لتغيّر اسمك' }, 400);
@@ -694,7 +755,7 @@ const server = Bun.serve({
         if (b.photo === null) { f.photo = null; f.ph = 0; }
         else {
           const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(b.photo));
-          if (!m || m[1].length > 90000) return json({ error: 'الصورة كبيرة أو مو مدعومة' }, 400);
+          if (!m || m[1].length > 90000) return json({ error: 'الصورة كبيرة أو غير مدعومة' }, 400);
           f.photo = m[1]; f.ph = Date.now();
         }
       }
@@ -733,7 +794,7 @@ const server = Bun.serve({
       if (ap === 'login' && req.method === 'POST') {
         await ensureOwner();
         const { username = '', password = '' } = await body(req);
-        if (!(await admins()).length) return json({ error: 'لوحة الأدمن مو مفعّلة — لازم تحط ADMIN_PASSWORD' }, 403);
+        if (!(await admins()).length) return json({ error: 'لوحة الأدمن غير مفعّلة — يجب تحط ADMIN_PASSWORD' }, 403);
         const a = await adminBy('name', String(username).trim() || 'admin');
         if (!a || !((await Bun.password.verify(String(password), a.pass)) || (String(password).trim() !== String(password) && (await Bun.password.verify(String(password).trim(), a.pass))))) { await new Promise((r) => setTimeout(r, 800)); return json({ error: 'الاسم أو كلمة السر غلط' }, 401); }
         return json({ token: sign({ admin: true, aid: a.id, exp: Date.now() + 1000 * 60 * 60 * 12 }), me: { id: a.id, username: a.username, role: a.role } });
@@ -743,7 +804,7 @@ const server = Bun.serve({
       if (ap === 'play' && req.method === 'POST') {
         const a = await adminBy('id', ADM.id); const { link = '' } = await body(req);
         let u = null;
-        if (link) { u = await findUser(String(link)); if (!u) return json({ error: 'ما في لاعب بهالاسم' }, 404); }
+        if (link) { u = await findUser(String(link)); if (!u) return json({ error: 'لا يوجد لاعب بهالاسم' }, 404); }
         else if (a.player_id) u = await getUser(a.player_id);
         if (!u) { let n = a.username, k = 1; while (await findUser(n)) n = a.username + (++k); u = await createUser(n, await Bun.password.hash(crypto.randomUUID())); }
         if (a.player_id !== u.id) await setAdminPlayer(a.id, u.id);
@@ -753,25 +814,25 @@ const server = Bun.serve({
         if (req.method === 'POST') {
           const { old = '', pass = '' } = await body(req); const a = await adminBy('id', ADM.id);
           if (!(await Bun.password.verify(String(old), a.pass))) return json({ error: 'كلمة السر الحالية غلط' }, 400);
-          if (String(pass).length < 6) return json({ error: 'كلمة السر الجديدة ٦ أحرف عالأقل' }, 400);
+          if (String(pass).length < 6) return json({ error: 'كلمة السر الجديدة ٦ أحرف على الأقل' }, 400);
           await setAdminPass(ADM.id, String(pass)); console.log('[admin]', ADM.username, 'changed own password'); return json({ ok: true });
         }
         const a0 = await adminBy('id', ADM.id); const pu = a0.player_id ? await getUser(a0.player_id) : null;
         return json({ me: { ...ADM, player: pu ? pu.username : null } });
       }
       if (ap === 'admins') {
-        if (ADM.role !== 'owner') return json({ error: 'بس المالك بيقدر يدير المشرفين' }, 403);
+        if (ADM.role !== 'owner') return json({ error: 'فقط المالك يقدر يدير المشرفين' }, 403);
         if (req.method === 'POST') {
           const a = await body(req);
           if (a.action === 'add') {
             const n = String(a.username || '').trim(); if (!/^[\w\u0600-\u06FF.-]{2,20}$/.test(n)) return json({ error: 'الاسم من ٢ لـ٢٠ حرف بدون مسافات' }, 400);
-            if (String(a.pass || '').length < 6) return json({ error: 'كلمة السر ٦ أحرف عالأقل' }, 400);
+            if (String(a.pass || '').length < 6) return json({ error: 'كلمة السر ٦ أحرف على الأقل' }, 400);
             if (await adminBy('name', n)) return json({ error: 'الاسم مستخدم' }, 400);
             await addAdmin(n, String(a.pass), a.role === 'owner' ? 'owner' : 'mod'); console.log('[admin]', ADM.username, 'added admin', n); return json({ ok: true });
           }
-          const t = await adminBy('id', +a.id); if (!t) return json({ error: 'مو موجود' }, 404);
-          if (a.action === 'del') { if (t.id === ADM.id) return json({ error: 'ما فيك تحذف حالك' }, 400); if (t.role === 'owner' && (await admins()).filter((x) => x.role === 'owner').length < 2) return json({ error: 'لازم يضل مالك واحد عالأقل' }, 400); await delAdmin(t.id); return json({ ok: true }); }
-          if (a.action === 'pass') { if (String(a.pass || '').length < 6) return json({ error: 'كلمة السر ٦ أحرف عالأقل' }, 400); await setAdminPass(t.id, String(a.pass)); return json({ ok: true }); }
+          const t = await adminBy('id', +a.id); if (!t) return json({ error: 'غير موجود' }, 404);
+          if (a.action === 'del') { if (t.id === ADM.id) return json({ error: 'ما فيك تحذف حالك' }, 400); if (t.role === 'owner' && (await admins()).filter((x) => x.role === 'owner').length < 2) return json({ error: 'يجب يضل مالك واحد على الأقل' }, 400); await delAdmin(t.id); return json({ ok: true }); }
+          if (a.action === 'pass') { if (String(a.pass || '').length < 6) return json({ error: 'كلمة السر ٦ أحرف على الأقل' }, 400); await setAdminPass(t.id, String(a.pass)); return json({ ok: true }); }
           return json({ error: 'أمر غلط' }, 400);
         }
         return json({ list: await admins() });
@@ -779,7 +840,7 @@ const server = Bun.serve({
       if (ap === 'newuser' && req.method === 'POST') {
         const a = await body(req); const n = String(a.username || '').trim().replace(/\s+/g, ' ');
         if (n.length < 2 || n.length > 20) return json({ error: 'الاسم من ٢ لـ٢٠ حرف' }, 400);
-        if (String(a.pass || '').length < 4) return json({ error: 'كلمة السر ٤ أحرف عالأقل' }, 400);
+        if (String(a.pass || '').length < 4) return json({ error: 'كلمة السر ٤ أحرف على الأقل' }, 400);
         if (await findUser(n)) return json({ error: 'الاسم مستخدم' }, 400);
         const u = await createUser(n, await Bun.password.hash(String(a.pass)));
         if (a.coins !== undefined && a.coins !== '') await patchUser(u.id, { points: Math.max(0, Math.trunc(+a.coins || 0)) });
@@ -807,12 +868,12 @@ const server = Bun.serve({
       }
       const um = ap.match(/^user\/(\d+)$/);
       if (um) {
-        const id = +um[1]; const u = await getUser(id); if (!u) return json({ error: 'اللاعب مو موجود' }, 404);
+        const id = +um[1]; const u = await getUser(id); if (!u) return json({ error: 'اللاعب غير موجود' }, 404);
         if (req.method === 'POST') {
           const a = await body(req); let note = '';
           if (a.action === 'coins') { const d = Math.trunc(+a.delta || 0); if (!d) return json({ error: 'اكتب رقم' }, 400); await patchUser(id, { points: Math.max(0, u.points + d) }); note = `${d > 0 ? 'زدنا' : 'نقصنا'} ${Math.abs(d)} 🪙`; const c = clients.get(id); if (c) { send(c, { t: 'me', user: pub(await getUser(id), true) }); if (d > 0) send(c, { t: 'notice', msg: `🎁 وصلك ${d} 🪙 من الإدارة` }); } }
           else if (a.action === 'setcoins') { const v = Math.max(0, Math.trunc(+a.value || 0)); await patchUser(id, { points: v }); note = `الرصيد صار ${v}`; const c = clients.get(id); if (c) send(c, { t: 'me', user: pub(await getUser(id), true) }); }
-          else if (a.action === 'password') { const v = String(a.value || ''); if (v.length < 4) return json({ error: 'كلمة السر ٤ أحرف عالأقل' }, 400); await patchUser(id, { pass: await Bun.password.hash(v) }); note = 'تغيّرت كلمة السر'; }
+          else if (a.action === 'password') { const v = String(a.value || ''); if (v.length < 4) return json({ error: 'كلمة السر ٤ أحرف على الأقل' }, 400); await patchUser(id, { pass: await Bun.password.hash(v) }); note = 'تغيّرت كلمة السر'; }
           else if (a.action === 'rename') { const n = String(a.value || '').trim().replace(/\s+/g, ' '); if (n.length < 2 || n.length > 20) return json({ error: 'الاسم من ٢ لـ٢٠ حرف' }, 400); const ex = await findUser(n); if (ex && ex.id !== id) return json({ error: 'الاسم مستخدم' }, 400); await patchUser(id, { username: n }); note = 'تغيّر الاسم'; }
           else if (a.action === 'ban') { const h = +a.hours || 0; const until = h > 0 ? new Date(Date.now() + h * 3600000) : new Date('2999-01-01'); await patchUser(id, { banned_until: until, ban_reason: String(a.reason || '').slice(0, 120) }); kickUser(id, `حسابك محظور ${h > 0 ? fmtUntil(until) : 'بشكل دائم'}${a.reason ? ' — السبب: ' + a.reason : ''}`); note = 'انحظر الحساب'; }
           else if (a.action === 'unban') { await patchUser(id, { banned_until: null, ban_reason: null }); note = 'انفك الحظر'; }
@@ -839,7 +900,7 @@ const server = Bun.serve({
         return json({ bans: await listBans(), users });
       }
       if (ap === 'rooms') {
-        if (req.method === 'POST') { const a = await body(req); const r = rooms.get(String(a.code || '')); if (!r) return json({ error: 'الطاولة مو موجودة' }, 404); for (const s of r.seats) if (s && s.uid) { const c = clients.get(s.uid); userRoom.delete(s.uid); if (c) send(c, { t: 'left', reason: 'الإدارة سكّرت الطاولة' }); } clearTimeout(r.timer); rooms.delete(r.code); lobbyDirty(); return json({ ok: true }); }
+        if (req.method === 'POST') { const a = await body(req); const r = rooms.get(String(a.code || '')); if (!r) return json({ error: 'الطاولة غير موجودة' }, 404); for (const s of r.seats) if (s && s.uid) { const c = clients.get(s.uid); userRoom.delete(s.uid); if (c) send(c, { t: 'left', reason: 'الإدارة سكّرت الطاولة' }); } clearTimeout(r.timer); rooms.delete(r.code); dropRoomState(r.code); lobbyDirty(); return json({ ok: true }); }
         return json({ list: [...rooms.values()].map((r) => ({ code: r.code, game: GAME_NAMES[r.game] || r.game, status: r.status, priv: r.priv, created: r.created, players: r.seats.map((s) => (s ? (s.bot ? '🤖 ' + s.name : s.name) : null)).filter(Boolean) })) });
       }
       if (ap === 'broadcast' && req.method === 'POST') { const { text = '' } = await body(req); const t = String(text).trim().slice(0, 200); if (!t) return json({ error: 'اكتب رسالة' }, 400); for (const c of clients.values()) send(c, { t: 'notice', msg: '📢 ' + t, big: true }); return json({ ok: true, sent: clients.size }); }
@@ -856,7 +917,7 @@ const server = Bun.serve({
       if (ws.data.ban) { send(ws, { t: 'banned', msg: ws.data.ban }); setTimeout(() => { try { ws.close(); } catch {} }, 300); return; }
       const uid = ws.data.uid;
       const old = clients.get(uid);
-      if (old && old !== ws) { send(old, { t: 'left', reason: 'فتحت الحساب من جهاز ثاني' }); try { old.close(); } catch {} }
+      if (old && old !== ws) { if (!old.data.tab || old.data.tab !== ws.data.tab) send(old, { t: 'left', reason: 'فتحت الحساب من جهاز ثاني' }); try { old.close(); } catch {} }
       clients.set(uid, ws);
       getUser(uid).then(async (u) => send(ws, { t: 'me', user: { ...pub(u, true), isAdmin: await isAdminPlayer(uid) } }));
       const code = userRoom.get(uid);

@@ -17,7 +17,7 @@ export class UIGame {
   check(seat) {
     if (this.over) throw new Error('اللعبة انتهت');
     if (this.pending) throw new Error('لحظة');
-    if (seat !== this.turn) throw new Error('مو دورك');
+    if (seat !== this.turn) throw new Error('غير دورك');
   }
   bump() { this.history.length++; }
   out(i) { return !!(this.isOut && this.isOut(i)); }

@@ -37,7 +37,7 @@ export class Guess {
     if (this.over) throw new Error('اللعبة انتهت');
     if (a.type === 'cat') {
       if (this.phase !== 'pick') throw new Error('الفئة انختارت');
-      if (seat !== this.chooser()) throw new Error('غيرك عم يختار');
+      if (seat !== this.chooser()) throw new Error('غيرك يختار');
       if (a.c !== 'mix' && !CELEB_CATS[a.c]) throw new Error('فئة غلط');
       this.start(a.c === 'mix' ? 'mix' : CELEB_CATS[a.c]); return;
     }

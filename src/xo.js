@@ -23,7 +23,7 @@ export class XO {
   act(seat, a) {
     if (this.over) throw new Error('اللعبة انتهت');
     if (this.pending) throw new Error('لحظة');
-    if (seat !== this.turn) throw new Error('مو دورك');
+    if (seat !== this.turn) throw new Error('غير دورك');
     const i = +a.i;
     if (a.type !== 'mark' || !(i >= 0 && i < 9) || this.board[i]) throw new Error('خانة غلط');
     this.board[i] = seat === 0 ? 'X' : 'O';

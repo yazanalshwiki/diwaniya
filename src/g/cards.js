@@ -34,7 +34,7 @@ export class Shayeb extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: this.hands[i].length ? `🂠 ${this.hands[i].length}` : '✅ خلّص' })),
       blocks: [
-        { k: 'text', t: 'كل جوز بيطلع لحاله. اسحب ورقة من اللي بعدك — واللي بيضل معه الشايب (الشيخ الوحيد) بيخسر', cls: 'hint' },
+        { k: 'text', t: 'كل جوز يطلع وحده. اسحب ورقة من اللي بعدك — واللي يضل معه الشايب (الشيخ الوحيد) يخسر', cls: 'hint' },
         { k: 'text', t: this.over ? this.msg : my ? `اسحب ورقة من ${this.nm(tg)}` : this.msg || `دور ${this.nm(this.turn)}`, cls: 'lead' },
         my ? { k: 'cards', cards: this.hands[tg].map(() => 'X'), click: this.hands[tg].map((_, i) => i), act: 'card', label: `ورق ${this.nm(tg)}`, fan: true } : null,
         seat >= 0 ? { k: 'cards', cards: this.hands[seat].slice().sort((a, b) => rank(a) - rank(b)), label: 'ورقك', fan: true } : null,
@@ -82,7 +82,7 @@ export class Blackjack extends UIGame {
         { k: 'cards', cards: showD ? this.dealer : [this.dealer[0], 'X'], label: `🏦 البنك ${showD ? '— ' + bjv(this.dealer) : ''}` },
         { k: 'text', t: this.over ? this.msg : this.msg || (my ? 'دورك' : this.turn >= 0 ? `دور ${this.nm(this.turn)}` : ''), cls: 'lead' },
         seat >= 0 ? { k: 'cards', cards: this.h[seat], label: `ورقك — ${bjv(this.h[seat])}` } : null,
-        my ? { k: 'btns', b: [{ t: '➕ ورقة كمان', a: { type: 'hit' }, cls: 'gold big' }, { t: '✋ بكفّي', a: { type: 'stand' }, cls: 'green big' }] } : null,
+        my ? { k: 'btns', b: [{ t: '➕ ورقة أيضاً', a: { type: 'hit' }, cls: 'gold big' }, { t: '✋ بكفّي', a: { type: 'stand' }, cls: 'green big' }] } : null,
       ],
     };
   }
@@ -104,7 +104,7 @@ export class Memory extends UIGame {
     if (this.open.length < 2) return;
     const [x, y] = this.open;
     if (rank(this.cards[x]) === rank(this.cards[y])) {
-      this.state[x] = this.state[y] = seat; this.scores[seat]++; this.msg = `✅ ${this.nm(seat)} لقى جوز — بيلعب كمان`;
+      this.state[x] = this.state[y] = seat; this.scores[seat]++; this.msg = `✅ ${this.nm(seat)} لقى جوز — يلعب مرة ثانية`;
       this.wait(800, () => { this.open = []; this.turn = seat; if (this.state.every((s) => s >= 0)) this.endByScore('خلص الورق'); });
     } else { this.msg = `${this.nm(seat)} ما زبطت معه`; this.wait(1500, () => { this.state[x] = this.state[y] = -2; this.open = []; this.turn = this.next(seat); }); }
   }
@@ -159,7 +159,7 @@ export class HiLo extends UIGame {
       blocks: [
         { k: 'text', t: `جولة ${this.round} من ${this.rounds} — الورقة الجاية أعلى ولا أوطى؟`, cls: 'hint' },
         { k: 'cards', cards: showing ? [this.cur, this.nextC] : [this.cur, 'X'], big: true },
-        showing ? { k: 'text', t: this.res === 'eq' ? 'متل بعض! ما حدا أخد' : this.res === 'hi' ? '⬆️ أعلى' : '⬇️ أوطى', cls: 'lead' }
+        showing ? { k: 'text', t: this.res === 'eq' ? 'مثل بعض! لا أحد أخد' : this.res === 'hi' ? '⬆️ أعلى' : '⬇️ أوطى', cls: 'lead' }
         : seat >= 0 && this.pick[seat] === null ? { k: 'btns', b: [{ t: '⬆️ أعلى', a: { type: 'pick', v: 'hi' }, cls: 'green big' }, { t: '⬇️ أوطى', a: { type: 'pick', v: 'lo' }, cls: 'red big' }] }
         : { k: 'text', t: 'استنى الباقيين…', cls: 'lead' },
         { k: 'timer', ms: showing ? 2800 : 9000 },
@@ -211,7 +211,7 @@ export class Basra extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: `⭐ ${this.scores[i]}` })),
       blocks: [
-        { k: 'text', t: 'كُل الورق اللي رقمه متل ورقتك أو مجموعه متلها. الولد بيكنس كل الطاولة، والسبعة الديناري كمان. تنضيف الطاولة = باصرة +10', cls: 'hint' },
+        { k: 'text', t: 'كُل الورق اللي رقمه مثل ورقتك أو مجموعه متلها. الولد يكنس كل الطاولة، والسبعة الديناري أيضاً. تنضيف الطاولة = باصرة +10', cls: 'hint' },
         { k: 'cards', cards: this.table.length ? this.table : [], label: `الطاولة (${this.table.length}) • باقي بالشدة ${this.deck.length}` },
         { k: 'text', t: this.over ? this.msg : this.msg || (my ? 'دورك' : `دور ${this.nm(this.turn)}`), cls: 'lead' },
         seat >= 0 ? { k: 'cards', cards: this.hands[seat], click: my ? this.hands[seat].map((_, i) => i) : [], act: 'card', label: my ? 'دورك — اختار ورقة' : 'ورقك', fan: true } : null,
@@ -231,10 +231,10 @@ export class Crazy8 extends UIGame {
     if (this.choose) { if (!SN[a.s]) throw new Error('اختار لون'); this.suit = a.s; this.choose = false; this.msg = `${this.nm(seat)} اختار ${SN[a.s]}`; return this.after(seat); }
     if (a.type === 'draw') { if (this.drawn) throw new Error('سحبت'); if (!this.deck.length) { this.deck = shuffle(this.pile.splice(0, this.pile.length - 1)); } const c = this.deck.pop(); if (c) this.hands[seat].push(c); this.drawn = true; this.bump(); this.msg = `${this.nm(seat)} سحب ورقة`; if (!c || !this.ok(c)) return this.after(seat); return; }
     if (a.type === 'pass') { if (!this.drawn) throw new Error('اسحب أول'); return this.after(seat); }
-    const i = +a.i; const c = this.hands[seat][i]; if (!c || !this.ok(c)) throw new Error('ما بتركب');
+    const i = +a.i; const c = this.hands[seat][i]; if (!c || !this.ok(c)) throw new Error('ما تركب');
     this.hands[seat].splice(i, 1); this.pile.push(c); this.suit = suit(c); this.bump(); this.msg = `${this.nm(seat)} نزّل ${cname(c)}`;
     if (!this.hands[seat].length) { const pts = this.hands.reduce((t, h) => t + h.length, 0); this.scores[seat] = pts; return this.end([seat], `🏆 ${this.nm(seat)} خلّص ورقه!`); }
-    if (rank(c) === 8) { this.choose = true; this.msg += ' — بيختار اللون'; return; }
+    if (rank(c) === 8) { this.choose = true; this.msg += ' — يختار اللون'; return; }
     this.after(seat);
   }
   after(seat) { this.drawn = false; this.wait(550, () => { this.turn = this.next(seat); }); }
@@ -249,7 +249,7 @@ export class Crazy8 extends UIGame {
     return {
       players: [0, 1, 2, 3].map((i) => ({ badge: `🂠 ${this.hands[i].length}` })),
       blocks: [
-        { k: 'text', t: 'نزّل ورقة من نفس اللون أو نفس الرقم. الثمانية بتركب على أي شي وبتختار اللون. أول واحد بيخلّص ورقه بيربح', cls: 'hint' },
+        { k: 'text', t: 'نزّل ورقة من نفس اللون أو نفس الرقم. الثمانية تركب على أي شيء وتختار اللون. أول واحد يخلّص ورقه يربح', cls: 'hint' },
         { k: 'row', items: [{ k: 'cards', cards: ['X'], label: `الشدة ${this.deck.length}` }, { k: 'cards', cards: [this.top()], label: `اللون: ${SN[this.suit]}` }] },
         { k: 'text', t: this.over ? this.msg : this.msg || (my ? 'دورك' : `دور ${this.nm(this.turn)}`), cls: 'lead' },
         my && this.choose ? { k: 'btns', b: Object.entries(SN).map(([s, n]) => ({ t: n, a: { type: 'suit', s }, cls: 'ghost big' })) } : null,

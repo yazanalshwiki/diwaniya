@@ -88,18 +88,18 @@ tbody tr{cursor:pointer}tbody tr:hover{background:#171c3a}.tw{overflow-x:auto}
       <div class="panel tw"><table><thead><tr><th>الكود</th><th>اللعبة</th><th>الحالة</th><th>اللاعبين</th><th></th></tr></thead><tbody id="rl"></tbody></table></div>
     </section>
     <section id="t-set" class="hidden">
-      <div class="panel"><h3>🔑 غيّر كلمة السر تبعك</h3>
-        <div class="row"><input id="po" type="password" placeholder="كلمة السر الحالية" autocomplete="current-password"><input id="pn" type="password" placeholder="كلمة السر الجديدة (٦ أحرف عالأقل)" autocomplete="new-password"><input id="pn2" type="password" placeholder="أعد كتابتها" autocomplete="new-password"><button class="gold" id="pgo">حفظ</button></div></div>
-      <div class="panel"><h3>🎮 حساب اللعب تبعك</h3>
-        <div class="muted" style="margin-bottom:8px">زر «🎮 العب» فوق بيفوتك عالألعاب بحساب لاعب مربوط فيك (بيتعمل لحاله أول مرة). إذا عندك حساب لاعب من قبل اربطه هون.</div>
-        <div class="row"><span id="pl" class="muted"></span><input id="plk" placeholder="اسم حساب اللاعب تبعك"><button id="plgo">ربط</button></div></div>
+      <div class="panel"><h3>🔑 غيّر كلمة السر الخاص بك</h3>
+        <div class="row"><input id="po" type="password" placeholder="كلمة السر الحالية" autocomplete="current-password"><input id="pn" type="password" placeholder="كلمة السر الجديدة (٦ أحرف على الأقل)" autocomplete="new-password"><input id="pn2" type="password" placeholder="أعد كتابتها" autocomplete="new-password"><button class="gold" id="pgo">حفظ</button></div></div>
+      <div class="panel"><h3>🎮 حساب اللعب الخاص بك</h3>
+        <div class="muted" style="margin-bottom:8px">زر «🎮 العب» فوق يفوتك على الألعاب بحساب لاعب مربوط فيك (يتعمل وحده أول مرة). إذا عندك حساب لاعب من قبل اربطه هنا.</div>
+        <div class="row"><span id="pl" class="muted"></span><input id="plk" placeholder="اسم حساب اللاعب الخاص بك"><button id="plgo">ربط</button></div></div>
       <div class="panel" id="admBox"><h3>👮 المشرفين</h3>
-        <div class="muted" style="margin-bottom:8px">«مالك» بيقدر يعمل كل شي ويدير المشرفين. «مشرف» بيقدر يدير اللاعبين والحظر والطاولات بس ما بيقدر يضيف مشرفين.</div>
-        <div class="row"><input id="au" placeholder="اسم المستخدم"><input id="ap" placeholder="كلمة السر (٦ أحرف عالأقل)" autocomplete="off"><select id="ar"><option value="mod">مشرف</option><option value="owner">مالك</option></select><button class="gold" id="ago">إضافة</button></div>
+        <div class="muted" style="margin-bottom:8px">«مالك» يقدر يعمل كل شيء ويدير المشرفين. «مشرف» يقدر يدير اللاعبين والحظر والطاولات فقط ما يقدر يضيف مشرفين.</div>
+        <div class="row"><input id="au" placeholder="اسم المستخدم"><input id="ap" placeholder="كلمة السر (٦ أحرف على الأقل)" autocomplete="off"><select id="ar"><option value="mod">مشرف</option><option value="owner">مالك</option></select><button class="gold" id="ago">إضافة</button></div>
         <div class="tw" style="margin-top:10px"><table><thead><tr><th>#</th><th>المستخدم</th><th>الصلاحية</th><th>انضاف</th><th></th></tr></thead><tbody id="al"></tbody></table></div></div>
     </section>
     <section id="t-bc" class="hidden">
-      <div class="panel"><h3>📢 رسالة لكل اللاعبين المتصلين هلق</h3>
+      <div class="panel"><h3>📢 رسالة لكل اللاعبين المتصلين الآن</h3>
         <textarea id="bct" rows="3" maxlength="200" placeholder="مثال: صيانة الساعة ١٢ بالليل لمدة ١٠ دقايق"></textarea>
         <div class="row" style="margin-top:8px"><span class="muted" id="bcn"></span><button class="gold" id="bcgo">إرسال</button></div>
       </div>
@@ -115,7 +115,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let tok = sessionStorage.getItem('atok') || '', off = 0, cur = null;
 const dt = (d) => (d ? new Date(d).toLocaleString('ar', { timeZone: 'Asia/Riyadh', dateStyle: 'short', timeStyle: 'short' }) : '—');
-const ago = (d) => { if (!d) return '—'; const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return 'هلق'; if (s < 3600) return `قبل ${Math.floor(s / 60)} د`; if (s < 86400) return `قبل ${Math.floor(s / 3600)} س`; return `قبل ${Math.floor(s / 86400)} يوم`; };
+const ago = (d) => { if (!d) return '—'; const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return 'الآن'; if (s < 3600) return `قبل ${Math.floor(s / 60)} د`; if (s < 86400) return `قبل ${Math.floor(s / 3600)} س`; return `قبل ${Math.floor(s / 86400)} يوم`; };
 const banned = (u) => u.banned_until && new Date(u.banned_until) > new Date();
 const untilTxt = (d) => (!d ? 'دائم' : new Date(d).getFullYear() > 2900 ? 'دائم' : dt(d));
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.remove('hidden'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.add('hidden'), 2600); }
@@ -140,25 +140,25 @@ let tab = 'dash';
 $('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('main>section').forEach((s) => s.classList.toggle('hidden', s.id !== 't-' + tab)); load(); };
 $('refresh').onclick = () => load();
 let ME = null;
-async function start() { $('login').classList.add('hidden'); $('app').classList.remove('hidden'); try { ME = (await api('me')).me; $('pl').textContent = ME.player ? 'مربوط بـ: ' + ME.player : 'لسا مو مربوط'; $('who').textContent = '👤 ' + ME.username + (ME.role === 'owner' ? ' (مالك)' : ' (مشرف)'); } catch {} load(); }
+async function start() { $('login').classList.add('hidden'); $('app').classList.remove('hidden'); try { ME = (await api('me')).me; $('pl').textContent = ME.player ? 'مربوط بـ: ' + ME.player : 'حتى الآن غير مربوط'; $('who').textContent = '👤 ' + ME.username + (ME.role === 'owner' ? ' (مالك)' : ' (مشرف)'); } catch {} load(); }
 async function load() {
   try {
     if (tab === 'dash') {
       const s = await api('stats');
-      const C = [['🟢 متصلين هلق', s.online, 'g'], ['🃏 طاولات مفتوحة', s.rooms], ['▶️ عم يلعبوا', s.live, 'g'], ['👥 كل اللاعبين', s.users], ['🆕 جداد (٢٤ س)', s.new24, 'y'], ['📅 نشطين (٢٤ س)', s.active24], ['🎮 ألعاب (٢٤ س)', s.games24], ['🎮 كل الألعاب', s.games], ['🪙 مجموع الكوينز', Number(s.coins).toLocaleString('en')], ['💳 مدفوعات', s.payments], ['💰 الإيرادات (ر.س)', s.revenue, 'y'], ['⛔ محظورين', s.banned, 'r']];
+      const C = [['🟢 متصلين الآن', s.online, 'g'], ['🃏 طاولات مفتوحة', s.rooms], ['▶️ يلعبوا', s.live, 'g'], ['👥 كل اللاعبين', s.users], ['🆕 جداد (٢٤ س)', s.new24, 'y'], ['📅 نشطين (٢٤ س)', s.active24], ['🎮 ألعاب (٢٤ س)', s.games24], ['🎮 كل الألعاب', s.games], ['🪙 مجموع الكوينز', Number(s.coins).toLocaleString('en')], ['💳 مدفوعات', s.payments], ['💰 الإيرادات (ر.س)', s.revenue, 'y'], ['⛔ محظورين', s.banned, 'r']];
       $('stats').innerHTML = C.map(([k, v, c]) => `<div class="st ${c || ''}"><small>${k}</small><b>${v ?? 0}</b></div>`).join('');
       const mx = Math.max(1, ...s.top.map((t) => t.n));
-      $('top').innerHTML = s.top.length ? s.top.map((t) => `<div class="toprow"><span>${esc(t.game)}</span><div class="bar"><i style="width:${(t.n / mx) * 100}%"></i></div><b>${t.n}</b></div>`).join('') : '<div class="muted">ما في بيانات لسا</div>';
+      $('top').innerHTML = s.top.length ? s.top.map((t) => `<div class="toprow"><span>${esc(t.game)}</span><div class="bar"><i style="width:${(t.n / mx) * 100}%"></i></div><b>${t.n}</b></div>`).join('') : '<div class="muted">لا يوجد بيانات حتى الآن</div>';
     }
     if (tab === 'users') {
       const j = await api('users?q=' + encodeURIComponent($('uq').value.trim()) + '&o=' + off);
-      $('ul').innerHTML = j.list.map((u) => `<tr data-u="${u.id}"><td>${u.id}</td><td><b>${esc(u.username)}</b></td><td>${u.points}</td><td>${u.games} / ${u.wins}🏆</td><td>${banned(u) ? '<span class="tag ban">محظور</span>' : u.online ? '<span class="tag on">متصل</span>' : '<span class="tag off">مو متصل</span>'}</td><td>${ago(u.last_seen || u.created_at)}</td><td style="direction:ltr">${esc(u.last_ip || '—')}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">ما في نتايج</td></tr>';
+      $('ul').innerHTML = j.list.map((u) => `<tr data-u="${u.id}"><td>${u.id}</td><td><b>${esc(u.username)}</b></td><td>${u.points}</td><td>${u.games} / ${u.wins}🏆</td><td>${banned(u) ? '<span class="tag ban">محظور</span>' : u.online ? '<span class="tag on">متصل</span>' : '<span class="tag off">غير متصل</span>'}</td><td>${ago(u.last_seen || u.created_at)}</td><td style="direction:ltr">${esc(u.last_ip || '—')}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">لا يوجد نتايج</td></tr>';
       $('upg').textContent = `${off + 1} – ${off + j.list.length}`; $('uprev').disabled = off === 0; $('unext').disabled = j.list.length < 50;
     }
     if (tab === 'bans') {
       const j = await api('bans');
-      $('bl').innerHTML = j.bans.map((b) => `<tr><td>${b.kind === 'ip' ? 'IP' : 'جهاز'}</td><td style="direction:ltr"><code>${esc(b.value)}</code></td><td>${esc(b.reason || '—')}</td><td>${untilTxt(b.until)}</td><td><button class="green" data-unban="${b.id}">فك</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">ما في</td></tr>';
-      $('bul').innerHTML = j.users.map((u) => `<tr data-u="${u.id}"><td>${u.id}</td><td>${esc(u.username)}</td><td>${esc(u.ban_reason || '—')}</td><td>${untilTxt(u.banned_until)}</td><td><button class="green" data-uunban="${u.id}">فك</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">ما في</td></tr>';
+      $('bl').innerHTML = j.bans.map((b) => `<tr><td>${b.kind === 'ip' ? 'IP' : 'جهاز'}</td><td style="direction:ltr"><code>${esc(b.value)}</code></td><td>${esc(b.reason || '—')}</td><td>${untilTxt(b.until)}</td><td><button class="green" data-unban="${b.id}">فك</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">لا يوجد</td></tr>';
+      $('bul').innerHTML = j.users.map((u) => `<tr data-u="${u.id}"><td>${u.id}</td><td>${esc(u.username)}</td><td>${esc(u.ban_reason || '—')}</td><td>${untilTxt(u.banned_until)}</td><td><button class="green" data-uunban="${u.id}">فك</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">لا يوجد</td></tr>';
     }
     if (tab === 'set') {
       $('admBox').classList.toggle('hidden', !ME || ME.role !== 'owner');
@@ -166,7 +166,7 @@ async function load() {
     }
     if (tab === 'rooms') {
       const j = await api('rooms');
-      $('rl').innerHTML = j.list.map((r) => `<tr><td><b>${r.code}</b>${r.priv ? ' 🔒' : ''}</td><td>${esc(r.game)}</td><td>${r.status === 'playing' ? '<span class="tag on">عم يلعبوا</span>' : r.status === 'waiting' ? '<span class="tag off">انتظار</span>' : '<span class="tag off">خلصت</span>'}</td><td>${r.players.map(esc).join('، ')}</td><td><button class="red" data-close="${r.code}">سكّر</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">ما في طاولات مفتوحة</td></tr>';
+      $('rl').innerHTML = j.list.map((r) => `<tr><td><b>${r.code}</b>${r.priv ? ' 🔒' : ''}</td><td>${esc(r.game)}</td><td>${r.status === 'playing' ? '<span class="tag on">يلعبوا</span>' : r.status === 'waiting' ? '<span class="tag off">انتظار</span>' : '<span class="tag off">خلصت</span>'}</td><td>${r.players.map(esc).join('، ')}</td><td><button class="red" data-close="${r.code}">سكّر</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">لا يوجد طاولات مفتوحة</td></tr>';
     }
   } catch (e) { toast(e.message); }
 }
@@ -177,16 +177,16 @@ document.addEventListener('click', async (e) => {
   if (ub) { await api('bans', { action: 'del', id: +ub.dataset.unban }).then(() => { toast('انفك الحظر'); load(); }).catch((x) => toast(x.message)); return; }
   if (uu) { await api('user/' + uu.dataset.uunban, { action: 'unban' }).then(() => { toast('انفك الحظر'); load(); }).catch((x) => toast(x.message)); return; }
   const ap = e.target.closest('[data-apass]'), ad = e.target.closest('[data-adel]');
-  if (ap) { const v = prompt('كلمة السر الجديدة للمشرف (٦ أحرف عالأقل):'); if (!v) return; await api('admins', { action: 'pass', id: +ap.dataset.apass, pass: v }).then(() => toast('تغيّرت')).catch((x) => toast(x.message)); return; }
-  if (ad) { if (!confirm('أكيد بدك تحذف هالمشرف؟')) return; await api('admins', { action: 'del', id: +ad.dataset.adel }).then(() => { toast('انحذف'); load(); }).catch((x) => toast(x.message)); return; }
-  if (cl) { if (!confirm('أكيد بدك تسكّر الطاولة ' + cl.dataset.close + '؟')) return; await api('rooms', { code: cl.dataset.close }).then(() => { toast('انسكّرت'); load(); }).catch((x) => toast(x.message)); return; }
+  if (ap) { const v = prompt('كلمة السر الجديدة للمشرف (٦ أحرف على الأقل):'); if (!v) return; await api('admins', { action: 'pass', id: +ap.dataset.apass, pass: v }).then(() => toast('تغيّرت')).catch((x) => toast(x.message)); return; }
+  if (ad) { if (!confirm('أكيد تريد تحذف هالمشرف؟')) return; await api('admins', { action: 'del', id: +ad.dataset.adel }).then(() => { toast('انحذف'); load(); }).catch((x) => toast(x.message)); return; }
+  if (cl) { if (!confirm('أكيد تريد تسكّر الطاولة ' + cl.dataset.close + '؟')) return; await api('rooms', { code: cl.dataset.close }).then(() => { toast('انسكّرت'); load(); }).catch((x) => toast(x.message)); return; }
   if (tr && !e.target.closest('button')) openUser(+tr.dataset.u);
 });
 async function goPlay(link) { try { const j = await api('play', link ? { link } : {}); localStorage.setItem('tok', j.token); location.href = '/'; } catch (e) { toast(e.message); } }
 $('play').onclick = () => goPlay();
 $('plgo').onclick = async () => { const v = $('plk').value.trim(); if (!v) return; try { await api('play', { link: v }); ME = (await api('me')).me; $('pl').textContent = 'مربوط بـ: ' + ME.player; $('plk').value = ''; toast('✅ انربط'); } catch (e) { toast(e.message); } };
 $('ngo').onclick = async () => { try { const j = await api('newuser', { username: $('nu').value, pass: $('np').value, coins: $('nc').value }); toast('انضاف اللاعب #' + j.id); $('nu').value = $('np').value = $('nc').value = ''; load(); } catch (e) { toast(e.message); } };
-$('pgo').onclick = async () => { if ($('pn').value !== $('pn2').value) return toast('كلمتين السر مو متطابقين'); try { await api('me', { old: $('po').value, pass: $('pn').value }); $('po').value = $('pn').value = $('pn2').value = ''; toast('✅ تغيّرت كلمة السر'); } catch (e) { toast(e.message); } };
+$('pgo').onclick = async () => { if ($('pn').value !== $('pn2').value) return toast('كلمتين السر غير متطابقين'); try { await api('me', { old: $('po').value, pass: $('pn').value }); $('po').value = $('pn').value = $('pn2').value = ''; toast('✅ تغيّرت كلمة السر'); } catch (e) { toast(e.message); } };
 $('ago').onclick = async () => { try { await api('admins', { action: 'add', username: $('au').value, pass: $('ap').value, role: $('ar').value }); $('au').value = $('ap').value = ''; toast('انضاف المشرف'); load(); } catch (e) { toast(e.message); } };
 $('bgo').onclick = async () => { try { await api('bans', { kind: $('bk').value, value: $('bv').value, hours: +$('bh').value, reason: $('br').value }); $('bv').value = ''; $('br').value = ''; toast('تم الحظر'); load(); } catch (e) { toast(e.message); } };
 $('bcgo').onclick = async () => { try { const j = await api('broadcast', { text: $('bct').value }); $('bcn').textContent = `وصلت لـ ${j.sent} لاعب متصل`; $('bct').value = ''; toast('انبعتت'); } catch (e) { toast(e.message); } };
@@ -196,7 +196,7 @@ async function openUser(id) {
   try {
     const j = await api('user/' + id); cur = j.user; const u = j.user;
     $('dbox').innerHTML = `
-      <div class="dh"><div class="av">${u.ph ? `<img src="/p/${u.id}?v=${u.ph}">` : '👤'}</div><div style="flex:1"><h2>${esc(u.username)}</h2><small>#${u.id} • ${banned(u) ? '<span class="tag ban">محظور ' + untilTxt(u.banned_until) + '</span>' : u.online ? '<span class="tag on">متصل' + (u.room ? ' — طاولة ' + u.room : '') + '</span>' : '<span class="tag off">مو متصل</span>'}</small></div><button id="dx">✕</button></div>
+      <div class="dh"><div class="av">${u.ph ? `<img src="/p/${u.id}?v=${u.ph}">` : '👤'}</div><div style="flex:1"><h2>${esc(u.username)}</h2><small>#${u.id} • ${banned(u) ? '<span class="tag ban">محظور ' + untilTxt(u.banned_until) + '</span>' : u.online ? '<span class="tag on">متصل' + (u.room ? ' — طاولة ' + u.room : '') + '</span>' : '<span class="tag off">غير متصل</span>'}</small></div><button id="dx">✕</button></div>
       <div class="kv">
         <span>الرصيد</span><b>🪙 ${u.points}</b><span>ألعاب / فوز</span><b>${u.games} / ${u.wins}</b>
         <span>الإيميل</span><b>${esc(u.email || '—')}</b><span>تسجيل</span><b>${dt(u.created_at)}</b><span>آخر ظهور</span><b>${dt(u.last_seen)}</b>
@@ -211,7 +211,7 @@ async function openUser(id) {
       <div class="act"><h4>⛔ الحظر</h4>
         <div class="row"><select id="dbh"><option value="1">ساعة</option><option value="24">يوم</option><option value="168" selected>أسبوع</option><option value="720">شهر</option><option value="0">دائم</option></select><input id="dbr" placeholder="السبب"></div>
         <div class="row">${banned(u) ? '<button class="green" id="dub">فك حظر الحساب</button>' : '<button class="red" id="dbg">احظر الحساب</button>'}<button class="red" id="dbip" ${u.last_ip ? '' : 'disabled'}>احظر الـIP</button><button class="red" id="dbdv" ${u.last_device ? '' : 'disabled'}>احظر الجهاز</button></div>
-        <div class="muted">حظر الـIP ممكن يمسك ناس تانيين على نفس الشبكة (نفس البيت أو نفس مزود الإنترنت) — حظر الجهاز أدق.</div>
+        <div class="muted">حظر الـIP ممكن يمسك ناس آخرين على نفس الشبكة (نفس البيت أو نفس مزود الإنترنت) — حظر الجهاز أدق.</div>
         ${u.online ? '<button id="dk">🚪 طلّعه من الطاولة</button>' : ''}</div>
       ${j.payments.length ? `<div class="act"><h4>💳 مدفوعاته</h4>${j.payments.map((p) => `<div class="muted">${dt(p.created_at)} • ${p.amount / 100} ر.س • ${p.coins} 🪙</div>`).join('')}</div>` : ''}
       ${j.games.length ? `<div class="act"><h4>🎮 آخر ألعابه</h4>${j.games.map((g) => `<div class="muted">${dt(g.finished_at)} • ${esc(g.game)} • ${esc((g.players || []).join('، '))}</div>`).join('')}</div>` : ''}`;
@@ -220,12 +220,12 @@ async function openUser(id) {
     $('dx').onclick = () => $('drawer').classList.add('hidden');
     $('dbox').querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => act({ action: 'coins', delta: +b.dataset.q })));
     $('dcg').onclick = () => act({ action: 'coins', delta: +$('dc').value });
-    $('dsg').onclick = () => act({ action: 'setcoins', value: +$('ds').value }, 'تحديد الرصيد بيمسح الرصيد الحالي، أكيد؟');
+    $('dsg').onclick = () => act({ action: 'setcoins', value: +$('ds').value }, 'تحديد الرصيد يمسح الرصيد الحالي، أكيد؟');
     $('dpgen').onclick = () => { $('dp').value = Math.random().toString(36).slice(2, 8); };
     $('dpg').onclick = () => act({ action: 'password', value: $('dp').value });
     $('dng').onclick = () => act({ action: 'rename', value: $('dn').value });
     const reason = () => $('dbr').value, hours = () => +$('dbh').value;
-    if ($('dbg')) $('dbg').onclick = () => act({ action: 'ban', hours: hours(), reason: reason() }, 'أكيد بدك تحظر ' + u.username + '؟');
+    if ($('dbg')) $('dbg').onclick = () => act({ action: 'ban', hours: hours(), reason: reason() }, 'أكيد تريد تحظر ' + u.username + '؟');
     if ($('dub')) $('dub').onclick = () => act({ action: 'unban' });
     $('dbip').onclick = () => act({ action: 'banip', hours: hours(), reason: reason() }, 'حظر الـIP ' + u.last_ip + '؟');
     $('dbdv').onclick = () => act({ action: 'bandevice', hours: hours(), reason: reason() }, 'حظر جهاز ' + u.username + '؟');

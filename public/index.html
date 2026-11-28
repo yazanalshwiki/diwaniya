@@ -910,7 +910,7 @@ button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,25
 <section id="tabFriends" class="hidden">
 <div class="cmtabs"><button data-ct="chat" class="on">💬 الدردشات</button><button data-ct="voice">🎙️ الصوتيات</button><button data-ct="fr">👥 الأصدقاء</button></div>
 <div id="cmChat"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">غرف الدردشة</h2><button class="small gold" id="cmNewT">➕ غرفة جديدة</button></div><div id="cmList"></div></div></div>
-<div id="cmVoice" class="hidden"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">الغرف الصوتية</h2><button class="small gold" id="cmNewV">➕ غرفة صوتية</button></div><p class="meta" style="margin:0 0 6px">احكي مع الشباب بالصوت وأنت بتتنقّل بالموقع 🎧</p><div id="vcList"></div></div></div>
+<div id="cmVoice" class="hidden"><div class="box cmbox"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">الغرف الصوتية</h2><button class="small gold" id="cmNewV">➕ غرفة صوتية</button></div><p class="meta" style="margin:0 0 6px">احكي مع الشباب بالصوت وأنت تتنقّل بالموقع 🎧</p><div id="vcList"></div></div></div>
 <div id="cmFr" class="hidden">
 <div class="box"><h2 style="margin:0 0 10px">➕ أضف صديق</h2>
 <div class="row"><input id="fAdd" placeholder="ابحث باسم اللاعب (ولو جزء منه)" autocomplete="off"><button class="gold" id="fAddB">بحث 🔍</button></div><div id="fRes"></div></div>
@@ -1166,7 +1166,7 @@ function sendWs(o) { if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o))
 
 let mode = 'login';
 $('tLogin').onclick = () => { mode = 'login'; $('tLogin').classList.add('on'); $('tReg').classList.remove('on'); $('aGo').textContent = 'دخول'; $('aEmailW').style.display = 'none'; $('aUser').placeholder = 'الإيميل أو اسم اللاعب'; };
-$('tReg').onclick = () => { mode = 'reg'; $('tReg').classList.add('on'); $('tLogin').classList.remove('on'); $('aGo').textContent = 'إنشاء حساب'; $('aEmailW').style.display = ''; $('aUser').placeholder = 'اسم اللاعب (بيبيّن للكل)'; };
+$('tReg').onclick = () => { mode = 'reg'; $('tReg').classList.add('on'); $('tLogin').classList.remove('on'); $('aGo').textContent = 'إنشاء حساب'; $('aEmailW').style.display = ''; $('aUser').placeholder = 'اسم اللاعب (يبيّن للكل)'; };
 $('aPass').addEventListener('keydown', (e) => e.key === 'Enter' && $('aGo').click());
 $('aGo').onclick = async () => {
   $('aErr').textContent = '';
@@ -1181,15 +1181,20 @@ $('aGo').onclick = async () => {
 };
 function logout() { localStorage.removeItem('tok'); token = ''; manualClose = true; ws && ws.close(); show('auth'); }
 
-function connect() {
+const TAB = (() => { try { let t = sessionStorage.getItem('tab'); if (!t) { t = Math.random().toString(36).slice(2, 10); sessionStorage.setItem('tab', t); } return t; } catch { return Math.random().toString(36).slice(2, 10); } })();
+function connect(force) {
   clearTimeout(reconnectT);
+  // one socket per page: never open a second one while the current is alive (that used to kick ourselves)
+  if (!force && ws && ws.readyState <= 1) return;
+  if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.close(); } catch {} }
   manualClose = false;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}&d=${encodeURIComponent(DEV)}`);
+  const sock = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}&d=${encodeURIComponent(DEV)}&tab=${TAB}`);
+  ws = sock;
   let opened = false;
-  ws.onopen = () => { opened = true; $('conn').classList.add('hidden'); };
-  ws.onclose = async () => {
-    if (manualClose) return;
+  sock.onopen = () => { opened = true; $('conn').classList.add('hidden'); };
+  sock.onclose = async () => {
+    if (sock !== ws || manualClose) return;
     if (!opened) {
       const r = await fetch('/api/me', { headers: { authorization: 'Bearer ' + token } }).catch(() => null);
       if (r && r.status === 401) { localStorage.removeItem('tok'); token = ''; show('auth'); return; }
@@ -1197,15 +1202,18 @@ function connect() {
     $('conn').classList.remove('hidden');
     reconnectT = setTimeout(connect, 1500);
   };
-  ws.onmessage = (ev) => {
+  sock.onmessage = (ev) => {
+    if (sock !== ws) return;
+    lastMsgAt = Date.now();
     const m = JSON.parse(ev.data);
+    if (m.t === 'pong') return;
     if (m.t === 'me') { me = m.user; renderMe(); if (window.renderGames) renderGames(); loadFriends(); }
     else if (m.t === 'friends') { loadFriends(); }
     else if (m.t === 'cmsg') cmOnMsg(m);
     else if (m.t === 'cdel') { if (CM.open && CM.open.id === m.ch) { CM.msgs = CM.msgs.filter((x) => x.id !== m.id); cmPaint(); } }
     else if (m.t === 'cchans') loadComm();
     else if (m.t && m.t.startsWith('vc')) vcOn(m);
-    else if (m.t === 'invite') { SND.play('trump'); openModal('invite', `<h3>📨 دعوة</h3><p style="text-align:center;font-size:16px;line-height:1.7"><b>${esc(m.from)}</b> عازمك تلعب معه <b>${esc(m.game)}</b></p><div class="row"><button class="gold" style="flex:1" data-fjoin="${esc(m.code)}">انضم 🎮</button><button class="ghost" style="flex:1" onclick="closeOverlay()">لا هلق</button></div>`); }
+    else if (m.t === 'invite') { SND.play('trump'); openModal('invite', `<h3>📨 دعوة</h3><p style="text-align:center;font-size:16px;line-height:1.7"><b>${esc(m.from)}</b> عازمك تلعب معه <b>${esc(m.game)}</b></p><div class="row"><button class="gold" style="flex:1" data-fjoin="${esc(m.code)}">انضم 🎮</button><button class="ghost" style="flex:1" onclick="closeOverlay()">لا الآن</button></div>`); }
     else if (m.t === 'banned') { manualClose = true; localStorage.removeItem('tok'); token = ''; room = null; show('auth'); openModal('ban', `<h3>⛔ محظور</h3><p style="text-align:center;color:var(--muted);line-height:1.7">${esc(m.msg || '')}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); }
     else if (m.t === 'notice') { if (m.big) openModal('notice', `<h3>📢 من الإدارة</h3><p style="text-align:center;font-size:16px;line-height:1.7">${esc(m.msg.replace(/^📢 /, ''))}</p><button class="gold" style="width:100%" onclick="closeOverlay()">تمام</button>`); else toast(m.msg); SND.play('trump'); }
     else if (m.t === 'lobby') {
@@ -1216,12 +1224,21 @@ function connect() {
     else if (m.t === 'room') { room = m.room; renderRoom(); syncVoice(); }
     else if (m.t === 'react') onReact(m);
     else if (m.t === 'rtc') onRtc(m.from, m.data);
-    else if (m.t === 'left') { voiceStop(); room = null; prev = null; closeOverlay(); if (m.reason) toast(m.reason); show('lobby'); renderLobby(); if (m.reason && m.reason.includes('جهاز')) { manualClose = true; openModal('kick', '<h3>الحساب مفتوح بمكان تاني</h3><p style="text-align:center;color:var(--muted)">فتحت نفس الحساب على جهاز أو صفحة تانية، فوقفنا الاتصال هون.</p><button class="gold" style="width:100%" onclick="closeOverlay();connect()">كمّل اللعب هون</button>'); } }
+    else if (m.t === 'left') { voiceStop(); room = null; prev = null; closeOverlay(); if (m.reason) toast(m.reason); show('lobby'); renderLobby(); if (m.reason && m.reason.includes('جهاز')) { manualClose = true; openModal('kick', '<h3>الحساب مفتوح بمكان ثاني</h3><p style="text-align:center;color:var(--muted)">فتحت نفس الحساب على جهاز أو صفحة ثانية، فوقفنا الاتصال هنا.</p><button class="gold" style="width:100%" onclick="closeOverlay();connect(true)">كمّل اللعب هنا</button>'); } }
     else if (m.t === 'error') { sentKey = ''; handKey = ''; panelKey = ''; toast(m.msg); if (room) renderRoom(); }
     else if (m.t === 'leaders') renderLeaders(m.list);
   };
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && token && (!ws || ws.readyState > 1)) connect(); });
+// coming back to the app: make sure the socket is really alive (mobile kills it silently in the background)
+let lastMsgAt = Date.now();
+function checkAlive() {
+  if (!token) return;
+  if (!ws || ws.readyState > 1) return connect();
+  if (ws.readyState === 1) { const t0 = Date.now(); try { ws.send(JSON.stringify({ t: 'ping' })); } catch {} setTimeout(() => { if (lastMsgAt < t0 && ws && ws.readyState === 1) connect(true); }, 3500); }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAlive(); });
+window.addEventListener('online', checkAlive); window.addEventListener('focus', checkAlive);
+setInterval(() => { if (!document.hidden && ws && ws.readyState === 1) try { ws.send(JSON.stringify({ t: 'ping' })); } catch {} }, 25000);
 
 function renderMe() {
   if (!me) return;
@@ -1278,7 +1295,7 @@ const GAMES = [
   { cat: 'chal', g: 'xo', ic: '❌', n: 'إكس أو', d: 'أول واحد ٣ جولات', pl: '٢', art: '❌' },
   { cat: 'party', g: 'guess', ic: '🎤', n: 'خمّن المشهور', d: 'مطربين • ممثلين • أنبياء', pl: '٢-٤', art: '🎤' },
   { cat: 'party', g: 'words', ic: '✍️', n: 'اسم جماد حيوان', d: 'نبات • بلاد', pl: '٢-٤', art: '✍️' },
-  { cat: 'party', g: 'draw', ic: '🎨', n: 'ارسم وخمّن', d: 'واحد بيرسم والباقي بيخمّن', pl: '٢-٤', art: '🎨' },
+  { cat: 'party', g: 'draw', ic: '🎨', n: 'ارسم وخمّن', d: 'واحد يرسم والباقي يخمّن', pl: '٢-٤', art: '🎨' },
   { cat: 'party', g: 'spy', ic: '🕵️', n: 'مين الجاسوس', d: 'اكشفوا الجاسوس بينكم', pl: '٣-٤', art: '🕵️' },
   { cat: 'party', g: 'trivia', ic: '🧩', n: 'مسابقة ثقافية', d: 'أسئلة عامة', pl: '٢-٤', art: '🧩' },
   { cat: 'party', g: 'tf', ic: '✅', n: 'صح ولا غلط', d: 'بسرعة!', pl: '٢-٤', art: '✅' },
@@ -1288,7 +1305,7 @@ const GAMES = [
   { cat: 'party', g: 'dishes', ic: '🍲', n: 'خمّن الأكلة', d: 'أكلات عربية', pl: '٢-٤', art: '🍲' },
   { cat: 'party', g: 'scramble', ic: '🔤', n: 'رتّب الحروف', d: 'لاقي الكلمة', pl: '٢-٤', art: '🔤' },
   { cat: 'party', g: 'math', ic: '➗', n: 'رياضيات سريعة', d: 'مين أسرع بالحساب', pl: '٢-٤', art: '➗' },
-  { cat: 'party', g: 'wyr', ic: '⚖️', n: 'لو خيّروك', d: 'اختار متل الأغلبية', pl: '٢-٤', art: '⚖️' },
+  { cat: 'party', g: 'wyr', ic: '⚖️', n: 'لو خيّروك', d: 'اختار مثل الأغلبية', pl: '٢-٤', art: '⚖️' },
 ];
 let gi = 0;
 try { gi = Math.max(0, GAMES.findIndex((x) => x.g === localStorage.getItem('lastGame'))); } catch {}
@@ -1411,8 +1428,8 @@ function renderWaiting() {
   const humans = room.seats.filter((s) => s && !s.bot).length, seatedN = room.seats.filter(Boolean).length;
   const flexG = FLEX.includes(room.game), sp = room.speed || 'normal', fill = room.fill || 'none';
   const seg = (k, v, cur, lbl) => `<button class="wopt${cur === v ? ' on' : ''}" ${room.isHost ? `data-wo="${k}:${v}"` : 'disabled'}>${lbl}</button>`;
-  const opts = `<div class="wopts"><div class="worow"><span>سرعة اللعب</span><div class="woseg">${seg('speed', 'slow', sp, '🐢 بطيء')}${seg('speed', 'normal', sp, '⚖️ عادي')}${seg('speed', 'fast', sp, '⚡ سريع')}</div></div>${flexG ? `<div class="worow"><span>الكراسي الفاضية</span><div class="woseg">${seg('fill', 'none', fill, '👥 بس اللاعبين الجالسين')}${seg('fill', 'bots', fill, '🤖 كمّلها بوتات')}</div></div>${fill === 'none' && seatedN < 2 ? '<div class="wonote">بدها لاعبين على الأقل — إذا ضليت لحالك بتنضاف بوتات</div>' : ''}` : ''}</div>`;
-  const startNote = room.seats.some((s) => !s) ? (flexG && fill === 'none' && seatedN >= 2 ? ` <small>(${seatedN} لاعبين — بدون بوتات)</small>` : ' <small>(الكراسي الفاضية بتصير بوتات)</small>') : '';
+  const opts = `<div class="wopts"><div class="worow"><span>سرعة اللعب</span><div class="woseg">${seg('speed', 'slow', sp, '🐢 بطيء')}${seg('speed', 'normal', sp, '⚖️ عادي')}${seg('speed', 'fast', sp, '⚡ سريع')}</div></div>${flexG ? `<div class="worow"><span>الكراسي الفاضية</span><div class="woseg">${seg('fill', 'none', fill, '👥 فقط اللاعبين الجالسين')}${seg('fill', 'bots', fill, '🤖 كمّلها بوتات')}</div></div>${fill === 'none' && seatedN < 2 ? '<div class="wonote">تحتاج لاعبين على الأقل — إذا بقيت وحدك تنضاف بوتات</div>' : ''}` : ''}</div>`;
+  const startNote = room.seats.some((s) => !s) ? (flexG && fill === 'none' && seatedN >= 2 ? ` <small>(${seatedN} لاعبين — بدون بوتات)</small>` : ' <small>(الكراسي الفاضية تصير بوتات)</small>') : '';
   $('wHostBox').innerHTML = opts + (room.isHost
     ? `<button class="gold" style="width:100%" id="wStart">ابدأ اللعب${startNote}</button>`
     : `<div class="empty">بانتظار صاحب الطاولة يبدأ… (${humans} لاعب)</div>`);
@@ -1566,7 +1583,7 @@ function renderTable() {
     const CW = 46, CH = Math.round(CW * 1.4), ST = Math.round(CH * 0.34), TOP = 3 * ST, COLH = TOP + CH + 9 * ST;
     fh += `<div class="board cols" style="--cw:${CW}px">` + ['S', 'H', 'D', 'C'].map((s) => {
       const b = e.board[s];
-      if (!b) return `<div class="bcol" style="height:${COLH}px"><div class="bph" style="top:${TOP}px;height:${CH}px">${suitHtml(s, '20px')}<small>بيفتح<br>بالولد</small></div></div>`;
+      if (!b) return `<div class="bcol" style="height:${COLH}px"><div class="bph" style="top:${TOP}px;height:${CH}px">${suitHtml(s, '20px')}<small>يفتح<br>بالولد</small></div></div>`;
       let h = '';
       for (let r = b.lo; r <= b.hi; r++) {
         const c = s + r;
@@ -1611,7 +1628,7 @@ function renderTable() {
   } else if (a && a.contracts) {
     panel = `<h4>اختر لعبتك</h4><div class="wide">` + a.contracts.map((c) => `<button class="gold" data-act='${JSON.stringify({ type: 'contract', name: c })}'>${TRIX_IC[c]} ${TRIX_NAMES[c]}</button>`).join('') + '</div>';
   } else if (a && a.doubles) {
-    panel = `<h4>بدك تدبّل؟ ✖️2</h4><div class="wide">` + a.doubles.map((c) => `<button class="gold" data-act='${JSON.stringify({ type: 'double', card: c })}'>دبّل ${RN[+c.slice(1)]} ${suitHtml(c[0])}</button>`).join('') + `</div><button class="pass" data-act='{"type":"nodouble"}'>بلا تدبيل</button>`;
+    panel = `<h4>تريد تدبّل؟ ✖️2</h4><div class="wide">` + a.doubles.map((c) => `<button class="gold" data-act='${JSON.stringify({ type: 'double', card: c })}'>دبّل ${RN[+c.slice(1)]} ${suitHtml(c[0])}</button>`).join('') + `</div><button class="pass" data-act='{"type":"nodouble"}'>بلا تدبيل</button>`;
   } else if (a && a.pass) {
     panel = `<h4>ما عندك ورقة تنزل</h4><button class="pass" data-act='{"type":"pass"}'>باص</button>`;
   }
@@ -1794,14 +1811,14 @@ function act(a) {
     if (myTurn && e.legal.length) {
       if (e.legal.includes(card)) { act({ type: 'play', card }); return true; }
       el && (el.classList.remove('shake'), void el.offsetWidth, el.classList.add('shake'));
-      toast(e.type === 'trix' && e.phase === 'trix' ? 'هذي الورقة ما تنزل الحين' : 'لازم تلعب من نفس النقشة');
+      toast(e.type === 'trix' && e.phase === 'trix' ? 'هذي الورقة ما تنزل الحين' : 'يجب تلعب من نفس النقشة');
       return false;
     }
     if (e.phase === 'bidding' || e.phase === 'choose' || e.phase === 'trump' || e.phase === 'double' || !myTurn) {
       preSel = preSel === card ? null : card;
       handKey = '';
       renderTable();
-      if (preSel) toast('جهّزت الورقة ✓ بتنلعب أول ما يجي دورك');
+      if (preSel) toast('جهّزت الورقة ✓ تنلعب أول ما يجي دورك');
       return false;
     }
     return false;
@@ -1973,7 +1990,7 @@ const MB = [
   ['go', 'انطلاق'], ['p', 'حي البلد', 0, 60], ['luck', 'حظ'], ['p', 'حي الرويس', 0, 60], ['tax', 'ضريبة', 100], ['rail', 'محطة القطار', 200], ['p', 'حي الشرفية', 1, 100],
   ['jail', 'السجن'], ['p', 'حي الصفا', 1, 120], ['util', 'الكهرباء', 150], ['p', 'حي النسيم', 2, 140], ['p', 'حي الفيصلية', 2, 160], ['rail', 'المطار', 200], ['luck', 'حظ'],
   ['park', 'استراحة'], ['p', 'حي الروضة', 3, 180], ['p', 'حي السلامة', 3, 200], ['luck', 'حظ'], ['p', 'حي الزهراء', 4, 220], ['rail', 'الميناء', 200], ['p', 'حي الحمراء', 4, 240],
-  ['gojail', 'روح عالسجن'], ['p', 'حي الخالدية', 5, 260], ['p', 'حي الشاطئ', 5, 280], ['util', 'المياه', 150], ['tax', 'ضريبة رفاهية', 75], ['p', 'الكورنيش', 6, 350], ['p', 'برج الديوانية', 6, 400],
+  ['gojail', 'روح على السجن'], ['p', 'حي الخالدية', 5, 260], ['p', 'حي الشاطئ', 5, 280], ['util', 'المياه', 150], ['tax', 'ضريبة رفاهية', 75], ['p', 'الكورنيش', 6, 350], ['p', 'برج الديوانية', 6, 400],
 ];
 const MG_COL = ['#9a6034', '#5ec8f2', '#e2479b', '#f39c12', '#e53935', '#f2d000', '#2f55d4'];
 const MG_NAME = ['بني', 'سماوي', 'زهري', 'برتقالي', 'أحمر', 'أصفر', 'كحلي'];
@@ -2054,11 +2071,11 @@ function deedHtml(e, i, mini) {
   if (b[0] === 'p') {
     const pr = b[3], lv = e.level[i];
     const rows = [['الإيجار', mRent(pr, 0)], ['مع اللون كامل', mRent(pr, 0) * 2], ['🏠 ١', mRent(pr, 1)], ['🏠 ٢', mRent(pr, 2)], ['🏠 ٣', mRent(pr, 3)], ['🏠 ٤', mRent(pr, 4)], ['🏨 فندق', mRent(pr, 5)]];
-    return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:${MG_COL[b[2]]}"><small>اللون ${MG_NAME[b[2]]}</small>${b[1]}</div><div class="dprice">السعر <b>${pr}</b></div>${mini ? '' : `<div class="drows">${rows.map(([k, v], r) => `<div class="${o >= 0 && ((r === 0 && lv === 0) || (r >= 2 && r - 1 === lv)) ? 'cur' : ''}"><span>${k}</span><b>${v}</b></div>`).join('')}</div><div class="dnote">البيت بـ${e.houseCost[b[2]]} • لازم تملك الحيّين بنفس اللون لتبني</div>`}${own}</div>`;
+    return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:${MG_COL[b[2]]}"><small>اللون ${MG_NAME[b[2]]}</small>${b[1]}</div><div class="dprice">السعر <b>${pr}</b></div>${mini ? '' : `<div class="drows">${rows.map(([k, v], r) => `<div class="${o >= 0 && ((r === 0 && lv === 0) || (r >= 2 && r - 1 === lv)) ? 'cur' : ''}"><span>${k}</span><b>${v}</b></div>`).join('')}</div><div class="dnote">البيت بـ${e.houseCost[b[2]]} • يجب تملك الحيّين بنفس اللون لتبني</div>`}${own}</div>`;
   }
   if (b[0] === 'rail') return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:#333">🚆 ${b[1]}</div><div class="dprice">السعر <b>${b[2]}</b></div>${mini ? '' : `<div class="drows"><div><span>محطة وحدة</span><b>25</b></div><div><span>محطتين</span><b>50</b></div><div><span>٣ محطات</span><b>100</b></div></div>`}${own}</div>`;
   if (b[0] === 'util') return `<div class="deed${mini ? ' mini' : ''}"><div class="dh" style="background:#5a6b7a">💡 ${b[1]}</div><div class="dprice">السعر <b>${b[2]}</b></div>${mini ? '' : `<div class="drows"><div><span>شركة وحدة</span><b>الزهر × 4</b></div><div><span>الشركتين</span><b>الزهر × 10</b></div></div>`}${own}</div>`;
-  const txt = { go: 'كل ما تمرق من هون بتاخد 200 ✨', luck: 'اسحب ورقة حظ 🍀', tax: `بتدفع ${b[2]} للبنك`, jail: 'إذا انبعتت عالسجن: ارمي دبل لتطلع، أو ادفع 50', park: 'استراحة — ما بيصير شي ☕', gojail: 'روح عالسجن مباشرة 🚔' }[b[0]];
+  const txt = { go: 'كل ما تمرق من هنا تاخد 200 ✨', luck: 'اسحب ورقة حظ 🍀', tax: `تدفع ${b[2]} للبنك`, jail: 'إذا انبعتت على السجن: ارمي دبل لتطلع، أو ادفع 50', park: 'استراحة — ما يصير شيء ☕', gojail: 'روح على السجن مباشرة 🚔' }[b[0]];
   return `<div class="deed"><div class="dh" style="background:#7a5a1a">${MICON[b[0]]} ${b[1]}</div><div class="dnote" style="font-size:14px;padding:12px">${txt}</div></div>`;
 }
 function myProps(e) {
@@ -2073,17 +2090,17 @@ function myProps(e) {
     groups.push(`<div class="pg"><div class="pgh" style="--gc:${MG_COL[g]}">${MG_NAME[g]} — ${have.length}/${ids.length}${have.length === ids.length ? ' ✅ كامل' : ''}</div>${have.map((i) => `<div class="pgi"><span>${MB[i][1]} ${e.level[i] ? (e.level[i] === 5 ? '🏨' : '🏠'.repeat(e.level[i])) : ''}</span><span class="pgr">إيجار ${e.rents[i]}</span>${build.includes(i) ? `<button class="gold sm" data-mbuild="${i}">ابني ${e.houseCost[g]}</button>` : ''}</div>`).join('')}</div>`);
   }
   const others = MB.map((b, i) => ((b[0] === 'rail' || b[0] === 'util') && e.owner[i] === mine ? `<div class="pgi"><span>${MICON[b[0]]} ${b[1]}</span><span class="pgr">إيجار ${e.rents[i] || (b[0] === 'util' ? 'زهر×' : '')}</span></div>` : '')).join('');
-  return `<h3 style="margin:0 0 8px">🏠 أملاكي</h3><div class="mprops">${groups.join('') || ''}${others}${!groups.length && !others ? '<div style="opacity:.7;padding:10px">لسا ما اشتريت شي</div>' : ''}</div>${a && a.roll && !build.length ? '<div class="dnote">لتبني بيوت لازم تجمع كل أحياء اللون الواحد</div>' : ''}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">سكّر</button>`;
+  return `<h3 style="margin:0 0 8px">🏠 أملاكي</h3><div class="mprops">${groups.join('') || ''}${others}${!groups.length && !others ? '<div style="opacity:.7;padding:10px">حتى الآن ما اشتريت شيء</div>' : ''}</div>${a && a.roll && !build.length ? '<div class="dnote">لتبني بيوت يجب تجمع كل أحياء اللون الواحد</div>' : ''}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">سكّر</button>`;
 }
 const MONO_HELP = `<h3 style="margin:0 0 8px">❓ كيف تلعب عقارات الديوانية</h3><div class="mhelp">
 <p>🎲 <b>ارمي الزهر</b> وامشِ بعدد النقاط.</p>
-<p>🏷️ إذا وقفت على حي <b>للبيع</b> بتقدر تشتريه.</p>
-<p>🧾 إذا وقفت على حي <b>لغيرك</b> بتدفعله إيجار.</p>
-<p>🎨 إذا جمعت <b>كل أحياء اللون</b> الإيجار بيتضاعف، وبتقدر تبني بيوت 🏠 (لحد ٤) وبعدين فندق 🏨 — قبل ما ترمي الزهر، اكبس على الحي المضوّي أو من «أملاكي».</p>
-<p>🚆 المحطات: كل ما جمعت أكتر الإيجار بيكبر. 💡 الشركات: الإيجار حسب الزهر.</p>
-<p>✨ كل ما تمرق عالانطلاق بتاخد 200. 🍀 الحظ ممكن يعطيك أو ياخد منك.</p>
-<p>🚔 بالسجن: ارمي دبل لتطلع أو ادفع 50. الدبل برّا السجن بيخليك ترمي مرة كمان.</p>
-<p>💀 اللي بتخلص مصاريه بيفلس. بعد ٢٥ جولة بيربح صاحب <b>أكبر ثروة</b> (مصاري + أملاك + بيوت).</p></div>
+<p>🏷️ إذا وقفت على حي <b>للبيع</b> تقدر تشتريه.</p>
+<p>🧾 إذا وقفت على حي <b>لغيرك</b> تدفعله إيجار.</p>
+<p>🎨 إذا جمعت <b>كل أحياء اللون</b> الإيجار يتضاعف، وتقدر تبني بيوت 🏠 (لحد ٤) ولاحقاً فندق 🏨 — قبل ما ترمي الزهر، اضغط على الحي المضوّي أو من «أملاكي».</p>
+<p>🚆 المحطات: كل ما جمعت أكتر الإيجار يكبر. 💡 الشركات: الإيجار حسب الزهر.</p>
+<p>✨ كل ما تمرق على الانطلاق تاخد 200. 🍀 الحظ ممكن يعطيك أو ياخد منك.</p>
+<p>🚔 بالسجن: ارمي دبل لتطلع أو ادفع 50. الدبل برّا السجن يخليك ترمي مرة أيضاً.</p>
+<p>💀 اللي تخلص مصاريه يفلس. بعد ٢٥ جولة يربح صاحب <b>أكبر ثروة</b> (مصاري + أملاك + بيوت).</p></div>
 <button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">فهمت 👍</button>`;
 function renderMono(e) {
   const mine = room.mySeat;
@@ -2128,11 +2145,11 @@ function renderMono(e) {
   } else if (a && a.roll) {
     act = `<button class="gold mbtn big" data-mact='{"type":"roll"}'>🎲 ارمي الزهر</button>`;
     if (a.bail) act += `<button class="ghost mbtn2" data-mact='{"type":"bail"}'>🔓 ادفع كفالة ${a.bail} واطلع</button>`;
-    if (build.length) act += `<div class="mhint">🏗️ فيك تبني! اكبس على الحي المضوّي بالأخضر</div>`;
+    if (build.length) act += `<div class="mhint">🏗️ فيك تبني! اضغط على الحي المضوّي بالأخضر</div>`;
   } else if (!e.over) {
     const w = activeSeat;
     if (e.card && e.card.id !== mono.cardSeen && e.card.seat === w) act = `<div class="mcard new">🍀 ${esc(e.card.t)}</div>`;
-    act += `<div class="mwait">${w >= 0 && room.seats[w] ? `<i class="mdot" style="--pc:${MP_COL[w]}"></i> دور ${esc(room.seats[w].name)}${e.phase === 'buy' ? ' — عم يفكر يشتري 🤔' : e.phase === 'moving' ? ' — عم يمشي 🚶' : ''}` : ''}</div>`;
+    act += `<div class="mwait">${w >= 0 && room.seats[w] ? `<i class="mdot" style="--pc:${MP_COL[w]}"></i> دور ${esc(room.seats[w].name)}${e.phase === 'buy' ? ' — يفكر يشتري 🤔' : e.phase === 'moving' ? ' — يمشي 🚶' : ''}` : ''}</div>`;
   }
   ctr += `<div class="mact">${act}</div><div class="mlog">${e.log.slice(-3).reverse().map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
   const key = JSON.stringify([ps, cells, ctr]);
@@ -2162,7 +2179,7 @@ function renderMono(e) {
     $('meInf').textContent = '💰 ' + e.players[mine].cash; $('meInf').className = 'pinf';
     $('meX').innerHTML = ''; $('meX').__h = '';
     $('meBar').classList.toggle('turn', myTurn);
-    $('gTurn').textContent = myTurn ? (a.buy ? 'دورك — بدك تشتري؟' : 'دورك — ارمي 🎲') : '';
+    $('gTurn').textContent = myTurn ? (a.buy ? 'دورك — تريد تشتري؟' : 'دورك — ارمي 🎲') : '';
   } else { $('meAv').__h = ''; $('meAv').textContent = '👀'; $('meName').textContent = 'متفرج'; $('meInf').textContent = ''; $('gTurn').textContent = 'أنت تتفرج'; }
   if (myTurn && !mono.myTurn) { setTimeout(() => SND.play('turn'), 120); try { navigator.vibrate && navigator.vibrate(60); } catch {} }
   if (e.over && !mono.over) SND.play(mine >= 0 && e.winners.includes(mine) ? 'win' : 'lose');
@@ -2253,12 +2270,12 @@ function renderXO(e) {
   const strip = altStrip(e, (i) => `<div class="mpc"><span class="xos ${i ? 'o' : 'x'}">${i ? 'O' : 'X'}</span> ${e.scores[i]}</div>`);
   const cells = e.board.map((v, i) => `<button class="xc ${v ? 'f ' + v.toLowerCase() : ''} ${e.line && e.line.includes(i) ? 'win' : ''} ${i === e.last ? 'last' : ''}" data-xo="${i}" ${my && !v ? '' : 'disabled'}>${v || ''}</button>`).join('');
   const turnName = e.turn >= 0 && room.seats[e.turn] ? room.seats[e.turn].name : '';
-  const info = e.msg ? e.msg : my ? 'دورك — اكبس على خانة' : turnName ? `دور ${esc(turnName)}` : '';
+  const info = e.msg ? e.msg : my ? 'دورك — اضغط على خانة' : turnName ? `دور ${esc(turnName)}` : '';
   const key = JSON.stringify([strip, cells, info]);
   if (alt.key !== key) {
     if (alt.key && e.last >= 0) SND.play('card');
     alt.key = key;
-    $('alt').innerHTML = `${strip}<div class="xoinfo">الجولة ${e.round} • أول واحد بيوصل ${e.target} بيربح${e.draws ? ` • تعادل ${e.draws}` : ''}</div><div class="xob">${cells}</div><div class="xomsg">${info}</div>`;
+    $('alt').innerHTML = `${strip}<div class="xoinfo">الجولة ${e.round} • أول واحد يوصل ${e.target} يربح${e.draws ? ` • تعادل ${e.draws}` : ''}</div><div class="xob">${cells}</div><div class="xomsg">${info}</div>`;
   }
   altMe(e, `${mine >= 0 ? (mine ? 'O' : 'X') : ''} • ${mine >= 0 ? e.scores[mine] : ''}`, my, 'دورك ✍️');
 }
@@ -2266,7 +2283,7 @@ function renderXO(e) {
 // ---------- Pool ----------
 const BCOL = ['#fff', '#f2c200', '#1f5fd6', '#d62828', '#6a2fb3', '#f07b12', '#1c9a4a', '#7a1d1d', '#111'];
 function ballCol(n) { return BCOL[n > 8 ? n - 8 : n]; }
-const poolGName = (g) => (g === 'solid' ? 'السادة' : g === 'stripe' ? 'المخططة' : 'لسا');
+const poolGName = (g) => (g === 'solid' ? 'السادة' : g === 'stripe' ? 'المخططة' : 'حتى الآن');
 function miniBall(n) { return `<i class="mb ${n > 8 ? 'st' : ''}" style="--bc:${ballCol(n)}">${n}</i>`; }
 function poolCue(e) { const c = e.balls.find((b) => b.n === 0); return alt.cuePos && e.bih ? { ...c, ...alt.cuePos, in: false } : c; }
 function poolBalls(e) { return alt.cuePos && e.bih ? e.balls.map((b) => (b.n === 0 ? { ...b, ...alt.cuePos, in: false } : b)) : e.balls; }
@@ -2277,7 +2294,7 @@ function renderPool(e) {
   const potted = (i) => { const g = e.group[i]; if (!g) return ''; return e.balls.filter((b) => b.in && (g === 'solid' ? b.n >= 1 && b.n <= 7 : b.n >= 9)).map((b) => miniBall(b.n)).join(''); };
   const strip = altStrip(e, (i) => `<div class="mpc">${poolGName(e.group[i])}${e.group[i] ? ` • باقي ${e.left[i]}` : ''}</div><div class="mbs">${potted(i)}</div>`);
   if (!$('alt').querySelector('canvas')) {
-    $('alt').innerHTML = `<div class="pstrip0"></div><div class="pwrap"><canvas id="pc"></canvas><div class="ppow" id="pPow"><div class="pfill"></div><div class="pknob">⬇️</div><small>اسحب<br>لتحت<br>واترك</small></div></div><div class="pmsg"></div><div class="pfine"><button class="ghost" data-fine="-1">◀ تصويب ناعم</button><button class="ghost" data-fine="1">تصويب ناعم ▶</button></div>`;
+    $('alt').innerHTML = `<div class="pstrip0"></div><div class="pwrap"><canvas id="pc"></canvas><div class="ppow" id="pPow"><div class="pfill"></div><div class="pknob">⬇️</div><small>اسحب<br>للأسفل<br>واترك</small></div></div><div class="pmsg"></div><div class="pfine"><button class="ghost" data-fine="-1">◀ تصويب ناعم</button><button class="ghost" data-fine="1">تصويب ناعم ▶</button></div>`;
     const cv = $('pc');
     let mode = null;
     const pt = (ev) => { const r = cv.getBoundingClientRect(); return { x: ((ev.clientX - r.left) / r.width) * 100, y: ((ev.clientY - r.top) / r.height) * 190 }; };
@@ -2304,7 +2321,7 @@ function renderPool(e) {
     pw.addEventListener('pointermove', (ev) => { if (pull != null) setPow(ev); });
     const release = () => {
       if (pull == null) return; pull = null; pw.classList.remove('on');
-      const p = alt.power; pw.style.setProperty('--p', 0); pw.querySelector('small').innerHTML = 'اسحب<br>لتحت<br>واترك';
+      const p = alt.power; pw.style.setProperty('--p', 0); pw.querySelector('small').innerHTML = 'اسحب<br>للأسفل<br>واترك';
       if (p < 0.04) { drawPool(poolBalls(room.engine)); return; }
       const a = { type: 'shoot', angle: alt.aim, power: p };
       if (room.engine.bih && alt.cuePos) a.cue = alt.cuePos;
@@ -2316,7 +2333,7 @@ function renderPool(e) {
   }
   if (alt.key !== strip) { alt.key = strip; $('alt').querySelector('.pstrip0').innerHTML = strip; }
   const tgt = e.group[mine] ? (e.left[mine] === 0 ? 'الـ8 السودا 🎱' : poolGName(e.group[mine])) : 'أي طابة';
-  $('alt').querySelector('.pmsg').innerHTML = alt.anim ? '' : my ? (e.bih ? '✋ معك الطابة البيضا — حرّكها بإصبعك، بعدين صوّب واسحب القوة' : `دورك — هدفك: <b>${tgt}</b> • صوّب بإصبعك واسحب القوة لتحت`) : esc(e.msg || '');
+  $('alt').querySelector('.pmsg').innerHTML = alt.anim ? '' : my ? (e.bih ? '✋ معك الطابة البيضا — حرّكها بإصبعك، لاحقاً صوّب واسحب القوة' : `دورك — هدفك: <b>${tgt}</b> • صوّب بإصبعك واسحب القوة للأسفل`) : esc(e.msg || '');
   $('alt').querySelector('.pfine').style.visibility = my ? 'visible' : 'hidden';
   $('pPow').classList.toggle('dis', !my);
   fitPool();
@@ -2421,17 +2438,17 @@ function renderGuess(e) {
   if (e.phase === 'pick') {
     const ch = e.chooser;
     if (ch === mine) body = `<div class="gq"><h3>اختار الفئة 🎯</h3><div class="gcats"><button class="gold" data-gc="mix">🎲 منوّع</button>${Object.entries(e.cats).map(([k, v]) => `<button class="ghost" data-gc="${k}">${({ sing: '🎤', act: '🎬', nabi: '🕌', inf: '📱', arab: '🏛️' })[k]} ${v}</button>`).join('')}</div><div class="gsub">باقي <b data-cd></b> ثانية</div></div>`;
-    else body = `<div class="gq"><h3>${ch >= 0 && room.seats[ch] ? esc(room.seats[ch].name) + ' عم يختار الفئة…' : 'عم نختار الفئة…'}</h3></div>`;
+    else body = `<div class="gq"><h3>${ch >= 0 && room.seats[ch] ? esc(room.seats[ch].name) + ' يختار الفئة…' : 'نختار الفئة…'}</h3></div>`;
   } else if (e.phase === 'q' || e.phase === 'reveal') {
     const rv = e.phase === 'reveal';
     const top = e.hintMode
-      ? `<div class="gtitle">${e.kind === 'dishes' ? 'شو هالأكلة؟ 🍽️' : 'مين هو؟ 🤔'}</div><div class="ghints">${[0, 1, 2].map((k) => k < e.hints.length ? `<div class="gh${k === e.hints.length - 1 && !rv && k ? ' new' : ''}"><b>${k + 1}</b>${esc(e.hints[k])}</div>` : `<div class="gh lock"><b>${k + 1}</b>🔒 تلميح جاي…</div>`).join('')}</div>${!rv ? `<div class="gsub">جاوب هلق وخود <b>${[30, 20, 10][e.stage]}</b> نقطة — كل ما استنيت تلميح بتقلّ النقاط</div>` : '<div class="gsub">&nbsp;</div>'}`
+      ? `<div class="gtitle">${e.kind === 'dishes' ? 'ماذا هالأكلة؟ 🍽️' : 'مين هو؟ 🤔'}</div><div class="ghints">${[0, 1, 2].map((k) => k < e.hints.length ? `<div class="gh${k === e.hints.length - 1 && !rv && k ? ' new' : ''}"><b>${k + 1}</b>${esc(e.hints[k])}</div>` : `<div class="gh lock"><b>${k + 1}</b>🔒 تلميح جاي…</div>`).join('')}</div>${!rv ? `<div class="gsub">جاوب الآن وخود <b>${[30, 20, 10][e.stage]}</b> نقطة — كل ما استنيت تلميح تقلّ النقاط</div>` : '<div class="gsub">&nbsp;</div>'}`
       : `<div class="gprompt${e.big ? ' big' : ''}">${esc(e.prompt)}</div>`;
     const cnt = (k) => (rv && e.ans ? e.ans.filter((x) => x && x.o === k).length : 0);
     const opts = `<div class="gopts${e.opts.length === 2 ? ' two' : ''}">${e.opts.map((o, k) => { let c = ''; if (rv) c = e.wyr ? (e.counts && e.counts[k] >= e.counts[1 - k] ? 'ok' : 'dim') : k === e.correct ? 'ok' : e.my && e.my.o === k ? 'bad' : 'dim'; else if (e.my && e.my.o === k) c = 'pick'; return `<button class="gopt ${c}" data-go="${k}" ${rv || e.my || mine < 0 ? 'disabled' : ''}>${esc(o)}${rv && e.wyr ? `<small>${cnt(k)} 👤</small>` : ''}</button>`; }).join('')}</div>`;
-    const res = rv ? (e.wyr ? `<div class="gsub">${e.my ? (e.my.ok ? '👍 اخترت متل الأغلبية +10' : '🤷 اخترت عكس الأغلبية') : 'ما اخترت'}</div>` : `<div class="gans">✅ ${esc(e.opts[e.correct])}</div>${e.explain ? `<div class="gexp">💡 ${esc(e.explain)}</div>` : ''}<div class="gsub">${e.my ? (e.my.ok ? `صح! +${e.my.pts}` : 'غلط') : 'ما جاوبت'}</div>`) : `<div class="gbar"><i data-cdbar="${e.qms}"></i></div>`;
+    const res = rv ? (e.wyr ? `<div class="gsub">${e.my ? (e.my.ok ? '👍 اخترت مثل الأغلبية +10' : '🤷 اخترت عكس الأغلبية') : 'ما اخترت'}</div>` : `<div class="gans">✅ ${esc(e.opts[e.correct])}</div>${e.explain ? `<div class="gexp">💡 ${esc(e.explain)}</div>` : ''}<div class="gsub">${e.my ? (e.my.ok ? `صح! +${e.my.pts}` : 'غلط') : 'ما جاوبت'}</div>`) : `<div class="gbar"><i data-cdbar="${e.qms}"></i></div>`;
     body = `<div class="gq"><div class="ghead"><span class="gcat">${esc(e.catName)}</span><span>سؤال ${e.qn} من ${e.nQ}</span></div>${top}${opts}<div class="gfoot">${res}</div></div>`;
-  } else if (e.phase === 'wait') body = `<div class="gq"><h3>جاهزين؟ اللعبة بتبلّش هلق…</h3></div>`;
+  } else if (e.phase === 'wait') body = `<div class="gq"><h3>جاهزين؟ اللعبة تبدأ الآن…</h3></div>`;
   if (e.phase === 'q' && alt.gStage !== e.qn + ':' + e.stage) { if (alt.gStage) SND.play('tick'); alt.gStage = e.qn + ':' + e.stage; }
   const key = JSON.stringify([strip, body]);
   if (alt.key !== key) {
@@ -2452,13 +2469,13 @@ function renderWords(e) {
     alt.wordsKey = wk;
     let body = '';
     if (e.phase === 'write') {
-      body = `<div class="wq"><div class="wl">${e.L}</div><div class="wsub">الجولة ${e.round} من ${e.rounds} • كل الكلمات لازم تبلّش بحرف <b>${e.L}</b></div>
+      body = `<div class="wq"><div class="wl">${e.L}</div><div class="wsub">الجولة ${e.round} من ${e.rounds} • كل الكلمات يجب تبدأ بحرف <b>${e.L}</b></div>
         <div class="wform">${e.cats.map((c, k) => `<label><span>${c}</span><input data-wi="${k}" maxlength="24" autocomplete="off" value="${esc((e.mine && e.mine[k]) || '')}" ${mine < 0 ? 'disabled' : ''}></label>`).join('')}</div>
         <div class="wstop"></div><div class="wrow"><div class="gbar"><i data-cdbar="75000"></i></div><b data-cd></b></div>
         ${mine >= 0 ? '<button class="gold" id="wDone" style="width:100%">✋ خلصت!</button>' : ''}</div>`;
     } else {
       body = `<div class="wq"><div class="wsub">حرف <b class="wl sm">${e.L}</b> • نتيجة الجولة ${e.round}</div><div class="wres"><table><tr><th></th>${e.cats.map((c) => `<th>${c}</th>`).join('')}<th>+</th></tr>${room.seats.map((s, i) => !s ? '' : `<tr class="${i === mine ? 'me' : ''}"><td>${esc(s ? s.name : '')}</td>${e.res[i].map((x, k) => { const mv = e.vetos && e.vetos[i] && e.vetos[i][k] && e.vetos[i][k].includes(mine); const can = mine >= 0 && i !== mine && (x.p || x.rej) && e.phase === 'show'; return `<td class="p${x.p}${x.rej ? ' rej' : ''}${can ? ' cv' : ''}${mv ? ' mv' : ''}" ${can ? `data-veto="${i},${k}"` : ''}>${esc(x.w || '—')}${x.ok ? ' ✓' : ''}<small>${x.rej ? 'مرفوضة 👎' : x.p ? '+' + x.p : x.bad ? '✗' : ''}${x.votes && !x.rej ? ' 👎' + x.votes : ''}</small></td>`; }).join('')}<td><b>${e.gain[i]}</b></td></tr>`).join('')}</table></div>
-        <div class="wsub">10 = كلمة صح ما حدا كتبها غيرك • 5 = مكررة • ✓ = كلمة معروفة</div>${e.phase === 'show' && mine >= 0 ? '<div class="wveto">👎 شايف كلمة غلط أو مو حقيقية؟ اكبس عليها لترفضها</div>' : ''}${e.over ? '' : '<div class="wsub">الجولة الجاية بعد <b data-cd></b> …</div>'}</div>`;
+        <div class="wsub">10 = كلمة صح لا أحد كتبها غيرك • 5 = مكررة • ✓ = كلمة معروفة</div>${e.phase === 'show' && mine >= 0 ? '<div class="wveto">👎 شايف كلمة غلط أو غير حقيقية؟ اضغط عليها لترفضها</div>' : ''}${e.over ? '' : '<div class="wsub">الجولة الجاية بعد <b data-cd></b> …</div>'}</div>`;
       if (newPhase) SND.play('bid');
     }
     const sc = $('alt').querySelector('.wres') ? $('alt').querySelector('.wres').scrollLeft : 0;
@@ -2652,7 +2669,7 @@ function paintChess(e, pending) {
     });
   }
   const turnName = e.turn >= 0 && room.seats[e.turn] ? room.seats[e.turn].name : '';
-  $('alt').querySelector('.chstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (c.check ? '<b class="red">⚠️ كش! لازم تحمي الملك</b>' : chs.sel >= 0 ? 'اسحب القطعة أو اكبس على المربع' : '<b>دورك</b> — اسحب قطعة أو اكبس عليها') : `دور ${esc(turnName)}${c.check ? ' — <b class="red">كش!</b>' : ''}`;
+  $('alt').querySelector('.chstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (c.check ? '<b class="red">⚠️ كش! يجب تحمي الملك</b>' : chs.sel >= 0 ? 'اسحب القطعة أو اضغط على المربع' : '<b>دورك</b> — اسحب قطعة أو اضغط عليها') : `دور ${esc(turnName)}${c.check ? ' — <b class="red">كش!</b>' : ''}`;
   let lg = ''; for (let k = 0; k < c.log.length; k += 2) lg += `<span><i>${k / 2 + 1}.</i>${esc(c.log[k].txt)}${c.log[k + 1] ? ' ' + esc(c.log[k + 1].txt) : ''}</span>`;
   const L = $('alt').querySelector('.chlog'); L.innerHTML = lg; L.scrollLeft = L.scrollWidth;
 }
@@ -2701,7 +2718,7 @@ function renderSnakes(e) {
   const S = e.sn, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
   if (snk.code !== room.code || !$('alt').querySelector('.snb')) {
     snk.code = room.code; snk.lastId = S.last ? S.last.id : 0; snk.shown = S.pos.slice(); snk.roll = S.rollId;
-    $('alt').innerHTML = `<div class="lgame"><div class="lprow top"><div class="lpan" data-corner="tl"></div><div class="lpan" data-corner="tr"></div></div><div class="lstat"></div><div class="snwrap"><div class="snb">${snBoardSvg(S.jumps)}<div class="sntoks"></div><div class="lfx"></div></div></div><div class="lprow bot"><div class="lpan" data-corner="bl"></div><div class="lpan" data-corner="br"></div></div><div class="snleg">🪜 السلّم بيطلّعك لفوق • 🐍 الحيّة بتنزّلك لتحت • ٦ = دور كمان</div></div>`;
+    $('alt').innerHTML = `<div class="lgame"><div class="lprow top"><div class="lpan" data-corner="tl"></div><div class="lpan" data-corner="tr"></div></div><div class="lstat"></div><div class="snwrap"><div class="snb">${snBoardSvg(S.jumps)}<div class="sntoks"></div><div class="lfx"></div></div></div><div class="lprow bot"><div class="lpan" data-corner="bl"></div><div class="lpan" data-corner="br"></div></div><div class="snleg">🪜 السلّم يطلّعك للأعلى • 🐍 الحيّة تنزّلك للأسفل • ٦ = دور مرة ثانية</div></div>`;
     $('alt').querySelector('.lgame').addEventListener('click', (ev) => { const d = ev.target.closest('.ldie.can'); if (d) { sendWs({ t: 'act', a: { type: 'roll' } }); d.classList.add('spin'); d.classList.remove('can'); SND.play('pop'); } });
   }
   if (S.last && S.last.id !== snk.lastId && !snk.anim) {
@@ -2742,7 +2759,7 @@ function paintSnakes(e) {
     el.innerHTML = `<div class="lpav">${avPic(st)}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="lpin"><div class="lpnm">${esc(st.name)}</div><div class="snpos">${p ? `<b>${p}</b> / 100` : 'على البداية'}</div></div>${die}`;
   });
   const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
-  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? '<b>دورك!</b> اكبس عالزهر 🎲' : `<i class="ldot" style="background:${SNC[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? '<b>دورك!</b> اضغط على الزهر 🎲' : `<i class="ldot" style="background:${SNC[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 function ludoPawnC(c, d, id) { return `<svg viewBox="0 0 40 48"><defs><radialGradient id="${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${c}"/><stop offset="1" stop-color="${d}"/></radialGradient></defs><ellipse cx="20" cy="43" rx="15" ry="4.5" fill="rgba(0,0,0,.35)"/><path d="M8 41c0-7 5-10 7-14-4-2-6-5-6-9a11 11 0 0 1 22 0c0 4-2 7-6 9 2 4 7 7 7 14z" fill="url(#${id})" stroke="${d}" stroke-width="1.6"/><ellipse cx="16" cy="13" rx="3.5" ry="2.5" fill="#fff" opacity=".7"/></svg>`; }
 
@@ -2850,7 +2867,7 @@ function paintLudo(e) {
     el.innerHTML = `<div class="lpav">${st ? avPic(st) : ''}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="lpin"><div class="lpnm">${esc(st ? st.name : '')}</div><div class="lpip">${pips}<em>${done}/4</em></div></div>${die}`;
   });
   const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
-  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>🏆 ${esc(e.msg)}</b>` : my ? (L.rolled ? `<b>طلعلك ${L.die}</b> — اكبس عالحجر اللي بدك ياه 👆` : '<b>دورك!</b> اكبس عالزهر 🎲') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>🏆 ${esc(e.msg)}</b>` : my ? (L.rolled ? `<b>طلعلك ${L.die}</b> — اضغط على الحجر اللي تريد ياه 👆` : '<b>دورك!</b> اضغط على الزهر 🎲') : `<i class="ldot" style="background:${LCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 
 // ----- جاكارو -----
@@ -3019,26 +3036,26 @@ function paintJack(e) {
   let o = '';
   if (my && jkd.sel >= 0) {
     const nm = (i) => esc(room.seats[i] ? room.seats[i].name : '');
-    if (!L.length) o = '<span class="jxmore">هالورقة ما إلها حركة هلق — اختار غيرها</span>';
+    if (!L.length) o = '<span class="jxmore">هالورقة ما لها حركة الآن — اختار غيرها</span>';
     else if (L.every((m) => m.kind === 'discard')) o = `<button class="jxo dis" data-jkey='${L[0].key}'>🔥 احرق هالورقة</button>`;
     else if (!fk) {
       const outs = L.filter((m) => m.kind === 'out');
-      o = outs.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>⬇️ نزّل كرة${m.caps ? ' 💥' : ''}</button>`).join('') + `<span class="jxmore">${prim.size ? 'كبس على كرة تضوي، أو على الدائرة المنقّطة وين بدك توصل' : ''}</span>`;
+      o = outs.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>⬇️ نزّل كرة${m.caps ? ' 💥' : ''}</button>`).join('') + `<span class="jxmore">${prim.size ? 'ضغط على كرة تضوي، أو على الدائرة المنقّطة أين تريد توصل' : ''}</span>`;
     } else {
       const sw = Lf.filter((m) => m.kind === 'swap'), spl = Lf.filter((m) => m.kind === 'split'), full = Lf.filter((m) => m.kind === 'fwd' || m.kind === 'back');
-      if (sw.length) o += '<span class="jxmore">🔄 كبس على الكرة اللي بدك تتبدّل معها</span>';
+      if (sw.length) o += '<span class="jxmore">🔄 ضغط على الكرة اللي تريد تتبدّل معها</span>';
       if (spl.length || (full.length && jkd.sel >= 0 && (room.engine.jk.hand[jkd.sel] || '').slice(1) === '7')) {
         const as = [...new Set(spl.map((m) => m.n))].sort((x, y) => x - y);
         o += full.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>٧ كاملة${m.caps ? ' 💥' : ''}</button>`).join('');
-        o += as.map((a) => `<button class="jxo${jkd.splitA === a ? ' on' : ''}" data-jsa="${a}">✂️ ${a} هون + ${7 - a}</button>`).join('');
-        if (jkd.splitA) o += `<span class="jxmore">هلق كبس على الكرة التانية لتمشي ${7 - jkd.splitA}</span>`;
-      } else if (!sw.length) o += full.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>${m.kind === 'back' ? '◀️ ٤ لورا' : `▶️ ${m.n} خطوة`}${m.caps ? ' 💥' : ''}</button>`).join('');
+        o += as.map((a) => `<button class="jxo${jkd.splitA === a ? ' on' : ''}" data-jsa="${a}">✂️ ${a} هنا + ${7 - a}</button>`).join('');
+        if (jkd.splitA) o += `<span class="jxmore">الآن ضغط على الكرة التانية لتمشي ${7 - jkd.splitA}</span>`;
+      } else if (!sw.length) o += full.map((m) => `<button class="jxo${m.caps ? ' cap' : ''}" data-jkey='${m.key}'>${m.kind === 'back' ? '◀️ ٤ للخلف' : `▶️ ${m.n} خطوة`}${m.caps ? ' 💥' : ''}</button>`).join('');
       o += '<button class="jxo ghost" data-jx="cancel">✕</button>';
     }
   }
   $('alt').querySelector('.jxopts').innerHTML = o;
   const cur = J.cur, who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
-  $('alt').querySelector('.jxstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (discardOnly ? '<b>ما عندك حركة</b> — اختار ورقة لترميها 🔥' : jkd.sel < 0 ? '<b>دورك!</b> اختار ورقة 👇' : jkd.filt ? '<b>اختار الحركة</b> 👇' : '<b>اختار الكرة</b> أو المكان اللي بدك توصله') : `<i class="ldot" style="background:${JCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+  $('alt').querySelector('.jxstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? (discardOnly ? '<b>ما عندك حركة</b> — اختار ورقة لترميها 🔥' : jkd.sel < 0 ? '<b>دورك!</b> اختار ورقة 👇' : jkd.filt ? '<b>اختار الحركة</b> 👇' : '<b>اختار الكرة</b> أو المكان اللي تريد توصله') : `<i class="ldot" style="background:${JCOL[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
 }
 
 // ----- ارسم وخمّن -----
@@ -3047,7 +3064,7 @@ const DW = [4, 9, 22];
 function renderDraw(e) {
   altShell(e);
   const mine = room.mySeat, me = mine === e.drawer;
-  const strip = altStrip(e, (i) => `<div class="mpc">⭐ ${e.scores[i]}</div><div class="mpx">${i === e.drawer ? '✏️ عم يرسم' : e.got && e.got[i] ? '✅ عرفها' : ''}</div>`);
+  const strip = altStrip(e, (i) => `<div class="mpc">⭐ ${e.scores[i]}</div><div class="mpx">${i === e.drawer ? '✏️ يرسم' : e.got && e.got[i] ? '✅ عرفها' : ''}</div>`);
   if (!$('alt').querySelector('#dc')) {
     $('alt').innerHTML = `<div class="dstrip"></div><div class="dtop"></div><div class="dwrap"><canvas id="dc" width="1000" height="750"></canvas></div><div class="dtools"></div><div class="dfeed"></div><form class="dguess"><input id="dIn" placeholder="اكتب تخمينك…" autocomplete="off" maxlength="30"><button class="gold">خمّن</button></form>`;
     alt.dc = { c: 0, w: 1, cur: null, buf: [], sent: 0 };
@@ -3068,8 +3085,8 @@ function renderDraw(e) {
   }
   function flushStroke() { const c = alt.dc.cur; alt.dc.cur = null; if (c.length < 4) c.push(c[0] + 1, c[1] + 1); sendWs({ t: 'act', a: { type: 'stroke', p: c, c: alt.dc.c, w: alt.dc.w } }); }
   $('alt').querySelector('.dstrip').innerHTML = strip;
-  const top = e.phase === 'choose' ? (me ? 'اختار كلمة لترسمها 👇' : `${esc(room.seats[e.drawer] ? room.seats[e.drawer].name : '')} عم يختار كلمة…`)
-    : e.phase === 'draw' ? (me ? `ارسم: <b>${esc(e.mask)}</b>` : `<span class="dmask">${esc([...e.mask].join(' '))}</span> <small>(${[...e.mask].filter((c) => c !== ' ').length} حروف)</small>${e.botDrawer ? '<br><small>البوت ما بيعرف يرسم 😅 — خمّن من الحروف اللي بتطلع</small>' : ''}`)
+  const top = e.phase === 'choose' ? (me ? 'اختار كلمة لترسمها 👇' : `${esc(room.seats[e.drawer] ? room.seats[e.drawer].name : '')} يختار كلمة…`)
+    : e.phase === 'draw' ? (me ? `ارسم: <b>${esc(e.mask)}</b>` : `<span class="dmask">${esc([...e.mask].join(' '))}</span> <small>(${[...e.mask].filter((c) => c !== ' ').length} حروف)</small>${e.botDrawer ? '<br><small>البوت ما يعرف يرسم 😅 — خمّن من الحروف اللي تطلع</small>' : ''}`)
     : e.phase === 'show' || e.over ? `الكلمة كانت: <b>${esc(e.word || '')}</b>` : 'جاهزين…';
   $('alt').querySelector('.dtop').innerHTML = `<div class="ut lead">${top}</div><div class="gbar"><i data-cdbar="${e.phase === 'draw' ? 80000 : e.phase === 'choose' ? 12000 : 4000}"></i></div>`;
   const tools = $('alt').querySelector('.dtools');
@@ -3114,7 +3131,7 @@ const LUX = [['heba', 'هيبة'], ['mawt', 'موت ضحك'], ['hubb', 'حب'], 
 const LUX_FREE = ['tamam', 'tasfeeq', 'nar', 'qahwa', 'warda', 'salam'];
 const luxOk = (k) => LUX_FREE.includes(k) || ownsItem('emo:lux');
 const EMOS = ['😂', '🤣', '😎', '🔥', '👏', '👍', '😡', '😱', '💔', '🙏', '😴', '🤔'];
-const PHRASES = ['يلا بسرعة 😅', 'حلوة! 👏', 'هاردلك', 'صح لسانك', 'شريكي وينك؟', 'لعبة نظيفة 🔥', 'أوووه 😱', 'السلام عليكم 👋'];
+const PHRASES = ['هيا بسرعة 😅', 'حلوة! 👏', 'هاردلك', 'صح لسانك', 'شريكي وينك؟', 'لعبة نظيفة 🔥', 'أوووه 😱', 'السلام عليكم 👋'];
 const FXE = {
   laugh: { e: '😂', l: 'ضحك', t: 'هههههههه', s: 'laugh', a: 'bounce', p: '😂' },
   scream: { e: '😱', l: 'صريخ', t: 'آآآآآآه!', s: 'scream', a: 'shake', p: '❗' },
@@ -3273,16 +3290,16 @@ $('gMute').textContent = SND.isMuted() ? '🔇' : '🔊';
 
 const RULES_HTML = `<div class="rules"><h3>القوانين المختصرة</h3>
 <h4>👑 تركس</h4>
-<p>٤ لاعبين، كل واحد لنفسه. فيه ٤ ممالك، وكل لاعب يصير ملك مملكة ويختار فيها الخمس لعبات بالترتيب اللي يبيه. لازم تتبع النقشة إذا عندك.</p>
-<p>🤴 شيخ الكبة: اللي ياكل ملك الكبة −75 (ما تفتح بالكبة، وإذا ما عندك النقشة وعندك الشيخ لازم ترميه). 👸 البنات: كل بنت −25. ♦️ الديناري: كل ديناري −10 (ما تفتح بالديناري). 🃏 اللطوش: كل لطش −15. 🎯 التركس: تفتح النقشة بالولد J وتبني فوقه وتحته، الأول +200 والثاني +150 والثالث +100 والأخير +50. أعلى مجموع بعد ٢٠ جولة يفوز.</p>
-<p>✖️2 التدبيل: بالشيخ والبنات، اللي معه الشيخ أو بنت بيقدر يدبّلها. إذا أكلها غيره بينخصم منه الضعف (الشيخ −150، البنت −50) وصاحبها بياخد (+75 / +25)، وإذا أكلها هو بينخصم منه الضعف.</p>
+<p>٤ لاعبين، كل واحد لنفسه. فيه ٤ ممالك، وكل لاعب يصير ملك مملكة ويختار فيها الخمس لعبات بالترتيب اللي يبيه. يجب تتبع النقشة إذا عندك.</p>
+<p>🤴 شيخ الكبة: اللي ياكل ملك الكبة −75 (ما تفتح بالكبة، وإذا ما عندك النقشة وعندك الشيخ يجب ترميه). 👸 البنات: كل بنت −25. ♦️ الديناري: كل ديناري −10 (ما تفتح بالديناري). 🃏 اللطوش: كل لطش −15. 🎯 التركس: تفتح النقشة بالولد J وتبني فوقه وتحته، الأول +200 والثاني +150 والثالث +100 والأخير +50. أعلى مجموع بعد ٢٠ جولة يفوز.</p>
+<p>✖️2 التدبيل: بالشيخ والبنات، اللي معه الشيخ أو بنت يقدر يدبّلها. إذا أكلها غيره ينخصم منه الضعف (الشيخ −150، البنت −50) وصاحبها ياخد (+75 / +25)، وإذا أكلها هو ينخصم منه الضعف.</p>
 <h4>🎭 تركس كمبلكس</h4>
-<p>كل مملكة فيها لعبتين بس: الكمبلكس والتركس. بالكمبلكس كل شي بينحسب سوا: كل أكلة −15، كل ديناري −10، كل بنت −25، وشيخ الكبة −75. والتدبيل بالكمبلكس بس، على الشيخ والبنات، وبينكشف الورق المدبّل للكل.</p>
+<p>كل مملكة فيها لعبتين فقط: الكمبلكس والتركس. بالكمبلكس كل شيء ينحسب سوا: كل أكلة −15، كل ديناري −10، كل بنت −25، وشيخ الكبة −75. والتدبيل بالكمبلكس فقط، على الشيخ والبنات، وينكشف الورق المدبّل للكل.</p>
 <h4>♥️ طرنيب ٤١</h4>
-<p>شراكة (اللي مقابلك شريكك) بس كل لاعب يطلب لنفسه مرة وحدة من 2 إلى 13. آخر ورقة عند الموزّع تنكشف، والطرنيب يكون النقشة الثانية من نفس اللون: كبة ↔ ديناري، بستوني ↔ سباتي. إذا مجموع الطلبات أقل من 11 تنعاد التوزيعة.</p>
+<p>شراكة (اللي مقابلك شريكك) فقط كل لاعب يطلب لنفسه مرة وحدة من 2 إلى 13. آخر ورقة عند الموزّع تنكشف، والطرنيب يكون النقشة الثانية من نفس اللون: كبة ↔ ديناري، بستوني ↔ سباتي. إذا مجموع الطلبات أقل من 11 تنعاد التوزيعة.</p>
 <p>النقاط: 2–4 بقيمتها، ومن 5 وفوق تنحسب ضعف (5=10، 6=12، 7=14 … 13=26). إذا ما جبت طلبك تنخصم نفس القيمة. يفوز الفريق لما يوصل أحدهم 41 وشريكه رصيده موجب.</p>
 <h4>♠️ طرنيب ٦١</h4>
-<p>فريقين. المزايدة من 7 إلى 13 وكل واحد يزيد أو يباص. اللي يرسى عليه الطلب يختار الطرنيب ويبدأ. إذا جاب الفريق طلبه ياخذ عدد لماته ولا ياخذ الفريق الثاني شي، وإذا انكسر ينخصم منه الطلب والفريق الثاني ياخذ لماته. الكبوت (13 لمة) بدون ما تطلبه = 16، وإذا طلبت 13 وجبتها = 26، وإذا طلبت 13 وانكسرت = −16. أول فريق يوصل 61 يفوز.</p>
+<p>فريقين. المزايدة من 7 إلى 13 وكل واحد يزيد أو يباص. اللي يرسى عليه الطلب يختار الطرنيب ويبدأ. إذا جاب الفريق طلبه ياخذ عدد لماته ولا ياخذ الفريق الثاني شيء، وإذا انكسر ينخصم منه الطلب والفريق الثاني ياخذ لماته. الكبوت (13 لمة) بدون ما تطلبه = 16، وإذا طلبت 13 وجبتها = 26، وإذا طلبت 13 وانكسرت = −16. أول فريق يوصل 61 يفوز.</p>
 <h4>🤖 البوتات</h4>
 <p>الكراسي الفاضية يلعب فيها بوت، وإذا انقطع نت لاعب أكثر من 10 ثواني أو تأخر 40 ثانية بدوره، يلعب البوت عنه لين يرجع.</p></div>`;
 
@@ -3295,7 +3312,7 @@ async function frApi(data) {
   const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'خطأ'); return j;
 }
 function frCard(f, btns) {
-  const st = f.online ? (f.room ? `🎮 عم يلعب ${esc(f.room.game)}${f.room.status === 'waiting' ? ' (بانتظار لاعبين)' : ''}` : '🟢 متصل') : '⚪ مو متصل';
+  const st = f.online ? (f.room ? `🎮 يلعب ${esc(f.room.game)}${f.room.status === 'waiting' ? ' (بانتظار لاعبين)' : ''}` : '🟢 متصل') : '⚪ غير متصل';
   return `<div class="frc"><div class="frav ${f.online ? 'on' : ''}">${avPic({ uid: f.id, ph: f.ph, name: f.username, av: f.av })}</div><div class="frt"><b>${esc(f.username)}</b><small>${st}</small></div><div class="frb">${btns}</div></div>`;
 }
 async function loadFriends() {
@@ -3303,7 +3320,7 @@ async function loadFriends() {
   const inRoom = !!room;
   $('fInBox').classList.toggle('hidden', !FR.incoming.length);
   $('fIn').innerHTML = FR.incoming.map((f) => frCard(f, `<button class="small gold" data-fa="accept" data-fid="${f.id}">قبول</button><button class="small ghost" data-fa="decline" data-fid="${f.id}">✕</button>`)).join('');
-  $('fList').innerHTML = FR.friends.length ? FR.friends.map((f) => frCard(f, `${f.room && !inRoom ? `<button class="small gold" data-fjoin="${f.room.code}">انضم</button>` : ''}${inRoom && f.online ? `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>` : ''}<button class="small ghost" data-fdm="${f.id}" title="رسالة">💬</button><button class="small ghost" data-fa="remove" data-fid="${f.id}" title="حذف">🗑️</button>`)).join('') : '<div class="meta" style="padding:12px 0">لسا ما عندك أصدقاء — ضيف أصحابك بأسمائهن 👆</div>';
+  $('fList').innerHTML = FR.friends.length ? FR.friends.map((f) => frCard(f, `${f.room && !inRoom ? `<button class="small gold" data-fjoin="${f.room.code}">انضم</button>` : ''}${inRoom && f.online ? `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>` : ''}<button class="small ghost" data-fdm="${f.id}" title="رسالة">💬</button><button class="small ghost" data-fa="remove" data-fid="${f.id}" title="حذف">🗑️</button>`)).join('') : '<div class="meta" style="padding:12px 0">حتى الآن ما عندك أصدقاء — ضيف أصحابك بأسمائهن 👆</div>';
   $('fOut').innerHTML = FR.outgoing.length ? `<div class="meta" style="margin:10px 0 4px">طلبات بعتّها:</div>` + FR.outgoing.map((f) => frCard(f, `<span class="meta">بانتظار…</span><button class="small ghost" data-fa="cancel" data-fid="${f.id}">إلغاء</button>`)).join('') : '';
   const nb = document.querySelector('.bnav [data-tab="Friends"]'); if (nb) nb.classList.toggle('dotd', FR.incoming.length > 0); const fb = document.querySelector('.cmtabs [data-ct="fr"]'); if (fb) fb.dataset.n = FR.incoming.length || '';
 }
@@ -3312,7 +3329,7 @@ async function frSearch() {
   const v = $('fAdd').value.trim(); if (v.length < 2) { $('fRes').innerHTML = v ? '<div class="meta" style="padding:6px 0">اكتب حرفين على الأقل</div>' : ''; return; }
   let j; try { j = await frApi({ action: 'search', q: v }); } catch (e) { toast(e.message); return; }
   if ($('fAdd').value.trim() !== v) return;
-  $('fRes').innerHTML = j.list.length ? j.list.map((u) => frCard({ id: u.id, username: u.username, av: u.av, ph: u.ph, online: u.online }, u.rel === 'friend' ? '<span class="meta">صديقك ✓</span>' : u.rel === 'sent' ? '<span class="meta">انبعت الطلب</span>' : u.rel === 'incoming' ? `<button class="small gold" data-fa="accept" data-fid="${u.id}">قبول</button>` : `<button class="small gold" data-fadd="${u.id}">➕ إضافة</button>`)).join('') : '<div class="meta" style="padding:6px 0">ما لقينا حدا بهالاسم</div>';
+  $('fRes').innerHTML = j.list.length ? j.list.map((u) => frCard({ id: u.id, username: u.username, av: u.av, ph: u.ph, online: u.online }, u.rel === 'friend' ? '<span class="meta">صديقك ✓</span>' : u.rel === 'sent' ? '<span class="meta">انبعت الطلب</span>' : u.rel === 'incoming' ? `<button class="small gold" data-fa="accept" data-fid="${u.id}">قبول</button>` : `<button class="small gold" data-fadd="${u.id}">➕ إضافة</button>`)).join('') : '<div class="meta" style="padding:6px 0">ما لقينا أحد بهالاسم</div>';
 }
 let frSearchT = null;
 $('fAdd').addEventListener('input', () => { clearTimeout(frSearchT); frSearchT = setTimeout(frSearch, 350); });
@@ -3321,13 +3338,13 @@ document.addEventListener('click', async (ev) => { const b = ev.target.closest('
 $('fAdd').addEventListener('keydown', (e) => e.key === 'Enter' && $('fAddB').click());
 $('fRef').onclick = loadFriends;
 document.addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-fa]'); if (b) { if (b.dataset.fa === 'remove' && !confirm('أكيد بدك تحذفه من أصدقائك؟')) return; frAct({ action: b.dataset.fa, id: +b.dataset.fid }); return; }
+  const b = ev.target.closest('[data-fa]'); if (b) { if (b.dataset.fa === 'remove' && !confirm('أكيد تريد تحذفه من أصدقائك؟')) return; frAct({ action: b.dataset.fa, id: +b.dataset.fid }); return; }
   const j = ev.target.closest('[data-fjoin]'); if (j) { closeOverlay(); sendWs({ t: 'join', code: j.dataset.fjoin }); }
 });
 async function openInvite() {
   try { FR = await frApi(); } catch {}
   const on = FR.friends.filter((f) => f.online);
-  openModal('finv', `<h3>👥 ادعُ أصدقاءك</h3>${on.length ? on.map((f) => frCard(f, f.room && room && f.room.code === room.code ? '<span class="meta">معك ✓</span>' : `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>`)).join('') : `<div class="meta" style="text-align:center;padding:10px">${FR.friends.length ? 'ما في حدا من أصدقاءك متصل هلق' : 'لسا ما عندك أصدقاء — ضيفهن من تبويب «الأصدقاء» بالصالة'}</div>`}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
+  openModal('finv', `<h3>👥 ادعُ أصدقاءك</h3>${on.length ? on.map((f) => frCard(f, f.room && room && f.room.code === room.code ? '<span class="meta">معك ✓</span>' : `<button class="small gold" data-fa="invite" data-fid="${f.id}">ادعُ</button>`)).join('') : `<div class="meta" style="text-align:center;padding:10px">${FR.friends.length ? 'لا يوجد أحد من أصدقاءك متصل الآن' : 'حتى الآن ما عندك أصدقاء — ضيفهن من تبويب «الأصدقاء» بالصالة'}</div>`}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">إغلاق</button>`);
 }
 $('wFr').onclick = openInvite;
 
@@ -3352,7 +3369,7 @@ function cmSetTab(t) {
 function cmRow(c) {
   const un = CM.unread[c.id] || 0;
   const av = c.kind === 'dm' ? `<div class="cmav dm">${avPic({ uid: c.other && c.other.id, ph: c.other && c.other.ph, name: c.name, av: c.other && c.other.av })}</div>` : `<div class="cmav">${cmIcon(c)}</div>`;
-  const sub = c.last ? `<b>${esc(c.last.name)}:</b> ${esc(c.last.text)}` : c.kind === 'dm' ? 'ابدأ المحادثة 👋' : 'لسا ما حدا كتب — كون الأول';
+  const sub = c.last ? `<b>${esc(c.last.name)}:</b> ${esc(c.last.text)}` : c.kind === 'dm' ? 'ابدأ المحادثة 👋' : 'حتى الآن لا أحد كتب — كون الأول';
   return `<div class="cmrow" data-cm="${c.id}">${av}<div class="cmt"><div class="cmn">${esc(c.kind === 'dm' ? c.name : cmName(c))}${c.priv && c.kind !== 'dm' ? ' <i>🔒 خاصة</i>' : ''}</div><div class="cms">${sub}</div></div><div class="cmx">${c.last ? `<small>${cmTime(c.last.at)}</small>` : ''}${un ? `<b class="cmun">${un > 99 ? '99+' : un}</b>` : ''}</div></div>`;
 }
 function vcRow(c) {
@@ -3363,7 +3380,7 @@ function renderComm() {
   const texts = CM.list.filter((c) => c.kind === 'text').sort((a, b) => (b.seed ? 0 : 1) - (a.seed ? 0 : 1) || new Date(b.at) - new Date(a.at));
   const pubs = texts.filter((c) => !c.priv), privs = texts.filter((c) => c.priv), dms = CM.list.filter((c) => c.kind === 'dm').sort((a, b) => new Date(b.at) - new Date(a.at));
   const sec = (t, arr, empty) => `<div class="cmsec">${t}</div>${arr.length ? arr.map(cmRow).join('') : `<div class="meta cmempty">${empty}</div>`}`;
-  $('cmList').innerHTML = sec('🌍 غرف عامة', pubs, '') + sec('🔒 غرفي الخاصة', privs, 'افتح غرفة خاصة وضيف أصحابك عليها') + sec('✉️ رسائل خاصة', dms, 'من تبويب الأصدقاء اكبس 💬 جنب أي صديق');
+  $('cmList').innerHTML = sec('🌍 غرف عامة', pubs, '') + sec('🔒 غرفي الخاصة', privs, 'افتح غرفة خاصة وضيف أصحابك عليها') + sec('✉️ رسائل خاصة', dms, 'من تبويب الأصدقاء اضغط 💬 جنب أي صديق');
   const vs = CM.list.filter((c) => c.kind === 'voice');
   $('vcList').innerHTML = `<div class="cmsec">🌍 صوتيات عامة</div>${vs.filter((c) => !c.priv).map(vcRow).join('')}<div class="cmsec">🔒 صوتيات خاصة</div>${vs.filter((c) => c.priv).map(vcRow).join('') || '<div class="meta cmempty">افتح غرفة صوتية خاصة لشلّتك</div>'}`;
   const tot = Object.entries(CM.unread).reduce((s, [id, n]) => { const c = CM.list.find((x) => x.id === +id); return s + (c && (c.priv || c.kind === 'dm') ? n : 0); }, 0);
@@ -3375,7 +3392,7 @@ async function cmOpen(id) {
   CM.open = c; CM.unread[id] = 0; CM.msgs = [];
   $('chatv').classList.remove('hidden'); document.body.classList.add('chatopen');
   $('cvT').innerHTML = c.kind === 'dm' ? `<span class="cvav">${avPic({ uid: c.other && c.other.id, ph: c.other && c.other.ph, name: c.name, av: c.other && c.other.av })}</span>${esc(c.name)}` : `${cmIcon(c)} ${esc(cmName(c))}`;
-  $('cvSub').textContent = c.kind === 'dm' ? 'محادثة خاصة' : c.priv ? `غرفة خاصة · ${c.members} أعضاء` : 'غرفة عامة · الكل بيشوف';
+  $('cvSub').textContent = c.kind === 'dm' ? 'محادثة خاصة' : c.priv ? `غرفة خاصة · ${c.members} أعضاء` : 'غرفة عامة · الكل يشوف';
   $('cvMore').style.display = c.kind === 'dm' ? 'none' : '';
   $('cvMsgs').innerHTML = '<div class="meta" style="text-align:center;padding:20px">…</div>';
   try { CM.msgs = (await cmApi({ action: 'history', ch: id })).msgs; } catch (e) { toast(e.message); }
@@ -3388,7 +3405,7 @@ function cmMsgHtml(m, prev) {
 }
 function cmPaint(toEnd) {
   const box = $('cvMsgs'), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-  box.innerHTML = CM.msgs.length ? CM.msgs.map((m, i) => cmMsgHtml(m, CM.msgs[i - 1])).join('') : `<div class="cvempty">${CM.open && CM.open.kind === 'dm' ? '👋 قول مرحبا' : '💬 لسا ما في رسائل — افتح السالفة'}</div>`;
+  box.innerHTML = CM.msgs.length ? CM.msgs.map((m, i) => cmMsgHtml(m, CM.msgs[i - 1])).join('') : `<div class="cvempty">${CM.open && CM.open.kind === 'dm' ? '👋 قول مرحبا' : '💬 حتى الآن لا يوجد رسائل — افتح السالفة'}</div>`;
   if (toEnd || atEnd) box.scrollTop = box.scrollHeight;
 }
 function cmSend() { const v = $('cvIn').value.trim(); if (!v || !CM.open) return; sendWs({ t: 'cmsg', ch: CM.open.id, text: v }); $('cvIn').value = ''; $('cvIn').focus(); }
@@ -3416,14 +3433,14 @@ async function cmMenu(id) {
 async function cmInvite(id) {
   try { FR = await frApi(); } catch {}
   let mem = []; try { mem = (await cmApi({ action: 'members', ch: id })).members.map((u) => u.id); } catch {}
-  openModal('cminv', `<h3>➕ ضيف أصدقاء</h3>${FR.friends.length ? FR.friends.map((f) => frCard(f, mem.includes(f.id) ? '<span class="meta">موجود ✓</span>' : `<button class="small gold" data-cmadd="${id}:${f.id}">ضيف</button>`)).join('') : '<p class="meta" style="text-align:center">لسا ما عندك أصدقاء</p>'}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">تم</button>`);
+  openModal('cminv', `<h3>➕ ضيف أصدقاء</h3>${FR.friends.length ? FR.friends.map((f) => frCard(f, mem.includes(f.id) ? '<span class="meta">موجود ✓</span>' : `<button class="small gold" data-cmadd="${id}:${f.id}">ضيف</button>`)).join('') : '<p class="meta" style="text-align:center">حتى الآن ما عندك أصدقاء</p>'}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeOverlay()">تم</button>`);
 }
 async function cmNew(kind) {
   try { FR = await frApi(); } catch {}
   openModal('cmnew', `<h3>${kind === 'voice' ? '🎙️ غرفة صوتية جديدة' : '💬 غرفة دردشة جديدة'}</h3>
   <input id="cnName" maxlength="30" placeholder="${kind === 'voice' ? 'مثلاً: ☕ سهرة الشباب' : 'مثلاً: 🃏 شلة التركس'}" style="width:100%;margin-bottom:10px">
-  <div class="cnseg"><label><input type="radio" name="cnp" value="0" checked> 🌍 عامة — الكل بيقدر يفوت</label><label><input type="radio" name="cnp" value="1"> 🔒 خاصة — بس اللي بتضيفهن</label></div>
-  <div id="cnFr" class="hidden"><div class="cmsec">اختار أصدقاء (فيك تضيف بعدين كمان)</div>${FR.friends.length ? FR.friends.map((f) => `<label class="cnf"><input type="checkbox" value="${f.id}"> ${esc(f.username)}</label>`).join('') : '<p class="meta">ما عندك أصدقاء لسا</p>'}</div>
+  <div class="cnseg"><label><input type="radio" name="cnp" value="0" checked> 🌍 عامة — الكل يقدر يفوت</label><label><input type="radio" name="cnp" value="1"> 🔒 خاصة — فقط اللي تضيفهن</label></div>
+  <div id="cnFr" class="hidden"><div class="cmsec">اختار أصدقاء (فيك تضيف لاحقاً أيضاً)</div>${FR.friends.length ? FR.friends.map((f) => `<label class="cnf"><input type="checkbox" value="${f.id}"> ${esc(f.username)}</label>`).join('') : '<p class="meta">ما عندك أصدقاء حتى الآن</p>'}</div>
   <button class="gold" style="width:100%;margin-top:12px" id="cnGo">إنشاء</button><button class="ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">إلغاء</button>`);
   document.querySelectorAll('[name=cnp]').forEach((r) => (r.onchange = () => $('cnFr').classList.toggle('hidden', !document.querySelector('[name=cnp][value="1"]').checked)));
   $('cnGo').onclick = async () => {
@@ -3442,8 +3459,8 @@ document.addEventListener('click', async (ev) => {
   const inv = t.closest('[data-cminv]'); if (inv) return cmInvite(+inv.dataset.cminv);
   const ad = t.closest('[data-cmadd]'); if (ad) { const [ch, uid] = ad.dataset.cmadd.split(':').map(Number); try { await cmApi({ action: 'invite', ch, uid }); ad.outerHTML = '<span class="meta">انضاف ✓</span>'; loadComm(); } catch (e) { toast(e.message); } return; }
   const kk = t.closest('[data-cmkick]'); if (kk) { const [ch, uid] = kk.dataset.cmkick.split(':').map(Number); try { await cmApi({ action: 'kick', ch, uid }); cmMenu(ch); } catch (e) { toast(e.message); } return; }
-  const lv = t.closest('[data-cmleave]'); if (lv) { if (!confirm('أكيد بدك تطلع؟')) return; try { await cmApi({ action: 'leave', ch: +lv.dataset.cmleave }); closeOverlay(); cmClose(); if (VC.ch === +lv.dataset.cmleave) vcLeave(); loadComm(); } catch (e) { toast(e.message); } return; }
-  const dl = t.closest('[data-cmdel]'); if (dl) { if (!confirm('أكيد بدك تحذف الغرفة وكل رسائلها؟')) return; try { await cmApi({ action: 'del', ch: +dl.dataset.cmdel }); closeOverlay(); cmClose(); loadComm(); } catch (e) { toast(e.message); } return; }
+  const lv = t.closest('[data-cmleave]'); if (lv) { if (!confirm('أكيد تريد تطلع؟')) return; try { await cmApi({ action: 'leave', ch: +lv.dataset.cmleave }); closeOverlay(); cmClose(); if (VC.ch === +lv.dataset.cmleave) vcLeave(); loadComm(); } catch (e) { toast(e.message); } return; }
+  const dl = t.closest('[data-cmdel]'); if (dl) { if (!confirm('أكيد تريد تحذف الغرفة وكل رسائلها؟')) return; try { await cmApi({ action: 'del', ch: +dl.dataset.cmdel }); closeOverlay(); cmClose(); loadComm(); } catch (e) { toast(e.message); } return; }
   const dmsg = t.closest('.cvm'); if (dmsg && CM.open && ev.detail === 2) { const m = CM.msgs.find((x) => x.id === +dmsg.dataset.mid); if (m && (m.uid === me.id || CM.open.mine || me.isAdmin) && confirm('حذف الرسالة؟')) sendWs({ t: 'cdel', ch: CM.open.id, id: m.id }); }
 });
 $('cvBack').onclick = cmClose; $('cvSend').onclick = cmSend; $('cvMore').onclick = () => CM.open && cmMenu(CM.open.id);
@@ -3453,7 +3470,7 @@ $('cmNewT').onclick = () => cmNew('text'); $('cmNewV').onclick = () => cmNew('vo
 // ----- voice rooms -----
 const VC = { ch: null, stream: null, peers: new Map(), audios: new Map(), users: [], mute: false, chain: Promise.resolve(), ana: new Map(), actx: null, loop: null };
 async function vcJoin(id) {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('المتصفح هذا ما بيدعم المايك — جرّب كروم أو سفاري'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('المتصفح هذا ما يدعم المايك — جرّب كروم أو سفاري'); return; }
   if (VOICE.on) { voiceStop(); sendWs({ t: 'voice', on: false }); }
   if (!VC.stream) { try { VC.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); } catch { toast('اسمح للمتصفح يستخدم المايك 🎤'); return; } }
   VC.mute = false; VC.stream.getAudioTracks().forEach((t) => (t.enabled = true));
@@ -3503,7 +3520,7 @@ function vcOn(m) {
   if (m.t === 'vcin') {
     VC.ch = m.ch; SND.play('good'); vcSpeakLoop(); if (VC.stream) vcAnalyse('me', VC.stream);
     VC.chain = VC.chain.then(async () => { for (const id of m.peers) { const pc = vcPeer(id); await pc.setLocalDescription(await pc.createOffer()); sendWs({ t: 'vcrtc', to: id, data: { sdp: pc.localDescription } }); } }).catch(() => {});
-    toast('🎙️ فتت عالغرفة الصوتية');
+    toast('🎙️ فتت على الغرفة الصوتية');
   } else if (m.t === 'vcs') {
     const c = CM.list.find((x) => x.id === m.ch); if (c) c.voice = m.users;
     if (m.ch === VC.ch) { const before = VC.users.length; VC.users = m.users; if (m.users.length > before && before) SND.play('pop'); vcRenderBar(); }
@@ -3525,71 +3542,71 @@ window.vcMute = vcMute; window.vcLeave = vcLeave; window.vcExpand = vcExpand; wi
 
 // ===== per-game rules =====
 const RULES = {
-  trix: ['٤ لاعبين، كل واحد لنفسه. في ٤ ممالك، وكل لاعب بيصير ملك مملكة وبيختار فيها الخمس لعبات بالترتيب اللي بدّه. لازم تتبع النقشة إذا معك.',
-    '🤴 <b>شيخ الكبة:</b> اللي بياكل ملك الكبة −75 (ما بتفتح بالكبة، وإذا ما معك النقشة ومعك الشيخ لازم ترميه). 👸 <b>البنات:</b> كل بنت −25. ♦️ <b>الديناري:</b> كل ديناري −10 (ما بتفتح بالديناري). 🃏 <b>اللطوش:</b> كل أكلة −15.',
-    '🎯 <b>التركس:</b> بتفتح النقشة بالولد وبتبني فوقه وتحته. الأول بيخلّص +200، التاني +150، التالت +100، الأخير +50.',
-    '✖️2 <b>التدبيل:</b> اللي معه الشيخ أو بنت بيقدر يدبّلها. إذا أكلها غيره بينخصم منه الضعف وصاحبها بياخد (+75 / +25)، وإذا أكلها هو بينخصم منه الضعف.',
-    'أعلى مجموع بعد الممالك الأربعة بيربح.'],
-  trixc: ['متل التركس بس كل مملكة فيها لعبتين: <b>الكمبلكس</b> و<b>التركس</b>.',
-    'بالكمبلكس كل شي بينحسب سوا: كل أكلة −15، كل ديناري −10، كل بنت −25، وشيخ الكبة −75.',
-    'التدبيل بالكمبلكس بس، على الشيخ والبنات، والورق المدبّل بيبيّن للكل. قدام كل لاعب بيطلع شو دبّل وشو أكل.'],
-  trixp: ['متل التركس العادي بس <b>شراكة</b>: اللي قاعد مقابلك شريكك ونقاطكن بتنجمع.', 'إذا أكل فريقك ورقة مدبّلة من فريقك، بتنخصم عادي بدون ضعف وبدون بونص.', 'بلعبة التركس بيطلع عندك كم ورقة <b>٢</b> مع شريكك (بدون نوعها).', 'الفريق اللي مجموعه أعلى بالآخر بيربح.'],
-  trixcp: ['متل الكمبلكس بس <b>شراكة</b>: شريكك مقابلك ونقاطكن بتنجمع.', 'تدبيل الفريق على ورقة فريقه ما بيضاعف.', 'الفريق صاحب المجموع الأعلى بيربح.'],
-  t41: ['شراكة (اللي مقابلك شريكك) بس كل لاعب بيطلب لحاله مرة وحدة من 2 لـ13. آخر ورقة عند الموزّع بتنكشف، والطرنيب النقشة التانية من نفس اللون: كبة ↔ ديناري، بستوني ↔ سباتي.',
-    'إذا مجموع الطلبات أقل من 11 بتنعاد التوزيعة.',
-    'النقاط: 2–4 بقيمتها، ومن 5 وطالع بتنحسب ضعف (5=10، 6=12 … 13=26). إذا ما جبت طلبك بينخصم نفس الرقم.',
-    'بيربح الفريق لما واحد منهم يوصل 41 وشريكه رصيده موجب.'],
-  t61: ['فريقين. المزايدة من 7 لـ13 وكل واحد بيزيد أو بيباص. اللي بيرسى عليه الطلب بيختار الطرنيب وبيبلّش.',
-    'إذا جاب الفريق طلبه بياخد عدد لماته والفريق التاني ما بياخد شي، وإذا انكسر بينخصم منه الطلب والفريق التاني بياخد لماته.',
-    'الكبوت (13 لمة) بدون ما تطلبه = 16، إذا طلبت 13 وجبتها = 26، وإذا انكسرت = −16. أول فريق بيوصل 61 بيربح.'],
-  basra: ['كل لاعب معه ٤ أوراق وعالطاولة ٤ أوراق مكشوفة.', 'بدورك بتنزّل ورقة: بتاكل كل الأوراق اللي <b>رقمها متل ورقتك</b>، أو أوراق <b>مجموعها</b> بيساوي رقم ورقتك (الآص = 1). إذا ما أكلت شي، ورقتك بتضل عالطاولة.',
-    '🧹 <b>الولد</b> بيكنس كل الطاولة، و<b>السبعة الديناري</b> كمان.', '🔥 <b>باصرة:</b> إذا نضّفت الطاولة كلها (بغير الولد) بتاخد +10.', 'كل ورقة بتاكلها بنقطة. لما تخلص الشدة، الباقي عالطاولة بيروح لآخر واحد أكل. الأعلى نقاط بيربح.'],
-  shayeb: ['الشدة ناقصها شيخ واحد، يعني في شيخ ما إله جوز هو <b>الشايب</b> 👴.', 'كل جوز (نفس الرقم) بيطلع من إيدك لحاله.', 'بدورك بتسحب ورقة مقلوبة من ورق اللاعب اللي بعدك. إذا عملت جوز بيطلع.', 'اللي بيخلّص ورقه بينجى. آخر واحد بيضل معه الشايب بيخسر.'],
-  crazy8: ['كل لاعب معه ٧ أوراق.', 'نزّل ورقة من <b>نفس اللون</b> أو <b>نفس الرقم</b> اللي عالكوم.', '8️⃣ <b>الثمانية</b> بتركب على أي شي وبتختار اللون الجاي.', 'إذا ما معك شي بيركب اسحب ورقة، وإذا ما ركبت مرّر.', 'أول واحد بيخلّص ورقه بيربح.'],
-  bj: ['كل واحد بيلعب ضد <b>البنك</b>. الهدف تقرّب على <b>21</b> بدون ما تطلع فوقها.', 'الورق بأرقامه، والشايب والبنت والولد = 10، والآص = 1 أو 11.', 'بدورك: «ورقة كمان» أو «بكفّي». البنك بيسحب لحد ما يوصل 17.', 'إذا غلبت البنك +10، وإذا جبت 21 من أول ورقتين (بلاك جاك) +15. بعد ٨ جولات الأعلى نقاط بيربح.'],
-  memory: ['في ٢٤ ورقة مقلوبة = ١٢ جوز.', 'بدورك اقلب ورقتين: إذا نفس الرقم بتاخدهن وبتلعب كمان، وإذا لا بيرجعوا ينقلبوا.', 'ركّز وتذكّر وين شفت كل ورقة! الأكتر أجواز بيربح.'],
-  hilo: ['بتبيّن ورقة، وكلكن بنفس الوقت بتخمّنوا: الورقة الجاية <b>أعلى</b> ولا <b>أوطى</b>؟', 'التخمين الصح +10. إذا طلعت نفس الرقم ما حدا بياخد.', 'بعد ١٥ جولة الأعلى نقاط بيربح.'],
-  mono: ['كل لاعب بيبلّش بـ1500. ارمي الزهر وامشي.', '🏷️ إذا وقفت على حي للبيع بتقدر تشتريه. 🧾 إذا وقفت على حي لغيرك بتدفعله إيجار.',
-    '🎨 إذا جمعت كل أحياء اللون الإيجار بيتضاعف، وبتقدر تبني بيوت 🏠 (لحد ٤) وبعدين فندق 🏨 — قبل ما ترمي الزهر.', '🚆 المحطات كل ما جمعت أكتر إيجارها أكبر. 💡 الشركات إيجارها حسب الزهر.',
-    '✨ كل ما تمرق عالانطلاق +200. 🍀 الحظ بيعطيك أو بياخد منك. 🚔 بالسجن ارمي دبل لتطلع أو ادفع 50. الدبل بيخليك ترمي كمان.', '💀 اللي بتخلص مصاريه بيفلس. بعد ٢٥ جولة بيربح صاحب أكبر ثروة.'],
-  jackaroo: ['لعبة لـ٤ لاعبين على شكل <b>فريقين</b> 🤝 (كل اتنين قبال بعض). ٥٢ ورقة بدون جوكر، وكل لاعب معه ٤ كرات بلونه.', '<b>مناطق اللعبة:</b> البيت (٤ فتحات لكرات كل لاعب)، القاعدة (أول مربع بتنزل عليه كرتك)، المسار المشترك، منطقة الأمان (٤ فتحات ملونة بالنص)، وكومة الورق بالنص.', 'كل توزيعة بياخد كل لاعب ٤ ورقات. بيبلش اللي على يمين الموزّع واللعب مع عقارب الساعة، وكل واحد بيلعب ورقة بدوره. بعد ما يخلص الورق بيتغيّر الموزّع.', '<b>A</b>: بتنزّل كرة من البيت للقاعدة، أو بتمشي خطوة أو ١١ خطوة.', '<b>K</b>: بس لتنزيل كرة من البيت للقاعدة.', '<b>J</b>: بتبدّل كرة إلك مع كرة لاعب تاني، بشرط ما تكون وحدة منهن بالبيت أو القاعدة أو منطقة الأمان.', '<b>٧</b>: فيك تقسمها على كرتين من كراتك (مثلاً ٣ + ٤).', '<b>٤</b>: بترجّع كرة ٤ خطوات لورا.', 'باقي الأوراق بتمشي كرة وحدة لقدّام قد رقمها (Q = ١٢).', '💥 إذا وقفت كرتك على كرة حدا، بترجع كرته لبيته.', '🛡️ الكرة اللي على القاعدة تبعها ما حدا بيقدر يتخطاها ولا ياكلها ولا يبدّلها. وإذا في كرتين ورا بعض، الكرة اللي قدام بتصير متل القاعدة.', '🚫 ما فيك تتخطى كراتك أنت بأي حال.', 'لتدخل منطقة الأمان لازم الورقة تكون قد المسافة بالظبط، وما فيك تلف لفة تانية. إذا ما عندك ولا حركة لازم ترمي ورقة.', 'إذا خلّصت كراتك بتكمّل بكرات شريكك. 🏆 أول فريق بيدخّل كراته الـ٨ لمنطقة الأمان بيربح.'],
-  ludo: ['كل لاعب معه ٤ حجار بالبيت. لازم تجيب <b>٦</b> لتطلّع حجر.', 'الـ٦ بيخليك تلعب كمان، بس ٣ ستات ورا بعض بيروح دورك.', '💥 إذا وقفت على حجر خصم (برّا المربعات الآمنة ★) بترجّعه لبيته وبتلعب كمان.', '🏁 أول واحد بيوصّل حجاره الأربعة للنص بيربح.'],
-  snakes: ['ارمي الزهر وامشي. 🪜 السلم بيطلّعك لفوق، 🐍 الحية بتنزّلك لتحت.', 'الـ٦ بيخليك ترمي كمان.', 'لازم توصل للـ100 بالمضبوط. أول واحد بيوصل بيربح.'],
-  domino: ['كل لاعب معه ٧ حجار.', 'نزّل حجر رقمه متل أحد طرفين السلسلة. إذا ما معك «دق» 👊.', 'اللي بيخلّص حجاره بياخد مجموع نقاط حجار الباقيين. إذا تسكّرت اللعبة بيربح الأقل نقاط.', 'أول واحد بيوصل 101 بيربح.'],
-  yatzy: ['معك ٥ زهرات و٣ رميات بكل دور. بعد كل رمية بتقدر <b>تثبّت</b> الزهر اللي بدك ياه (اكبس عليه).', 'بعدين اختار خانة من الورقة لتسجّل فيها: الواحدات…الستات، ٣ أو ٤ متل بعض، فل هاوس (25)، سلسلة صغيرة (30)، كبيرة (40)، خمسات! (50)، أو مجموع حر.', 'كل خانة بتنستعمل مرة وحدة. إذا مجموع (الواحدات…الستات) 63 أو أكتر +35. الأعلى مجموع بيربح.'],
-  liar: ['كل لاعب معه ٥ زهرات مخبّاية. الـ⚀ جوكر بيحسب مع أي رقم.', 'بدورك زايد: «في ٣ × ⚄» يعني بكل الطاولة في عالأقل ٣ خمسات. كل مزايدة لازم تكون أعلى من اللي قبلها.', '🤥 أو اكشف: «كذاب!». إذا المزايدة طلعت غلط بيخسر صاحبها زهرة، وإذا صح بيخسر اللي قال كذاب.', 'آخر واحد بيضل معه زهر بيربح.'],
-  pig: ['ارمي الزهر قد ما بدك وجمّع نقاط بهالدور.', '💥 إذا طلع <b>١</b> بتخسر كل اللي جمعته بهالدور وبيروح دورك.', '💰 «خبّي» لتحفظ نقاطك وتعطي الدور للي بعدك.', 'أول واحد بيوصل 100 بيربح.'],
-  pool: ['لاعبين. أول طابة بتدخّلها بعد الكسرة بتحدد إذا إنت عالسادة (1–7) أو المخططة (9–15).', 'إذا دخّلت طابة من طاباتك بتكمّل، وإذا لا بيروح الدور.', '❌ <b>فاول:</b> البيضا وقعت، ما لمست شي، أو لمست طابة الخصم أول — وخصمك بيحط البيضا وين ما بدو.', '🎱 بعد ما تخلّص طاباتك دخّل الـ8 السودا لتربح. إذا دخّلتها قبل وقتها بتخسر.', 'صوّب بإصبعك عالطاولة، واسحب شريط القوة لتحت واترك لتضرب.'],
-  chess: ['الشطرنج المعروف: كل قطعة إلها حركتها. الأبيض بيبلّش.', 'كش = الملك مهدد ولازم تحميه. <b>كش مات</b> = ما في طريقة تحمي الملك وبتخسر.', 'في تبييت (كاستلنغ)، والأكل بالمرور، والجندي بيصير وزير لما يوصل للآخر.', 'اختار القطعة وبعدين المكان المضوّي.'],
-  dama: ['الداما التركية: الحجار بتمشي <b>لقدّام أو عالجنب</b> خانة وحدة (مو بالقطر).', 'الأكل بالقفز فوق حجر الخصم، و<b>الأكل إجباري</b>. إذا بتقدر تكمّل أكل بنفس الحجر لازم تكمّل.', '👑 الحجر اللي بيوصل للصف الأخير بيصير <b>ملك</b> بيمشي أي عدد خانات بكل الاتجاهات.', 'اللي بيخلّص حجار خصمه أو بيسكّر عليه بيربح.'],
-  c4: ['لاعبين بالدور بينزّلوا أقراص بالأعمدة، والقرص بيوقع لتحت.', 'أول واحد بيصفّ <b>٤ ورا بعض</b> (أفقي، عمودي أو قطري) بيربح.'],
-  othello: ['حط حجر بحيث تحاصر أحجار خصمك بين حجرك الجديد وحجر قديم إلك (بأي اتجاه)، فبينقلبوا للونك.', 'لازم كل حركة تقلب شي. إذا ما عندك حركة بيروح الدور.', 'لما تخلص اللعبة اللي إله أحجار أكتر بيربح. الزوايا كتير قوية!'],
-  gomoku: ['لاعبين بالدور بيحطوا أحجار عالشبكة.', 'أول واحد بيصفّ <b>٥ ورا بعض</b> بأي اتجاه بيربح.'],
-  dots: ['بالدور ارسم خط بين نقطتين.', 'إذا سكّرت مربع (ضلعه الرابع) بياخده وبتلعب كمان.', 'لما يخلصوا المربعات، اللي إله أكتر مربعات بيربح. انتبه لا تعطي خصمك الضلع التالت!'],
-  mancala: ['كل لاعب إله ٦ حفر تحت ومخزن عاليمين. بكل حفرة ٤ حبات.', 'اختار حفرة من حفرك: الحبات بتتوزع وحدة وحدة عكس عقارب الساعة (وبتمرق على مخزنك مش مخزن خصمك).', 'إذا آخر حبة وقعت بمخزنك بتلعب كمان. إذا وقعت بحفرة فاضية إلك بتاكلها مع اللي قبالها.', 'لما تفضى حفر لاعب بتخلص اللعبة، والأكتر حبات بالمخزن بيربح.'],
-  xo: ['لاعبين: X و O بالدور.', 'أول واحد بيصفّ ٣ (أفقي، عمودي أو قطري) بيربح الجولة. أول واحد بيربح ٣ جولات بيربح المباراة.'],
-  guess: ['اختار الفئة: مطربين، ممثلين، أنبياء ورسل، إعلاميين ومؤثرين، شخصيات عربية، أو منوّع.', 'كل سؤال بيطلع فيه تلميح كل ٦ ثواني، واختار الجواب من ٤.', 'كل ما جاوبت أسرع نقاطك أكتر: ٣٠ ثم ٢٠ ثم ١٠، وأول واحد بيجاوب صح +5. باللعبة ١٠ أسئلة.'],
-  words: ['بيطلع حرف عشوائي، واكتب: اسم، جماد، حيوان، نبات، بلاد — كلها بتبلّش بهالحرف.', 'عندك ٧٥ ثانية. أول ما حدا يكبس «خلصت!» بيضل للباقيين ٨ ثواني.', 'كلمة صح ما حدا كتبها غيرك = 10، كلمة مكررة = 5.', '👎 بعد كل جولة بتقدر ترفض كلمة غلط عند حدا، وإذا وافق نص اللاعبين بتنشطب.', '٥ جولات والأعلى نقاط بيربح.'],
-  draw: ['كل لاعب بيجي دوره يرسم: بيختار كلمة من ٣ وبيرسمها بـ٨٠ ثانية.', 'الباقيين بيكتبوا تخميناتهم. كل ما عرفت أسرع نقاطك أكتر، والرسّام بياخد +8 عن كل واحد عرف.', 'كل ٢٠ ثانية بيبيّن حرف من الكلمة كمساعدة. ممنوع تكتب الكلمة بالرسمة! 😄'],
-  spy: ['كل اللاعبين بيعرفوا <b>المكان</b> إلا واحد هو <b>الجاسوس</b> 🕵️.', '💬 بالشات اسألوا بعض أسئلة عن المكان بدون ما تفضحوه — الجاسوس بيحاول يمثّل إنه بيعرف.', 'بعدين كل واحد بيصوّت مين الجاسوس. إذا مسكتوه كل الباقيين +20، وإذا فلت هو +40.', 'الجاسوس بيقدر بدل التصويت يخمّن المكان: إذا صح +40.', '٣ جولات. أحلى شي مع ٣ لاعبين حقيقيين أو أكتر.'],
-  trivia: ['أسئلة ثقافة عامة مع ٤ خيارات.', 'الجواب الصح بيعطيك نقاط أكتر كل ما جاوبت أسرع (لحد ٣٠)، وأول واحد بيجاوب صح +5.'],
-  tf: ['جملة، وإنت قول: صح ولا غلط؟ بسرعة!', 'الأسرع بالجواب الصح بياخد نقاط أكتر.'],
-  flags: ['بيطلع علم دولة، واختار اسمها من ٤.', 'الأسرع بالجواب الصح بياخد نقاط أكتر.'],
-  capitals: ['شو عاصمة هالدولة؟ اختار من ٤.', 'الأسرع بالجواب الصح بياخد نقاط أكتر.'],
-  proverbs: ['بيطلع أول المثل الشعبي، واختار كيف بيكمل.', 'الأسرع بالجواب الصح بياخد نقاط أكتر.'],
-  dishes: ['تلميحات عن أكلة عربية بتطلع وحدة وحدة، وخمّن شو هي.', 'كل ما جاوبت أبكر نقاطك أكتر: ٣٠ ثم ٢٠ ثم ١٠.'],
-  scramble: ['حروف كلمة مخربطة، واختار الكلمة الصح من ٤.', 'الأسرع بالجواب الصح بياخد نقاط أكتر.'],
-  math: ['عملية حسابية سريعة (جمع، طرح، ضرب، قسمة) واختار الجواب.', 'عندك ١٠ ثواني لكل سؤال، والأسرع بياخد نقاط أكتر.'],
-  wyr: ['«لو خيّروك…» بين شغلتين، شو بتختار؟', 'ما في جواب صح: اللي بيختاروا متل <b>الأغلبية</b> بياخدوا +10. إذا تعادلوا الكل بياخد.'],
+  trix: ['٤ لاعبين، كل واحد لنفسه. في ٤ ممالك، وكل لاعب يصير ملك مملكة ويختار فيها الخمس لعبات بالترتيب اللي يحتاج. يجب تتبع النقشة إذا معك.',
+    '🤴 <b>شيخ الكبة:</b> اللي ياكل ملك الكبة −75 (ما تفتح بالكبة، وإذا ما معك النقشة ومعك الشيخ يجب ترميه). 👸 <b>البنات:</b> كل بنت −25. ♦️ <b>الديناري:</b> كل ديناري −10 (ما تفتح بالديناري). 🃏 <b>اللطوش:</b> كل أكلة −15.',
+    '🎯 <b>التركس:</b> تفتح النقشة بالولد وتبني فوقه وتحته. الأول يخلّص +200، التاني +150، التالت +100، الأخير +50.',
+    '✖️2 <b>التدبيل:</b> اللي معه الشيخ أو بنت يقدر يدبّلها. إذا أكلها غيره ينخصم منه الضعف وصاحبها ياخد (+75 / +25)، وإذا أكلها هو ينخصم منه الضعف.',
+    'أعلى مجموع بعد الممالك الأربعة يربح.'],
+  trixc: ['مثل التركس فقط كل مملكة فيها لعبتين: <b>الكمبلكس</b> و<b>التركس</b>.',
+    'بالكمبلكس كل شيء ينحسب سوا: كل أكلة −15، كل ديناري −10، كل بنت −25، وشيخ الكبة −75.',
+    'التدبيل بالكمبلكس فقط، على الشيخ والبنات، والورق المدبّل يبيّن للكل. قدام كل لاعب يطلع ماذا دبّل وماذا أكل.'],
+  trixp: ['مثل التركس العادي فقط <b>شراكة</b>: اللي قاعد مقابلك شريكك ونقاطكن تنجمع.', 'إذا أكل فريقك ورقة مدبّلة من فريقك، تنخصم عادي بدون ضعف وبدون بونص.', 'بلعبة التركس يطلع عندك كم ورقة <b>٢</b> مع شريكك (بدون نوعها).', 'الفريق اللي مجموعه أعلى بالآخر يربح.'],
+  trixcp: ['مثل الكمبلكس فقط <b>شراكة</b>: شريكك مقابلك ونقاطكن تنجمع.', 'تدبيل الفريق على ورقة فريقه ما يضاعف.', 'الفريق صاحب المجموع الأعلى يربح.'],
+  t41: ['شراكة (اللي مقابلك شريكك) فقط كل لاعب يطلب وحده مرة وحدة من 2 لـ13. آخر ورقة عند الموزّع تنكشف، والطرنيب النقشة التانية من نفس اللون: كبة ↔ ديناري، بستوني ↔ سباتي.',
+    'إذا مجموع الطلبات أقل من 11 تنعاد التوزيعة.',
+    'النقاط: 2–4 بقيمتها، ومن 5 وطالع تنحسب ضعف (5=10، 6=12 … 13=26). إذا ما جبت طلبك ينخصم نفس الرقم.',
+    'يربح الفريق لما واحد منهم يوصل 41 وشريكه رصيده موجب.'],
+  t61: ['فريقين. المزايدة من 7 لـ13 وكل واحد يزيد أو يباص. اللي يرسى عليه الطلب يختار الطرنيب ويبدأ.',
+    'إذا جاب الفريق طلبه ياخد عدد لماته والفريق التاني ما ياخد شيء، وإذا انكسر ينخصم منه الطلب والفريق التاني ياخد لماته.',
+    'الكبوت (13 لمة) بدون ما تطلبه = 16، إذا طلبت 13 وجبتها = 26، وإذا انكسرت = −16. أول فريق يوصل 61 يربح.'],
+  basra: ['كل لاعب معه ٤ أوراق وعالطاولة ٤ أوراق مكشوفة.', 'بدورك تنزّل ورقة: تاكل كل الأوراق اللي <b>رقمها مثل ورقتك</b>، أو أوراق <b>مجموعها</b> يساوي رقم ورقتك (الآص = 1). إذا ما أكلت شيء، ورقتك تضل على الطاولة.',
+    '🧹 <b>الولد</b> يكنس كل الطاولة، و<b>السبعة الديناري</b> أيضاً.', '🔥 <b>باصرة:</b> إذا نضّفت الطاولة كلها (بغير الولد) تاخد +10.', 'كل ورقة تاكلها نقطة. لما تخلص الشدة، الباقي على الطاولة يروح لآخر واحد أكل. الأعلى نقاط يربح.'],
+  shayeb: ['الشدة ناقصها شيخ واحد، يعني في شيخ ما له جوز هو <b>الشايب</b> 👴.', 'كل جوز (نفس الرقم) يطلع من إيدك وحده.', 'بدورك تسحب ورقة مقلوبة من ورق اللاعب اللي بعدك. إذا عملت جوز يطلع.', 'اللي يخلّص ورقه ينجى. آخر واحد يضل معه الشايب يخسر.'],
+  crazy8: ['كل لاعب معه ٧ أوراق.', 'نزّل ورقة من <b>نفس اللون</b> أو <b>نفس الرقم</b> اللي على الكوم.', '8️⃣ <b>الثمانية</b> تركب على أي شيء وتختار اللون الجاي.', 'إذا ما معك شيء يركب اسحب ورقة، وإذا ما ركبت مرّر.', 'أول واحد يخلّص ورقه يربح.'],
+  bj: ['كل واحد يلعب ضد <b>البنك</b>. الهدف تقرّب على <b>21</b> بدون ما تطلع فوقها.', 'الورق بأرقامه، والشايب والبنت والولد = 10، والآص = 1 أو 11.', 'بدورك: «ورقة أيضاً» أو «بكفّي». البنك يسحب لحد ما يوصل 17.', 'إذا غلبت البنك +10، وإذا جبت 21 من أول ورقتين (بلاك جاك) +15. بعد ٨ جولات الأعلى نقاط يربح.'],
+  memory: ['في ٢٤ ورقة مقلوبة = ١٢ جوز.', 'بدورك اقلب ورقتين: إذا نفس الرقم تاخدهن وتلعب مرة ثانية، وإذا لا يرجعوا ينقلبوا.', 'ركّز وتذكّر أين شفت كل ورقة! الأكتر أجواز يربح.'],
+  hilo: ['تبيّن ورقة، وكلكن بنفس الوقت تخمّنوا: الورقة الجاية <b>أعلى</b> ولا <b>أوطى</b>؟', 'التخمين الصح +10. إذا طلعت نفس الرقم لا أحد ياخد.', 'بعد ١٥ جولة الأعلى نقاط يربح.'],
+  mono: ['كل لاعب يبدأ بـ1500. ارمي الزهر وامشي.', '🏷️ إذا وقفت على حي للبيع تقدر تشتريه. 🧾 إذا وقفت على حي لغيرك تدفعله إيجار.',
+    '🎨 إذا جمعت كل أحياء اللون الإيجار يتضاعف، وتقدر تبني بيوت 🏠 (لحد ٤) ولاحقاً فندق 🏨 — قبل ما ترمي الزهر.', '🚆 المحطات كل ما جمعت أكتر إيجارها أكبر. 💡 الشركات إيجارها حسب الزهر.',
+    '✨ كل ما تمرق على الانطلاق +200. 🍀 الحظ يعطيك أو ياخد منك. 🚔 بالسجن ارمي دبل لتطلع أو ادفع 50. الدبل يخليك ترمي أيضاً.', '💀 اللي تخلص مصاريه يفلس. بعد ٢٥ جولة يربح صاحب أكبر ثروة.'],
+  jackaroo: ['لعبة لـ٤ لاعبين على شكل <b>فريقين</b> 🤝 (كل اتنين قبال بعض). ٥٢ ورقة بدون جوكر، وكل لاعب معه ٤ كرات بلونه.', '<b>مناطق اللعبة:</b> البيت (٤ فتحات لكرات كل لاعب)، القاعدة (أول مربع تنزل عليه كرتك)، المسار المشترك، منطقة الأمان (٤ فتحات ملونة بالنص)، وكومة الورق بالنص.', 'كل توزيعة ياخد كل لاعب ٤ ورقات. يبلش اللي على يمين الموزّع واللعب مع عقارب الساعة، وكل واحد يلعب ورقة بدوره. بعد ما يخلص الورق يتغيّر الموزّع.', '<b>A</b>: تنزّل كرة من البيت للقاعدة، أو تمشي خطوة أو ١١ خطوة.', '<b>K</b>: فقط لتنزيل كرة من البيت للقاعدة.', '<b>J</b>: تبدّل كرة لك مع كرة لاعب ثاني، بشرط ما تكون وحدة منهن بالبيت أو القاعدة أو منطقة الأمان.', '<b>٧</b>: فيك تقسمها على كرتين من كراتك (مثلاً ٣ + ٤).', '<b>٤</b>: ترجّع كرة ٤ خطوات للخلف.', 'باقي الأوراق تمشي كرة وحدة للأمام قد رقمها (Q = ١٢).', '💥 إذا وقفت كرتك على كرة أحد، ترجع كرته لبيته.', '🛡️ الكرة اللي على القاعدة الخاص بها لا أحد يقدر يتخطاها ولا ياكلها ولا يبدّلها. وإذا في كرتين ورا بعض، الكرة اللي قدام تصير مثل القاعدة.', '🚫 ما فيك تتخطى كراتك أنت بأي حال.', 'لتدخل منطقة الأمان يجب الورقة تكون قد المسافة بالظبط، وما فيك تلف لفة ثانية. إذا ما عندك ولا حركة يجب ترمي ورقة.', 'إذا خلّصت كراتك تكمّل بكرات شريكك. 🏆 أول فريق يدخّل كراته الـ٨ لمنطقة الأمان يربح.'],
+  ludo: ['كل لاعب معه ٤ أحجار بالبيت. يجب تجيب <b>٦</b> لتطلّع حجر.', 'الـ٦ يخليك تلعب مرة ثانية، فقط ٣ ستات ورا بعض يروح دورك.', '💥 إذا وقفت على حجر خصم (برّا المربعات الآمنة ★) ترجّعه لبيته وتلعب مرة ثانية.', '🏁 أول واحد يوصّل حجاره الأربعة للنص يربح.'],
+  snakes: ['ارمي الزهر وامشي. 🪜 السلم يطلّعك للأعلى، 🐍 الحية تنزّلك للأسفل.', 'الـ٦ يخليك ترمي أيضاً.', 'يجب توصل للـ100 بالمضبوط. أول واحد يوصل يربح.'],
+  domino: ['كل لاعب معه ٧ أحجار.', 'نزّل حجر رقمه مثل أحد طرفين السلسلة. إذا ما معك «دق» 👊.', 'اللي يخلّص حجاره ياخد مجموع نقاط أحجار الباقيين. إذا تسكّرت اللعبة يربح الأقل نقاط.', 'أول واحد يوصل 101 يربح.'],
+  yatzy: ['معك ٥ زهرات و٣ رميات بكل دور. بعد كل رمية تقدر <b>تثبّت</b> الزهر اللي تريد ياه (اضغط عليه).', 'لاحقاً اختار خانة من الورقة لتسجّل فيها: الواحدات…الستات، ٣ أو ٤ مثل بعض، فل هاوس (25)، سلسلة صغيرة (30)، كبيرة (40)، خمسات! (50)، أو مجموع حر.', 'كل خانة تنستعمل مرة وحدة. إذا مجموع (الواحدات…الستات) 63 أو أكتر +35. الأعلى مجموع يربح.'],
+  liar: ['كل لاعب معه ٥ زهرات مخبّاية. الـ⚀ جوكر يحسب مع أي رقم.', 'بدورك زايد: «في ٣ × ⚄» يعني بكل الطاولة في على الأقل ٣ خمسات. كل مزايدة يجب تكون أعلى من اللي قبلها.', '🤥 أو اكشف: «كذاب!». إذا المزايدة طلعت غلط يخسر صاحبها زهرة، وإذا صح يخسر اللي قال كذاب.', 'آخر واحد يضل معه زهر يربح.'],
+  pig: ['ارمي الزهر قد ما تريد وجمّع نقاط بهالدور.', '💥 إذا طلع <b>١</b> تخسر كل اللي جمعته بهالدور ويروح دورك.', '💰 «خبّي» لتحفظ نقاطك وتعطي الدور للي بعدك.', 'أول واحد يوصل 100 يربح.'],
+  pool: ['لاعبين. أول طابة تدخّلها بعد الكسرة تحدد إذا إنت على السادة (1–7) أو المخططة (9–15).', 'إذا دخّلت طابة من طاباتك تكمّل، وإذا لا يروح الدور.', '❌ <b>فاول:</b> البيضا وقعت، ما لمست شيء، أو لمست طابة الخصم أول — وخصمك يحط البيضا أين ما بدو.', '🎱 بعد ما تخلّص طاباتك دخّل الـ8 السودا لتربح. إذا دخّلتها قبل وقتها تخسر.', 'صوّب بإصبعك على الطاولة، واسحب شريط القوة للأسفل واترك لتضرب.'],
+  chess: ['الشطرنج المعروف: كل قطعة لها حركتها. الأبيض يبدأ.', 'كش = الملك مهدد ويجب تحميه. <b>كش مات</b> = لا يوجد طريقة تحمي الملك وتخسر.', 'في تبييت (كاستلنغ)، والأكل بالمرور، والجندي يصير وزير لما يوصل للآخر.', 'اختار القطعة ولاحقاً المكان المضوّي.'],
+  dama: ['الداما التركية: الأحجار تمشي <b>للأمام أو على الجنب</b> خانة وحدة (غير بالقطر).', 'الأكل بالقفز فوق حجر الخصم، و<b>الأكل إجباري</b>. إذا تقدر تكمّل أكل بنفس الحجر يجب تكمّل.', '👑 الحجر اللي يوصل للصف الأخير يصير <b>ملك</b> يمشي أي عدد خانات بكل الاتجاهات.', 'اللي يخلّص أحجار خصمه أو يسكّر عليه يربح.'],
+  c4: ['لاعبين بالدور ينزّلوا أقراص بالأعمدة، والقرص يوقع للأسفل.', 'أول واحد يصفّ <b>٤ ورا بعض</b> (أفقي، عمودي أو قطري) يربح.'],
+  othello: ['ضع حجر بحيث تحاصر أحجار خصمك بين حجرك الجديد وحجر قديم لك (بأي اتجاه)، فبينقلبوا للونك.', 'يجب كل حركة تقلب شيء. إذا ما عندك حركة يروح الدور.', 'لما تخلص اللعبة اللي له أحجار أكتر يربح. الزوايا كثير قوية!'],
+  gomoku: ['لاعبين بالدور يحطوا أحجار على الشبكة.', 'أول واحد يصفّ <b>٥ ورا بعض</b> بأي اتجاه يربح.'],
+  dots: ['بالدور ارسم خط بين نقطتين.', 'إذا سكّرت مربع (ضلعه الرابع) ياخده وتلعب مرة ثانية.', 'لما يخلصوا المربعات، اللي له أكتر مربعات يربح. انتبه لا تعطي خصمك الضلع التالت!'],
+  mancala: ['كل لاعب له ٦ حفر تحت ومخزن عاليمين. بكل حفرة ٤ حبات.', 'اختار حفرة من حفرك: الحبات تتوزع وحدة وحدة عكس عقارب الساعة (وتمرق على مخزنك غير مخزن خصمك).', 'إذا آخر حبة وقعت بمخزنك تلعب مرة ثانية. إذا وقعت بحفرة فاضية لك تاكلها مع اللي قبالها.', 'لما تفضى حفر لاعب تخلص اللعبة، والأكتر حبات بالمخزن يربح.'],
+  xo: ['لاعبين: X و O بالدور.', 'أول واحد يصفّ ٣ (أفقي، عمودي أو قطري) يربح الجولة. أول واحد يربح ٣ جولات يربح المباراة.'],
+  guess: ['اختار الفئة: مطربين، ممثلين، أنبياء ورسل، إعلاميين ومؤثرين، شخصيات عربية، أو منوّع.', 'كل سؤال يطلع فيه تلميح كل ٦ ثواني، واختار الجواب من ٤.', 'كل ما جاوبت أسرع نقاطك أكتر: ٣٠ ثم ٢٠ ثم ١٠، وأول واحد يجاوب صح +5. باللعبة ١٠ أسئلة.'],
+  words: ['يطلع حرف عشوائي، واكتب: اسم، جماد، حيوان، نبات، بلاد — كلها تبدأ بهالحرف.', 'عندك ٧٥ ثانية. أول لا أحد يكبس «خلصت!» يضل للباقيين ٨ ثواني.', 'كلمة صح لا أحد كتبها غيرك = 10، كلمة مكررة = 5.', '👎 بعد كل جولة تقدر ترفض كلمة غلط عند أحد، وإذا وافق نص اللاعبين تنشطب.', '٥ جولات والأعلى نقاط يربح.'],
+  draw: ['كل لاعب يجي دوره يرسم: يختار كلمة من ٣ ويرسمها بـ٨٠ ثانية.', 'الباقيين يكتبوا تخميناتهم. كل ما عرفت أسرع نقاطك أكتر، والرسّام ياخد +8 عن كل واحد عرف.', 'كل ٢٠ ثانية يبيّن حرف من الكلمة كمساعدة. ممنوع تكتب الكلمة بالرسمة! 😄'],
+  spy: ['كل اللاعبين يعرفوا <b>المكان</b> إلا واحد هو <b>الجاسوس</b> 🕵️.', '💬 بالشات اسألوا بعض أسئلة عن المكان بدون ما تفضحوه — الجاسوس يحاول يمثّل إنه يعرف.', 'لاحقاً كل واحد يصوّت مين الجاسوس. إذا مسكتوه كل الباقيين +20، وإذا فلت هو +40.', 'الجاسوس يقدر بدل التصويت يخمّن المكان: إذا صح +40.', '٣ جولات. أحلى شيء مع ٣ لاعبين حقيقيين أو أكتر.'],
+  trivia: ['أسئلة ثقافة عامة مع ٤ خيارات.', 'الجواب الصح يعطيك نقاط أكتر كل ما جاوبت أسرع (لحد ٣٠)، وأول واحد يجاوب صح +5.'],
+  tf: ['جملة، وإنت قول: صح ولا غلط؟ بسرعة!', 'الأسرع بالجواب الصح ياخد نقاط أكتر.'],
+  flags: ['يطلع علم دولة، واختار اسمها من ٤.', 'الأسرع بالجواب الصح ياخد نقاط أكتر.'],
+  capitals: ['ماذا عاصمة هالدولة؟ اختار من ٤.', 'الأسرع بالجواب الصح ياخد نقاط أكتر.'],
+  proverbs: ['يطلع أول المثل الشعبي، واختار كيف يكمل.', 'الأسرع بالجواب الصح ياخد نقاط أكتر.'],
+  dishes: ['تلميحات عن أكلة عربية تطلع وحدة وحدة، وخمّن ماذا هي.', 'كل ما جاوبت أبكر نقاطك أكتر: ٣٠ ثم ٢٠ ثم ١٠.'],
+  scramble: ['حروف كلمة مخربطة، واختار الكلمة الصح من ٤.', 'الأسرع بالجواب الصح ياخد نقاط أكتر.'],
+  math: ['عملية حسابية سريعة (جمع، طرح، ضرب، قسمة) واختار الجواب.', 'عندك ١٠ ثواني لكل سؤال، والأسرع ياخد نقاط أكتر.'],
+  wyr: ['«لو خيّروك…» بين شغلتين، ماذا تختار؟', 'لا يوجد جواب صح: اللي يختاروا مثل <b>الأغلبية</b> ياخدوا +10. إذا تعادلوا الكل ياخد.'],
 };
-const RULES_COMMON = '<h4>🤖 البوتات</h4><p>الكراسي الفاضية بيلعب فيها بوت. إذا انقطع نت لاعب أو تأخّر بدوره، بيلعب البوت عنه لحد ما يرجع.</p>';
+const RULES_COMMON = '<h4>🤖 البوتات</h4><p>الكراسي الفاضية يلعب فيها بوت. إذا انقطع نت لاعب أو تأخّر بدوره، يلعب البوت عنه لحد ما يرجع.</p>';
 function rulesFor(g) {
   const G = GAMES.find((x) => x.g === g) || { n: g, ic: '📖' };
-  return `<div class="rules"><h3>${G.ic} قوانين ${esc(G.n)}</h3>${(RULES[g] || ['ما في قوانين لهاللعبة لسا.']).map((p) => `<p>${p}</p>`).join('')}${RULES_COMMON}</div>`;
+  return `<div class="rules"><h3>${G.ic} قوانين ${esc(G.n)}</h3>${(RULES[g] || ['لا يوجد قوانين لهاللعبة حتى الآن.']).map((p) => `<p>${p}</p>`).join('')}${RULES_COMMON}</div>`;
 }
 function openRules(g, back) {
   const pick = `<div class="rpick">${GAMES.map((x) => `<button class="${x.g === g ? 'on' : ''}" data-rg="${x.g}">${x.ic} ${esc(x.n)}</button>`).join('')}</div>`;
-  openModal('rules', `${rulesFor(g)}<details class="rmore"><summary>📚 قوانين لعبة تانية</summary>${pick}</details><button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>`);
+  openModal('rules', `${rulesFor(g)}<details class="rmore"><summary>📚 قوانين لعبة ثانية</summary>${pick}</details><button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>`);
   $('modal').querySelectorAll('[data-rg]').forEach((b) => (b.onclick = () => openRules(b.dataset.rg)));
 }
 
@@ -3634,18 +3651,18 @@ function openStore(tab) {
   if (storeTab === 'cards') h = '<div class="lkt">وجه الورق</div><div class="lk">' + LOOKS.cs.map(([v, n]) => item('cs:' + v, `<div class="cprev cs-${v}">${['S14', 'H13', 'D12', 'C10'].map((c) => cardHtml(c, '', 'style="--cw:38px"')).join('')}</div>`, n)).join('') +
     '</div><div class="lkt">ظهر الورق</div><div class="lk">' + LOOKS.bk.map(([v, n]) => item('bk:' + v, `<div class="bprev bk-${v}"><i></i><i></i></div>`, n)).join('') + '</div>';
   else if (storeTab === 'tb') h = '<div class="lk">' + LOOKS.tb.map(([v, n]) => item('tb:' + v, `<div class="tprev tb-${v}"><div class="felt"></div></div>`, n)).join('') + '</div>';
-  else if (storeTab === 'fx') h = '<div class="lk lk4">' + FX_KEYS.map((k) => item('fx:' + k, `<div class="fxprev">${FXE[k].e}</div>`, FXE[k].l)).join('') + '</div><p class="st-note">التفاعلات بتطلع لكل اللي عالطاولة مع صوت 🔊</p><div class="lkt">باقة إيموجيات الديوانية الفاخرة (${LUX.length} إيموجي)</div><div class="lk" style="grid-template-columns:1fr">' + item('emo:lux', `<div class="luxprev">${LUX.slice(0, 12).map(([k]) => `<img src="/img/emo/${k}.webp">`).join('')}</div>`, 'الباقة كاملة للأبد') + '</div>';
+  else if (storeTab === 'fx') h = '<div class="lk lk4">' + FX_KEYS.map((k) => item('fx:' + k, `<div class="fxprev">${FXE[k].e}</div>`, FXE[k].l)).join('') + '</div><p class="st-note">التفاعلات تطلع لكل اللي على الطاولة مع صوت 🔊</p><div class="lkt">باقة إيموجيات الديوانية الفاخرة (${LUX.length} إيموجي)</div><div class="lk" style="grid-template-columns:1fr">' + item('emo:lux', `<div class="luxprev">${LUX.slice(0, 12).map(([k]) => `<img src="/img/emo/${k}.webp">`).join('')}</div>`, 'الباقة كاملة للأبد') + '</div>';
   else if (storeTab === 'coins') {
     const P = packsInfo;
     if (!P) { loadPacks(); h = '<div class="empty">جاري التحميل…</div>'; }
-    else if (!P.enabled) h = '<div class="empty">💳 شحن النقاط بالدفع رح يتفعّل قريباً<br><small>هلأ فيك تجمع نقاط من اللعب والمكافأة اليومية 🎁</small></div>';
-    else h = '<div class="packs">' + Object.entries(P.packs).map(([k, v], i) => `<button class="pack" data-pack="${k}"><div class="pk-c">🪙</div><b>${v.coins.toLocaleString('en')}</b><small>نقطة</small><em>${v.sar} ريال</em>${i === 1 ? '<i class="pk-b">الأكثر طلباً</i>' : ''}</button>`).join('') + '</div><p class="st-note">الدفع بمدى، فيزا، ماستركارد أو STC Pay 🔒 والنقاط بتنضاف فوراً</p>';
+    else if (!P.enabled) h = '<div class="empty">💳 شحن النقاط بالدفع سوف يتفعّل قريباً<br><small>الآن فيك تجمع نقاط من اللعب والمكافأة اليومية 🎁</small></div>';
+    else h = '<div class="packs">' + Object.entries(P.packs).map(([k, v], i) => `<button class="pack" data-pack="${k}"><div class="pk-c">🪙</div><b>${v.coins.toLocaleString('en')}</b><small>نقطة</small><em>${v.sar} ريال</em>${i === 1 ? '<i class="pk-b">الأكثر طلباً</i>' : ''}</button>`).join('') + '</div><p class="st-note">الدفع بمدى، فيزا، ماستركارد أو STC Pay 🔒 والنقاط تنضاف فوراً</p>';
   }
-  else h = `<div class="vipbox"><div class="vipc">👑</div><b>غرف VIP</b><p>طاولتك بتطلع بإطار ذهبي و👑 بقائمة الطاولات، وبتختار وقت الدور (٢٠ ثانية لـ ٩٠ ثانية).</p>${item('vip:room', '', 'مفتاح غرف VIP للأبد')}</div>`;
+  else h = `<div class="vipbox"><div class="vipc">👑</div><b>غرف VIP</b><p>طاولتك تطلع بإطار ذهبي و👑 بقائمة الطاولات، وتختار وقت الدور (٢٠ ثانية لـ ٩٠ ثانية).</p>${item('vip:room', '', 'مفتاح غرف VIP للأبد')}</div>`;
   openModal('store', `<div class="st-head"><h3>🛍️ المتجر</h3><div class="coin"><span>🪙</span><b>${me ? Number(me.points).toLocaleString('en') : 0}</b></div></div>
   ${me && me.dailyReady ? '<button class="green st-daily" data-daily="1">🎁 خود مكافأتك اليومية +100</button>' : ''}
   <div class="st-tabs">${T.map(([k, n]) => `<button class="${k === storeTab ? 'on' : ''}" data-stab="${k}">${n}</button>`).join('')}</div>${h}
-  <p class="st-note">النقاط بتجمعها من اللعب: الفوز +30، والمكافأة اليومية +100 🎁</p>
+  <p class="st-note">النقاط تجمعها من اللعب: الفوز +30، والمكافأة اليومية +100 🎁</p>
   <button class="gold" style="width:100%;margin-top:10px" onclick="closeOverlay()">تمام</button>`);
 }
 let packsInfo = null;
@@ -3684,7 +3701,7 @@ function openMenu() {
 function menuAct(m) {
   if (m === 'home') {
     closeOverlay();
-    if (room && room.status === 'playing' && room.mySeat >= 0 && !confirm('متأكد بدك تطلع؟ بوت بيكمل مكانك')) return;
+    if (room && room.status === 'playing' && room.mySeat >= 0 && !confirm('متأكد تريد تطلع؟ بوت يكمل مكانك')) return;
     sendWs({ t: 'leave' });
   } else if (m === 'cards' || m === 'tb') openLook(m);
   else if (m === 'res') { closeOverlay(); showResults(); }
@@ -3703,7 +3720,7 @@ $('modal').addEventListener('click', (ev) => {
   if (b) {
     const id = b.dataset.buy, [k] = id.split(':');
     if (ownsItem(id)) { if (k === 'cs' || k === 'bk' || k === 'tb') storeOp('equip', id); return; }
-    if (confirm(`بدك تشتريه بـ ${price(id)} نقطة؟`)) storeOp('buy', id);
+    if (confirm(`تريد تشتريه بـ ${price(id)} نقطة؟`)) storeOp('buy', id);
     return;
   }
   const m = ev.target.closest('[data-m]');
@@ -3800,7 +3817,7 @@ function uploadPhoto(file) {
   img.src = url;
 }
 
-{ const pq = new URLSearchParams(location.search).get('pay'); if (pq) { history.replaceState(null, '', location.pathname); setTimeout(() => { toast(pq === 'paid' ? '✅ تم الدفع وانضافت النقاط' : '❌ الدفع ما اكتمل، ما انسحب شي'); SND.play(pq === 'paid' ? 'win' : 'bad'); }, 1200); } }
+{ const pq = new URLSearchParams(location.search).get('pay'); if (pq) { history.replaceState(null, '', location.pathname); setTimeout(() => { toast(pq === 'paid' ? '✅ تم الدفع وانضافت النقاط' : '❌ الدفع ما اكتمل، ما انسحب شيء'); SND.play(pq === 'paid' ? 'win' : 'bad'); }, 1200); } }
 if (token) connect(); else show('auth');
 </script><script>
 (() => {

@@ -22,7 +22,7 @@ export class Pool {
   check(seat) {
     if (this.over) throw new Error('اللعبة انتهت');
     if (this.pending) throw new Error('انتظر الطابات توقف');
-    if (seat !== this.turn) throw new Error('مو دورك');
+    if (seat !== this.turn) throw new Error('غير دورك');
   }
   nm(i) { return (this.names && this.names[i]) || `لاعب ${i + 1}`; }
   mine(seat) { const g = this.group[seat]; return this.balls.filter((b) => !b.in && (g === 'solid' ? isSolid(b.n) : g === 'stripe' ? isStripe(b.n) : b.n !== 0 && b.n !== 8)); }
@@ -34,8 +34,8 @@ export class Pool {
     if (!Number.isFinite(angle) || !Number.isFinite(power)) throw new Error('ضربة غلط');
     if (this.bih && a.cue && Number.isFinite(+a.cue.x) && Number.isFinite(+a.cue.y)) {
       const x = +a.cue.x, y = +a.cue.y;
-      if (x < R || x > W - R || y < R || y > H - R) throw new Error('حط الطابة جوّا الطاولة');
-      if (this.balls.some((b) => b.n !== 0 && !b.in && Math.hypot(b.x - x, b.y - y) < 2 * R)) throw new Error('الطابة فوق طابة تانية');
+      if (x < R || x > W - R || y < R || y > H - R) throw new Error('ضع الطابة جوّا الطاولة');
+      if (this.balls.some((b) => b.n !== 0 && !b.in && Math.hypot(b.x - x, b.y - y) < 2 * R)) throw new Error('الطابة فوق طابة ثانية');
       const cue = this.balls.find((b) => b.n === 0); cue.x = x; cue.y = y; cue.in = false;
     }
     this.bih = false;
@@ -84,7 +84,7 @@ export class Pool {
     if (scratch) respot(this.balls);
     const g2 = this.group[seat];
     const ownPot = pots.some((n) => n !== 8 && (!g2 || (g2 === 'solid' ? isSolid(n) : isStripe(n))));
-    if (foul) { this.fouls[seat]++; this.afterTurn = opp; this.bihNext = true; this.msg = `❌ فاول: ${foul} — ${this.nm(opp)} بيحط الطابة البيضا وين ما بدو`; }
+    if (foul) { this.fouls[seat]++; this.afterTurn = opp; this.bihNext = true; this.msg = `❌ فاول: ${foul} — ${this.nm(opp)} يحط الطابة البيضا أين ما بدو`; }
     else if (ownPot) { this.afterTurn = seat; this.msg = `✅ ${this.nm(seat)} دخّل ${pots.filter((n) => n !== 8).length > 1 ? 'طابات' : 'طابة'} — كمّل`; }
     else { this.afterTurn = opp; this.msg = `دور ${this.nm(opp)}`; }
     if (!g && this.group[seat]) this.msg += ` • ${this.nm(seat)}: ${this.group[seat] === 'solid' ? 'السادة 🔴' : 'المخططة 🟡'}`;

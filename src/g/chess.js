@@ -74,7 +74,7 @@ export class Chess extends UIGame {
     this.halfmoves = p[1] === 'P' || cap ? 0 : this.halfmoves + 1;
     const op = 1 - s, opc = this.col(op);
     const inCheck = this.attacked(this.b, this.b.indexOf(opc + 'K'), me);
-    if (!this.legal(op).length) return inCheck ? this.end([s], `كش مات! ${this.nm(s)} ربح ♚`) : this.end([0, 1], 'تعادل — ما في حركات (ستيل مات)');
+    if (!this.legal(op).length) return inCheck ? this.end([s], `كش مات! ${this.nm(s)} ربح ♚`) : this.end([0, 1], 'تعادل — لا يوجد حركات (ستيل مات)');
     if (this.halfmoves >= 100 || this.b.filter(Boolean).length === 2) return this.end([0, 1], 'تعادل');
     this.check2 = inCheck; this.turn = op;
     if (inCheck) this.log[this.log.length - 1].txt += '+';
@@ -87,12 +87,12 @@ export class Chess extends UIGame {
   }
   act(seat, a) {
     this.check(seat);
-    if (a.type === 'move') { let m = this.legal(seat).find((x) => x.f === +a.f && x.t === +a.t); if (!m) throw new Error('حركة مو مسموحة'); if (m.promo && ['Q', 'R', 'B', 'N'].includes(a.pr)) m = { ...m, pr: a.pr }; return this.doMove(seat, m); }
+    if (a.type === 'move') { let m = this.legal(seat).find((x) => x.f === +a.f && x.t === +a.t); if (!m) throw new Error('حركة غير مسموحة'); if (m.promo && ['Q', 'R', 'B', 'N'].includes(a.pr)) m = { ...m, pr: a.pr }; return this.doMove(seat, m); }
     const i = +a.i; const ms = this.legal(seat);
     const m = ms.find((x) => x.f === this.sel && x.t === i);
     if (m) return this.doMove(seat, m);
     if (ms.some((x) => x.f === i)) { this.sel = i; return; }
-    throw new Error('حركة مو مسموحة');
+    throw new Error('حركة غير مسموحة');
   }
   evalB(b) { let s = 0; for (let i = 0; i < 64; i++) { const p = b[i]; if (!p) continue; let v = VAL[p[1]]; const r = Math.floor(i / 8), c = i % 8; if (p[1] === 'P') v += (p[0] === 'w' ? 6 - r : r - 1) * 8; if (p[1] === 'N' || p[1] === 'B') v += 10 - (Math.abs(3.5 - r) + Math.abs(3.5 - c)) * 3; s += p[0] === 'w' ? v : -v; } return s; }
   search(b, s, d, al, be) {
@@ -115,7 +115,7 @@ export class Chess extends UIGame {
     return {
       players: [0, 1].map((i) => ({ badge: i === 0 ? '⚪ الأبيض' : '⚫ الأسود', sub: this.lost[1 - i].map((p) => GLYPH[p[1]]).join('') })),
       blocks: [
-        { k: 'text', t: this.over ? this.msg : my ? (this.check2 ? '⚠️ كش! احمِ الملك' : 'دورك — اختار قطعة وبعدين المكان') : `دور ${this.nm(this.turn)}${this.check2 ? ' — كش!' : ''}`, cls: 'lead' },
+        { k: 'text', t: this.over ? this.msg : my ? (this.check2 ? '⚠️ كش! احمِ الملك' : 'دورك — اختار قطعة ولاحقاً المكان') : `دور ${this.nm(this.turn)}${this.check2 ? ' — كش!' : ''}`, cls: 'lead' },
         { k: 'board', r: 8, c: 8, act: 'cell', theme: 'chess', flip: seat === 1, sel: this.sel, hl: targets, click: my ? [...new Set(ms.map((m) => m.f)), ...targets] : [],
           cells: this.b.map((p, i) => ({ t: p ? GLYPH[p[1]] : '', fg: p ? (p[0] === 'w' ? 'w' : 'b') : '', cls: (this.last.includes(i) ? 'last ' : '') + (i === kingSq ? 'chk' : '') })) },
       ],

@@ -106,7 +106,7 @@ class TrickGame {
   check(seat) {
     if (this.over) throw new Error('اللعبة انتهت');
     if (this.pending) throw new Error('انتظر لحظة');
-    if (seat !== this.turn) throw new Error('مو دورك');
+    if (seat !== this.turn) throw new Error('غير دورك');
   }
   baseView(seat) {
     return {
@@ -216,7 +216,7 @@ export class Tarneeb41 extends TrickGame {
   act(seat, a) {
     this.check(seat);
     if (this.phase === 'bidding') {
-      if (a.type !== 'bid') throw new Error('لازم تطلب');
+      if (a.type !== 'bid') throw new Error('يجب تطلب');
       const v = +a.value;
       if (!(v >= 2 && v <= 13)) throw new Error('الطلب من 2 إلى 13');
       this.bids[seat] = v;
@@ -323,7 +323,7 @@ export class Tarneeb61 extends TrickGame {
       if (a.type === 'pass') { this.passed[seat] = true; this.bids[seat] = 'pass'; }
       else if (a.type === 'bid') {
         const v = +a.value;
-        if (!(v >= 7 && v <= 13 && v > this.high)) throw new Error('لازم تطلب أعلى من الطلب الحالي (7-13)');
+        if (!(v >= 7 && v <= 13 && v > this.high)) throw new Error('يجب تطلب أعلى من الطلب الحالي (7-13)');
         this.high = v; this.bidder = seat; this.bids[seat] = v;
       } else throw new Error('اطلب أو باص');
       const passCount = this.passed.filter(Boolean).length;

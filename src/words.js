@@ -50,8 +50,8 @@ export class Words {
     if (a.type === 'veto') {
       if (this.phase !== 'show') throw new Error('التصويت بعد الجولة');
       const t = +a.s, k = +a.k;
-      if (!(t >= 0 && t < 4 && k >= 0 && k < 5) || t === seat) throw new Error('ما بتقدر');
-      const x = this.res[t][k]; if (!x || !x.p && !x.rej) throw new Error('هالكلمة ما إلها نقاط');
+      if (!(t >= 0 && t < 4 && k >= 0 && k < 5) || t === seat) throw new Error('ما تقدر');
+      const x = this.res[t][k]; if (!x || !x.p && !x.rej) throw new Error('هالكلمة ما لها نقاط');
       const v = (this.vetos[t][k] ||= []);
       const i = v.indexOf(seat); if (i >= 0) v.splice(i, 1); else v.push(seat);
       this.rescore();

@@ -17,10 +17,10 @@ export class Spy extends UIGame {
   act(seat, a) {
     if (this.over || seat < 0) throw new Error('استنى');
     if (a.type === 'skip' && this.phase === 'talk') { this.ready = (this.ready || new Set()).add(seat); if ([0, 1, 2, 3].every((i) => this.ready.has(i) || this.bot(i))) this.endsAt = Date.now(); return; }
-    if (this.phase !== 'vote') throw new Error('التصويت لسا ما بلّش');
+    if (this.phase !== 'vote') throw new Error('التصويت حتى الآن ما بدأ');
     if (this.done(seat)) throw new Error('صوّتت');
-    if (a.type === 'vote') { const t = +a.t; if (!(t >= 0 && t < 4) || t === seat) throw new Error('اختار حدا غيرك'); this.votes[seat] = t; }
-    else if (a.type === 'guess') { if (seat !== this.spy) throw new Error('بس الجاسوس'); const g = +a.g; if (!PLACES[g]) throw new Error('مكان غلط'); this.guess = g; }
+    if (a.type === 'vote') { const t = +a.t; if (!(t >= 0 && t < 4) || t === seat) throw new Error('اختار أحد غيرك'); this.votes[seat] = t; }
+    else if (a.type === 'guess') { if (seat !== this.spy) throw new Error('فقط الجاسوس'); const g = +a.g; if (!PLACES[g]) throw new Error('مكان غلط'); this.guess = g; }
     else throw new Error('حركة غلط');
     if ([0, 1, 2, 3].every((s) => this.done(s))) this.endsAt = Date.now();
   }
@@ -53,10 +53,10 @@ export class Spy extends UIGame {
   ui(seat) {
     const isSpy = seat === this.spy, blocks = [];
     blocks.push({ k: 'text', t: `جولة ${this.round} من ${this.rounds}`, cls: 'hint' });
-    if (seat >= 0 && this.phase !== 'result') blocks.push({ k: 'role', t: isSpy ? '🕵️ إنت الجاسوس!' : this.place, sub: isSpy ? 'ما بتعرف المكان — اسمع منيح وحاول تكتشفه بدون ما يكشفوك' : 'كلكن بنفس المكان إلا الجاسوس — اكشفوه بدون ما تفضحوا المكان' });
+    if (seat >= 0 && this.phase !== 'result') blocks.push({ k: 'role', t: isSpy ? '🕵️ إنت الجاسوس!' : this.place, sub: isSpy ? 'ما تعرف المكان — اسمع جيد وحاول تكتشفه بدون ما يكشفوك' : 'كلكن بنفس المكان إلا الجاسوس — اكشفوه بدون ما تفضحوا المكان' });
     if (this.phase === 'roles') blocks.push({ k: 'text', t: 'احفظ دورك…', cls: 'lead' });
     if (this.phase === 'talk') {
-      blocks.push({ k: 'text', t: '💬 اسألوا بعض أسئلة بالشات عن المكان (مثلاً: «شو لابس هون؟» «كم بتضل هون؟»)', cls: 'lead' });
+      blocks.push({ k: 'text', t: '💬 اسألوا بعض أسئلة بالشات عن المكان (مثلاً: «ماذا لابس هنا؟» «كم تضل هنا؟»)', cls: 'lead' });
       blocks.push({ k: 'chips', items: PLACES, label: 'الأماكن الممكنة' });
       blocks.push({ k: 'btns', b: [{ t: '✅ جاهز للتصويت', a: { type: 'skip' }, cls: 'ghost', dis: this.ready && this.ready.has(seat) }] });
     }
@@ -64,7 +64,7 @@ export class Spy extends UIGame {
       if (seat >= 0 && !this.done(seat)) {
         blocks.push({ k: 'text', t: 'مين الجاسوس برأيك؟', cls: 'lead' });
         blocks.push({ k: 'btns', b: [0, 1, 2, 3].filter((i) => i !== seat).map((i) => ({ t: `🫵 ${this.nm(i)}`, a: { type: 'vote', t: i }, cls: 'ghost big' })) });
-        if (isSpy) { blocks.push({ k: 'text', t: '…أو خمّن المكان وإذا صح بتربح +40', cls: 'hint' }); blocks.push({ k: 'btns', cls: 'bids', b: PLACES.map((p, g) => ({ t: p, a: { type: 'guess', g }, cls: 'ghost' })) }); }
+        if (isSpy) { blocks.push({ k: 'text', t: '…أو خمّن المكان وإذا صح تربح +40', cls: 'hint' }); blocks.push({ k: 'btns', cls: 'bids', b: PLACES.map((p, g) => ({ t: p, a: { type: 'guess', g }, cls: 'ghost' })) }); }
       } else blocks.push({ k: 'text', t: 'استنى الباقيين يصوّتوا…', cls: 'lead' });
     }
     if (this.phase === 'result') { blocks.push({ k: 'role', t: this.place, sub: `الجاسوس كان: ${this.nm(this.spy)}` }); blocks.push({ k: 'text', t: this.res.txt, cls: 'lead' }); }
@@ -84,7 +84,13 @@ export class Draw {
   nm(i) { return (this.names && this.names[i]) || `لاعب ${i + 1}`; }
   get pending() { if (this.over) return null; let t = this.endsAt; if (this.phase === 'draw') { for (const p of this.plan) if (p && !this.got[p.s]) t = Math.min(t, p.at); if (this.bot(this.drawer)) t = Math.min(t, this.nextHint || t); } return { delay: Math.max(30, t - Date.now()) }; }
   nextRound() {
-    if (this.ri < 0 && this.isOut) this.order = this.order.filter((i) => !this.isOut(i));
+    if (this.ri < 0) {
+      // bots can't draw: only real players take the pencil (each draws at least once, at least 4 rounds in total)
+      let o = this.order.filter((i) => !(this.isOut && this.isOut(i)));
+      const humans = o.filter((i) => this.isHuman && this.isHuman(i));
+      if (humans.length) { o = []; while (o.length < Math.max(4, humans.length)) o.push(...humans); o = o.slice(0, Math.max(4, humans.length)); }
+      this.order = o;
+    }
     this.ri++; if (this.ri >= this.order.length) return this.finish();
     this.drawer = this.order[this.ri]; this.choices = shuffle(WORDS.slice()).slice(0, 3); this.word = null; this.strokes = []; this.got = [0, 1, 2, 3].map((i) => !!(this.isOut && this.isOut(i))); this.feed = [];
     this.phase = 'choose'; this.endsAt = Date.now() + (this.bot(this.drawer) ? 1200 : 12000); this.history.length++;
@@ -96,17 +102,17 @@ export class Draw {
   }
   act(seat, a) {
     if (this.over || seat < 0) throw new Error('استنى');
-    if (a.type === 'pick') { if (this.phase !== 'choose' || seat !== this.drawer) throw new Error('مو دورك'); const w = this.choices[+a.i]; if (!w) throw new Error('اختار كلمة'); return this.startDraw(w); }
+    if (a.type === 'pick') { if (this.phase !== 'choose' || seat !== this.drawer) throw new Error('غير دورك'); const w = this.choices[+a.i]; if (!w) throw new Error('اختار كلمة'); return this.startDraw(w); }
     if (a.type === 'stroke') {
-      if (this.phase !== 'draw' || seat !== this.drawer) throw new Error('مو دورك ترسم');
+      if (this.phase !== 'draw' || seat !== this.drawer) throw new Error('غير دورك ترسم');
       const p = Array.isArray(a.p) ? a.p.slice(0, 400).map((x) => Math.max(0, Math.min(1000, x | 0))) : [];
       if (p.length >= 2 && this.strokes.length < 600) this.strokes.push({ p, c: (a.c | 0) % 8, w: (a.w | 0) % 3 });
       this.history.length++; return;
     }
-    if (a.type === 'clear') { if (seat !== this.drawer) throw new Error('مو دورك'); this.strokes = []; this.history.length++; return; }
-    if (a.type === 'undo') { if (seat !== this.drawer) throw new Error('مو دورك'); this.strokes.pop(); this.history.length++; return; }
+    if (a.type === 'clear') { if (seat !== this.drawer) throw new Error('غير دورك'); this.strokes = []; this.history.length++; return; }
+    if (a.type === 'undo') { if (seat !== this.drawer) throw new Error('غير دورك'); this.strokes.pop(); this.history.length++; return; }
     if (a.type === 'guess') {
-      if (this.phase !== 'draw' || seat === this.drawer || this.got[seat]) throw new Error('ما بتقدر تخمّن هلق');
+      if (this.phase !== 'draw' || seat === this.drawer || this.got[seat]) throw new Error('ما تقدر تخمّن الآن');
       const g = String(a.w || '').slice(0, 30);
       if (normW(g) === normW(this.word)) this.hit(seat);
       else { this.feed.push({ s: seat, t: g }); if (this.feed.length > 8) this.feed.shift(); }
