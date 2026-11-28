@@ -33,7 +33,7 @@ export class Words {
     this.L = free[Math.floor(Math.random() * free.length)]; this.used.push(this.L);
     this.phase = 'write';
     this.ans = [0, 1, 2, 3].map(() => Array(5).fill(''));
-    this.done = [false, false, false, false];
+    this.done = [0, 1, 2, 3].map((i) => !!(this.isOut && this.isOut(i)));
     this.stopBy = -1;
     this.endsAt = Date.now() + WRITE_MS;
     this.history.length++;
@@ -115,8 +115,8 @@ export class Words {
   }
   finish() {
     this.over = true; this.phase = 'over';
-    const m = Math.max(...this.scores);
-    this.winners = [0, 1, 2, 3].filter((i) => this.scores[i] === m);
+    const ids = [0, 1, 2, 3].filter((i) => !(this.isOut && this.isOut(i))); const m = Math.max(...ids.map((i) => this.scores[i]));
+    this.winners = ids.filter((i) => this.scores[i] === m);
   }
   view(seat) {
     return { type: 'words', phase: this.phase, L: this.L, round: this.round, rounds: ROUNDS, cats: CATS, scores: this.scores, turn: -1,

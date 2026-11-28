@@ -20,11 +20,12 @@ export class UIGame {
     if (seat !== this.turn) throw new Error('مو دورك');
   }
   bump() { this.history.length++; }
-  next(from = this.turn, skip) { let n = from; for (let k = 0; k < this.n; k++) { n = (n + 1) % this.n; if (!skip || !skip(n)) return n; } return from; }
+  out(i) { return !!(this.isOut && this.isOut(i)); }
+  next(from = this.turn, skip) { let n = from; for (let k = 0; k < this.n; k++) { n = (n + 1) % this.n; if (!this.out(n) && (!skip || !skip(n))) return n; } return from; }
   wait(ms, fn) { this.pending = { delay: ms }; this.afterWait = fn; this.turnSave = this.turn; this.turn = -1; }
   tick() { const f = this.afterWait; this.pending = null; this.afterWait = null; if (f) f.call(this); }
   end(winners, msg) { this.over = true; this.turn = -1; this.winners = winners; if (msg) this.msg = msg; this.bump(); }
-  endByScore(msg) { const m = Math.max(...this.scores); this.end([...Array(this.n).keys()].filter((i) => this.scores[i] === m), msg); }
+  endByScore(msg) { const ids = [...Array(this.n).keys()].filter((i) => !this.out(i)); const m = Math.max(...ids.map((i) => this.scores[i])); this.end(ids.filter((i) => this.scores[i] === m), msg); }
   rankRows() { return [...Array(this.n).keys()].map((i) => ({ seat: i, score: this.scoreLabel ? this.scoreLabel(i) : this.scores[i] })); }
   view(seat) {
     return { type: 'ui', game: this.game, turn: this.turn, over: this.over, winners: this.winners, history: this.history, msg: this.msg,

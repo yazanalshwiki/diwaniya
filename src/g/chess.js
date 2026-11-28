@@ -49,7 +49,7 @@ export class Chess extends UIGame {
     return out;
   }
   apply(b, m) {
-    const nb = b.slice(); const p = nb[m.f]; nb[m.t] = m.promo ? p[0] + 'Q' : p; nb[m.f] = null;
+    const nb = b.slice(); const p = nb[m.f]; nb[m.t] = m.promo ? p[0] + (m.pr || 'Q') : p; nb[m.f] = null;
     if (m.epc !== undefined) nb[m.epc] = null;
     if (m.cs === 'K') { nb[m.f + 1] = nb[m.f + 3]; nb[m.f + 3] = null; }
     if (m.cs === 'Q') { nb[m.f - 1] = nb[m.f - 4]; nb[m.f - 4] = null; }
@@ -65,7 +65,7 @@ export class Chess extends UIGame {
     const p = this.b[m.f];
     const files = 'abcdefgh', sq = (i) => files[i % 8] + (8 - Math.floor(i / 8));
     this.log = this.log || [];
-    this.log.push({ s, txt: m.cs ? (m.cs === 'K' ? 'O-O' : 'O-O-O') : `${GLYPH[p[1]]}${cap ? '×' : ''}${sq(m.t)}${m.promo ? '=♛' : ''}`, cap: !!cap, cs: !!m.cs });
+    this.log.push({ s, txt: m.cs ? (m.cs === 'K' ? 'O-O' : 'O-O-O') : `${GLYPH[p[1]]}${cap ? '×' : ''}${sq(m.t)}${m.promo ? '=' + GLYPH[m.pr || 'Q'] : ''}`, cap: !!cap, cs: !!m.cs });
     this.lastMv = { f: m.f, t: m.t, cap: !!cap, cs: m.cs || null, promo: !!m.promo, id: (this.lastMv ? this.lastMv.id : 0) + 1, piece: p };
     this.b = this.apply(this.b, m); this.last = [m.f, m.t]; this.sel = -1; this.bump();
     if (p[1] === 'K') { this.castle[me + 'K'] = false; this.castle[me + 'Q'] = false; }
@@ -87,7 +87,7 @@ export class Chess extends UIGame {
   }
   act(seat, a) {
     this.check(seat);
-    if (a.type === 'move') { const m = this.legal(seat).find((x) => x.f === +a.f && x.t === +a.t); if (!m) throw new Error('حركة مو مسموحة'); return this.doMove(seat, m); }
+    if (a.type === 'move') { let m = this.legal(seat).find((x) => x.f === +a.f && x.t === +a.t); if (!m) throw new Error('حركة مو مسموحة'); if (m.promo && ['Q', 'R', 'B', 'N'].includes(a.pr)) m = { ...m, pr: a.pr }; return this.doMove(seat, m); }
     const i = +a.i; const ms = this.legal(seat);
     const m = ms.find((x) => x.f === this.sel && x.t === i);
     if (m) return this.doMove(seat, m);

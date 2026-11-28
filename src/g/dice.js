@@ -103,7 +103,7 @@ export class Yatzy extends UIGame {
       if (!this.rolls) throw new Error('ارمي أول'); const k = a.c; if (!YC.some((x) => x[0] === k) || this.sheet[seat][k] !== undefined) throw new Error('خانة مستعملة');
       this.sheet[seat][k] = yscore(k, this.dice); this.msg = `${this.nm(seat)} سجّل ${this.sheet[seat][k]} بـ«${YC.find((x) => x[0] === k)[1]}»`; this.bump();
       this.scores = [0, 1, 2, 3].map((i) => this.total(i));
-      if (this.sheet.every((sh) => Object.keys(sh).length === YC.length)) return this.endByScore('خلصت الورقة');
+      if (this.sheet.every((sh, i) => this.out(i) || Object.keys(sh).length === YC.length)) return this.endByScore('خلصت الورقة');
       return this.wait(700, () => { this.turn = this.next(seat); this.newTurn(); });
     }
     throw new Error('حركة غلط');
@@ -139,6 +139,7 @@ export class Yatzy extends UIGame {
 export class Liar extends UIGame {
   constructor() { super('liar', 4); this.cnt = [5, 5, 5, 5]; this.turn = rnd(4); this.newRound(); }
   alive() { return [0, 1, 2, 3].filter((i) => this.cnt[i] > 0); }
+  setOut() { for (let i = 0; i < 4; i++) if (this.out(i)) this.cnt[i] = 0; this.newRound(); }
   newRound() { this.dice = this.cnt.map((n) => Array.from({ length: n }, d6)); this.bid = null; this.reveal = null; this.bump(); }
   total() { return this.cnt.reduce((a, b) => a + b, 0); }
   countFace(f) { return this.dice.flat().filter((x) => x === f || x === 1).length; } // 1 is wild

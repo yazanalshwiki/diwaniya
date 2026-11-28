@@ -84,13 +84,14 @@ export class Draw {
   nm(i) { return (this.names && this.names[i]) || `لاعب ${i + 1}`; }
   get pending() { if (this.over) return null; let t = this.endsAt; if (this.phase === 'draw') { for (const p of this.plan) if (p && !this.got[p.s]) t = Math.min(t, p.at); if (this.bot(this.drawer)) t = Math.min(t, this.nextHint || t); } return { delay: Math.max(30, t - Date.now()) }; }
   nextRound() {
-    this.ri++; if (this.ri >= 4) return this.finish();
-    this.drawer = this.order[this.ri]; this.choices = shuffle(WORDS.slice()).slice(0, 3); this.word = null; this.strokes = []; this.got = [false, false, false, false]; this.feed = [];
+    if (this.ri < 0 && this.isOut) this.order = this.order.filter((i) => !this.isOut(i));
+    this.ri++; if (this.ri >= this.order.length) return this.finish();
+    this.drawer = this.order[this.ri]; this.choices = shuffle(WORDS.slice()).slice(0, 3); this.word = null; this.strokes = []; this.got = [0, 1, 2, 3].map((i) => !!(this.isOut && this.isOut(i))); this.feed = [];
     this.phase = 'choose'; this.endsAt = Date.now() + (this.bot(this.drawer) ? 1200 : 12000); this.history.length++;
   }
   startDraw(w) {
     this.word = w; this.phase = 'draw'; this.t0 = Date.now(); this.endsAt = this.t0 + 80000; this.reveal = [];
-    this.plan = [0, 1, 2, 3].map((s) => (s !== this.drawer && this.bot(s) && Math.random() < 0.7 ? { s, at: this.t0 + 15000 + rnd(55000) } : null));
+    this.plan = [0, 1, 2, 3].map((s) => (s !== this.drawer && !this.got[s] && this.bot(s) && Math.random() < 0.7 ? { s, at: this.t0 + 15000 + rnd(55000) } : null));
     this.nextHint = this.t0 + 20000; this.history.length++;
   }
   act(seat, a) {
@@ -131,7 +132,7 @@ export class Draw {
     }
     if (this.phase === 'show' && now >= this.endsAt) this.nextRound();
   }
-  finish() { this.over = true; this.phase = 'over'; const m = Math.max(...this.scores); this.winners = [0, 1, 2, 3].filter((i) => this.scores[i] === m); this.history.length++; }
+  finish() { this.over = true; this.phase = 'over'; const ids = [0, 1, 2, 3].filter((i) => !(this.isOut && this.isOut(i))); const m = Math.max(...ids.map((i) => this.scores[i])); this.winners = ids.filter((i) => this.scores[i] === m); this.history.length++; }
   botAction() { return { type: 'noop' }; }
   view(seat) {
     const drawer = seat === this.drawer;

@@ -133,7 +133,7 @@ export class HiLo extends UIGame {
   init() { this.newRound(); }
   get pending() { if (this.over) return null; return { delay: Math.max(30, Math.min(this.endsAt, ...(this.plan || []).filter((p) => p && this.pick[p.s] === null).map((p) => p.at)) - Date.now()) }; }
   set pending(v) {}
-  newRound() { this.round++; this.pick = [null, null, null, null]; this.phase = 'pick'; this.endsAt = Date.now() + 9000; this.bump();
+  newRound() { this.round++; this.pick = [0, 1, 2, 3].map((i) => (this.out(i) ? 'x' : null)); this.phase = 'pick'; this.endsAt = Date.now() + 9000; this.bump();
     const r = rank(this.cur); this.plan = [0, 1, 2, 3].map((s) => (this.bot(s) ? { s, at: Date.now() + 1500 + rnd(5000), v: Math.random() < (r <= 7 ? 0.8 : r >= 9 ? 0.2 : 0.5) ? 'hi' : 'lo' } : null)); }
   act(seat, a) {
     if (this.over || this.phase !== 'pick') throw new Error('استنى');

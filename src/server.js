@@ -229,6 +229,7 @@ function newCode() {
 const COMM = makeCommunity({ sql, clients, send: (w, m) => send(w, m), getUser, frGet, isAdminPlayer: (u) => isAdminPlayer(u) });
 await COMM.init();
 const send = (ws, m) => { try { ws && ws.readyState === 1 && ws.send(JSON.stringify(m)); } catch {} };
+const FLEX_GAMES = new Set(['ludo', 'snakes', 'pig', 'yatzy', 'liar', 'memory', 'hilo', 'words', 'draw', 'guess', 'trivia', 'tf', 'flags', 'capitals', 'proverbs', 'dishes', 'scramble', 'math', 'wyr']);
 const humanSeats = (r) => r.seats.map((s, i) => [s, i]).filter(([s]) => s && !s.bot);
 const isConnected = (uid) => clients.has(uid);
 const seatOf = (r, uid) => r.seats.findIndex((s) => s && !s.bot && s.uid === uid);
@@ -280,6 +281,7 @@ function lobbyList() {
 
 function controlledByBot(r, i) {
   const s = r.seats[i];
+  if (!s) return false;
   return s.bot || s.left || !isConnected(s.uid);
 }
 
@@ -296,6 +298,7 @@ function schedule(r) {
   const seat = eng.turn;
   if (seat < 0) return;
   const s = r.seats[seat];
+  if (!s) { try { eng.turn = eng.next ? eng.next(seat) : seat; } catch {} r.timer = setTimeout(() => afterChange(r), 50); return; }
   let delay;
   if (s.bot || s.left) delay = 650 + Math.random() * 600;
   else if (!isConnected(s.uid)) delay = Math.max(300, (s.awaySince || Date.now()) + AWAY_MS - Date.now());
@@ -312,11 +315,11 @@ async function afterChange(r) {
   if (eng && eng.over && r.status === 'playing') {
     r.status = 'finished';
     const winners = eng.winners;
-    r.result = { winners, names: winners.map((i) => r.seats[i].name) };
+    r.result = { winners, names: winners.map((i) => (r.seats[i] ? r.seats[i].name : '')) };
     const humans = humanSeats(r);
     try {
       for (const [s, i] of humans) await recordResult(s.uid, winners.includes(i));
-      if (sql) await sql`insert into matches (game, players, winners) values (${r.game}, ${JSON.stringify(r.seats.map((s) => s.name))}::jsonb, ${JSON.stringify(winners)}::jsonb)`;
+      if (sql) await sql`insert into matches (game, players, winners) values (${r.game}, ${JSON.stringify(r.seats.map((s) => (s ? s.name : null)))}::jsonb, ${JSON.stringify(winners)}::jsonb)`;
     } catch (e) { console.error('db error', e); }
     for (const [s] of humans) {
       const u = await getUser(s.uid).catch(() => null);
@@ -419,16 +422,22 @@ async function handle(ws, m) {
       if (!r || r.host !== uid) throw new Error('بس صاحب الطاولة يقدر يبدأ');
       if (m.t === 'start' && r.status !== 'waiting') throw new Error('اللعبة بدأت');
       if (m.t === 'rematch' && r.status !== 'finished') throw new Error('اللعبة ما خلصت');
+      // games that work with 2+ players don't get forced bots: empty chairs simply sit the game out
+      const seated = r.seats.filter((x) => x && !x.left).length;
+      const flex = FLEX_GAMES.has(r.game) && seated >= 2;
       for (let i = 0; i < r.seats.length; i++) {
         const s = r.seats[i];
         if (!s || s.left) {
           if (s && s.left) userRoom.get(s.uid) === r.code && userRoom.delete(s.uid);
-          r.seats[i] = { bot: true, name: botName(r) };
+          r.seats[i] = flex ? null : { bot: true, name: botName(r) };
         }
       }
       r.engine = createGame(r.game);
-      r.engine.names = r.seats.map((x) => x.name); r.engine.isHuman = (i) => !r.seats[i].bot; r.engine.isBot = (i) => controlledByBot(r, i);
+      r.engine.names = r.seats.map((x) => (x ? x.name : '')); r.engine.isHuman = (i) => !!r.seats[i] && !r.seats[i].bot; r.engine.isBot = (i) => !!r.seats[i] && controlledByBot(r, i);
+      r.engine.isOut = (i) => !r.seats[i];
       if (r.engine.init) r.engine.init();
+      if (r.engine.setOut) r.engine.setOut();
+      if (r.engine.turn >= 0 && !r.seats[r.engine.turn] && r.engine.next) r.engine.turn = r.engine.next(r.engine.turn);
       if (r.engine.type === 'mono') { r.engine.names = r.seats.map((x) => x.name); r.engine.isHuman = (i) => !r.seats[i].bot; }
       r.status = 'playing';
       r.result = null;

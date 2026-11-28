@@ -30,6 +30,7 @@ export class Guess {
     return { delay: Math.max(30, next - Date.now()) };
   }
   bot(i) { return this.isBot ? this.isBot(i) : true; }
+  isOutSeat(i) { return !!(this.isOut && this.isOut(i)); }
   chooser() { for (let i = 0; i < 4; i++) if (this.isHuman && this.isHuman(i) && !this.bot(i)) return i; return -1; }
   act(seat, a) {
     if (this.over) throw new Error('اللعبة انتهت');
@@ -53,7 +54,7 @@ export class Guess {
   }
   maybeFast() {
     // all real players answered: don't keep them waiting for the bots
-    const humans = [0, 1, 2, 3].filter((i) => !this.bot(i));
+    const humans = [0, 1, 2, 3].filter((i) => !this.bot(i) && !this.isOutSeat(i));
     if (humans.length && humans.every((i) => this.ans[i])) for (const b of this.botPlan || []) if (b && !this.ans[b.seat]) this.answer(b.seat, b.o);
   }
   start(cat) { this.cat = cat; this.qs = makeQuestions(this.kind, cat); this.nQ = this.qs.length; this.nextQ(); }
@@ -62,14 +63,14 @@ export class Guess {
     if (this.qn >= this.nQ) return this.finish();
     this.q = this.qs[this.qn++];
     this.correct = this.q.wyr ? -1 : this.q.opts.indexOf(this.q.a);
-    this.ans = [null, null, null, null];
+    this.ans = [0, 1, 2, 3].map((i) => (this.isOutSeat(i) ? { o: -1, ok: false, pts: 0, out: true } : null));
     this.counts = null;
     this.phase = 'q';
     this.t0 = Date.now(); this.endsAt = this.t0 + this.qms;
     this.history.length++;
     const n = this.q.opts.length;
     this.botPlan = [0, 1, 2, 3].map((i) => {
-      if (!this.bot(i)) return null;
+      if (!this.bot(i) || this.isOutSeat(i)) return null;
       const at = this.t0 + 1800 + Math.random() * (this.qms - 4500);
       const st = this.cfg.hints ? Math.min(2, Math.floor((at - this.t0) / HINT_MS)) : 1;
       const right = this.q.wyr ? Math.random() < 0.5 : Math.random() < [0.45, 0.62, 0.75][st];
@@ -110,8 +111,8 @@ export class Guess {
   }
   finish() {
     this.over = true; this.phase = 'over';
-    const m = Math.max(...this.scores);
-    this.winners = [0, 1, 2, 3].filter((i) => this.scores[i] === m);
+    const ids = [0, 1, 2, 3].filter((i) => !this.isOutSeat(i)); const m = Math.max(...ids.map((i) => this.scores[i]));
+    this.winners = ids.filter((i) => this.scores[i] === m);
   }
   view(seat) {
     const v = { type: 'guess', kind: this.kind, phase: this.phase, scores: this.scores, turn: -1, over: this.over, winners: this.winners, history: this.history,
