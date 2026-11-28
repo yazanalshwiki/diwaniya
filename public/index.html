@@ -828,6 +828,24 @@ button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,25
 .chprin{background:#1b2540;border:1px solid rgba(207,171,85,.5);border-radius:14px;padding:12px;text-align:center}.chprin b{display:block;margin-bottom:8px;font-weight:600}
 .chprin div{display:flex;gap:8px}.chprin button{width:58px;height:58px;border-radius:10px;background-color:#f0d9b5;background-size:85%;background-position:center;background-repeat:no-repeat;border:0;padding:0;cursor:pointer}
 .chlog{direction:ltr!important;justify-content:flex-start}.chlog span{background:rgba(255,255,255,.05)!important;color:#dfe4ee!important;font-family:"Roboto Condensed",monospace;font-size:13px}.chlog span i{font-style:normal;color:#8f9ab1;margin-right:4px}
+
+.snwrap{width:min(96vw,54vh,580px)}.snb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:0 0 0 4px #fff8ea,0 0 0 6px rgba(207,171,85,.6),0 14px 34px rgba(0,0,0,.5);direction:ltr}.snb svg{width:100%;height:100%;display:block}
+.sntoks{position:absolute;inset:0}.snt{position:absolute;width:7.5%;height:9%;transform:translate(-50%,-70%);transition:left .2s ease,top .2s ease;z-index:3;pointer-events:none}.snt svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.snt.jump{transition:left .65s cubic-bezier(.45,.05,.4,1),top .65s cubic-bezier(.45,.05,.4,1);z-index:5}
+.snpos{font-size:11px;color:#c9d0de;margin-top:2px}.snpos b{font-size:15px;color:#fff}
+.snleg{font-size:11.5px;color:#9aa6bf;text-align:center;padding:0 8px}
+
+/* dice games — clearer dice and tables */
+.ud .die,.lpan .ldie .die,.ldie .die{background:linear-gradient(145deg,#ffffff,#ece6da)!important;box-shadow:0 5px 0 #c9bfae,0 8px 14px rgba(0,0,0,.45),inset 0 1px 0 #fff!important;border-radius:20%!important}
+.die i.on{background:radial-gradient(circle at 35% 35%,#555,#111)!important}
+.ud .die{width:56px!important;height:56px!important}.udice.big .ud .die{width:88px!important;height:88px!important}.udice.small .ud .die{width:32px!important;height:32px!important}
+.udice>div{gap:10px!important}
+.ud.held{transform:translateY(-8px)}.ud.held .die{box-shadow:0 0 0 3px #cfab55,0 5px 0 #c9bfae,0 10px 16px rgba(0,0,0,.5)!important}
+.ud.held::after{content:'🔒';position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:11px}
+.ud:not(:disabled){cursor:pointer}.ud:not(:disabled):hover .die{transform:translateY(-2px)}
+.ysheet b.pot{color:#e0c27a;font-size:15px}.ysheet .utr.can{background:rgba(207,171,85,.1)!important;border-color:rgba(207,171,85,.4)!important;cursor:pointer}
+.pigt{width:100%;max-width:420px}.pigt .utr{display:grid!important;grid-template-columns:1fr 2fr auto;gap:10px;align-items:center;font-size:13px}.pigt .utr.cur{background:rgba(207,171,85,.1)!important}
+.pgb{position:relative;display:block;height:10px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;min-width:120px}.pgb i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}.pgb u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#cfab55 0 4px,#e9d08b 4px 8px);opacity:.9}
 </style>
 </head>
 <body>
@@ -2506,6 +2524,7 @@ alt.rolls = {};
 function renderUI(e) {
   if (e.game === 'chess' && e.chess) return renderChess(e);
   if (e.game === 'ludo' && e.ludo) return renderLudo(e);
+  if (e.game === 'snakes' && e.sn) return renderSnakes(e);
   if (e.game === 'jackaroo' && e.jk) return renderJack(e);
   altShell(e);
   const u = e.ui || { blocks: [] }, mine = room.mySeat;
@@ -2627,6 +2646,95 @@ function paintChess(e, pending) {
   const L = $('alt').querySelector('.chlog'); L.innerHTML = lg; L.scrollLeft = L.scrollWidth;
 }
 
+// ----- سلم وثعبان -----
+const SNC = ['#e53935', '#1e88e5', '#43a047', '#f5b400'];
+const SND_ = ['#8e1512', '#0d4f94', '#1f6b26', '#9c7300'];
+function snXY(n) { const r = Math.floor((n - 1) / 10), c = r % 2 ? 9 - ((n - 1) % 10) : (n - 1) % 10; return [c * 60 + 30, (9 - r) * 60 + 30]; }
+function snBoardSvg(J) {
+  const pal = ['#f7efe0', '#e7dcc6'], hi = ['#fde6c8', '#f3d4ad'];
+  let g = '';
+  for (let n = 1; n <= 100; n++) {
+    const [x, y] = snXY(n), r = Math.floor((n - 1) / 10), c = Math.round((x - 30) / 60);
+    const alt = (r + c) % 2;
+    g += `<rect x="${x - 30}" y="${y - 30}" width="60" height="60" fill="${n === 100 ? '#ffd86b' : pal[alt]}"/>`;
+    g += `<text x="${x - 25}" y="${y - 16}" font-size="13" font-weight="700" fill="#8a7a62" font-family="sans-serif">${n}</text>`;
+  }
+  g += `<text x="${snXY(100)[0]}" y="${snXY(100)[1] + 12}" text-anchor="middle" font-size="26">🏆</text>`;
+  // ladders
+  const P = 'sn' + Math.random().toString(36).slice(2, 6);
+  for (const [a, b] of Object.entries(J)) {
+    const f = +a, t = b; if (t < f) continue;
+    const [x1, y1] = snXY(f), [x2, y2] = snXY(t), dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = (-dy / L) * 11, ny = (dx / L) * 11;
+    let rungs = ''; const k = Math.max(2, Math.round(L / 26));
+    for (let i = 1; i < k; i++) { const px = x1 + (dx * i) / k, py = y1 + (dy * i) / k; rungs += `<line x1="${px - nx}" y1="${py - ny}" x2="${px + nx}" y2="${py + ny}" stroke="#7a4a1e" stroke-width="5" stroke-linecap="round"/>`; }
+    g += `<g filter="url(#${P}s)"><line x1="${x1 - nx}" y1="${y1 - ny}" x2="${x2 - nx}" y2="${y2 - ny}" stroke="#a8682f" stroke-width="6" stroke-linecap="round"/><line x1="${x1 + nx}" y1="${y1 + ny}" x2="${x2 + nx}" y2="${y2 + ny}" stroke="#a8682f" stroke-width="6" stroke-linecap="round"/>${rungs}</g>`;
+  }
+  // snakes
+  const cols = [['#2e9b4f', '#1d6b35'], ['#c0392b', '#7d2219'], ['#7b4bc4', '#4c2b86'], ['#e08a1e', '#9b5a0c']]; let si = 0;
+  for (const [a, b] of Object.entries(J)) {
+    const f = +a, t = b; if (t > f) continue;
+    const [x1, y1] = snXY(f), [x2, y2] = snXY(t), dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, w = Math.min(40, L / 4);
+    const c1 = [x1 + dx * 0.33 + nx * w, y1 + dy * 0.33 + ny * w], c2 = [x1 + dx * 0.66 - nx * w, y1 + dy * 0.66 - ny * w];
+    const d = `M${x1},${y1} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${x2},${y2}`;
+    const [c, cd] = cols[si++ % cols.length];
+    g += `<g filter="url(#${P}s)"><path d="${d}" stroke="${cd}" stroke-width="15" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="11" fill="none" stroke-linecap="round"/><path d="${d}" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none" stroke-dasharray="2 9" stroke-linecap="round"/>`;
+    const ang = (Math.atan2(c1[1] - y1, c1[0] - x1) * 180) / Math.PI;
+    g += `<g transform="translate(${x1} ${y1}) rotate(${ang})"><ellipse cx="0" cy="0" rx="13" ry="10" fill="${c}" stroke="${cd}" stroke-width="2"/><circle cx="-3" cy="-4" r="2.6" fill="#fff"/><circle cx="-3" cy="4" r="2.6" fill="#fff"/><circle cx="-3.5" cy="-4" r="1.3" fill="#111"/><circle cx="-3.5" cy="4" r="1.3" fill="#111"/><path d="M-13 0 l-7 -3 m7 3 l-7 3" stroke="#d11" stroke-width="1.6"/></g></g>`;
+  }
+  return `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"><defs><filter id="${P}s" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-opacity=".35"/></filter></defs>${g}</svg>`;
+}
+const snk = { code: '', lastId: 0, shown: null, anim: null, roll: 0 };
+const SNCORN = ['bl', 'br', 'tr', 'tl'];
+function renderSnakes(e) {
+  altShell(e);
+  const S = e.sn, mine = room.mySeat, rot = mine >= 0 ? mine : 0;
+  if (snk.code !== room.code || !$('alt').querySelector('.snb')) {
+    snk.code = room.code; snk.lastId = S.last ? S.last.id : 0; snk.shown = S.pos.slice(); snk.roll = S.rollId;
+    $('alt').innerHTML = `<div class="lgame"><div class="lprow top"><div class="lpan" data-corner="tl"></div><div class="lpan" data-corner="tr"></div></div><div class="lstat"></div><div class="snwrap"><div class="snb">${snBoardSvg(S.jumps)}<div class="sntoks"></div><div class="lfx"></div></div></div><div class="lprow bot"><div class="lpan" data-corner="bl"></div><div class="lpan" data-corner="br"></div></div><div class="snleg">🪜 السلّم بيطلّعك لفوق • 🐍 الحيّة بتنزّلك لتحت • ٦ = دور كمان</div></div>`;
+    $('alt').querySelector('.lgame').addEventListener('click', (ev) => { const d = ev.target.closest('.ldie.can'); if (d) { sendWs({ t: 'act', a: { type: 'roll' } }); d.classList.add('spin'); d.classList.remove('can'); SND.play('pop'); } });
+  }
+  if (S.last && S.last.id !== snk.lastId && !snk.anim) {
+    const m = S.last; snk.lastId = m.id; const steps = [];
+    for (let x = m.from + 1; x <= m.mid && m.mid !== m.from; x++) steps.push([x, 0]);
+    if (m.to !== m.mid) steps.push([m.to, 1]);
+    let k = 0;
+    if (steps.length) snk.anim = setInterval(() => {
+      if (!room || !room.engine || !room.engine.sn) { clearInterval(snk.anim); snk.anim = null; return; }
+      const [p, jump] = steps[k]; snk.shown[m.s] = p; snk.jump = jump ? m.s : -1;
+      if (jump) SND.play(p > m.mid ? 'good' : 'bad'); else SND.play('tick');
+      paintSnakes(room.engine);
+      if (++k >= steps.length) { clearInterval(snk.anim); snk.anim = null; setTimeout(() => { snk.jump = -1; if (!room || !room.engine || !room.engine.sn) return; snk.shown = room.engine.sn.pos.slice(); paintSnakes(room.engine); }, jump ? 700 : 150); if (m.to === 100) SND.play('win'); }
+    }, 230);
+  } else if (!snk.anim) snk.shown = S.pos.slice();
+  if (S.rollId !== snk.roll) { snk.roll = S.rollId; snk.rolledAt = Date.now(); SND.play('pop'); }
+  paintSnakes(e);
+  altMe(e, '', e.turn === mine && !e.over, 'ارمي الزهر 🎲');
+}
+function paintSnakes(e) {
+  const S = e.sn, mine = room.mySeat, rot = mine >= 0 ? mine : 0, my = e.turn === mine && !e.over && !snk.anim;
+  const by = {};
+  snk.shown.forEach((p, s) => { if (room.seats[s] && p > 0) (by[p] ||= []).push(s); });
+  let h = '';
+  for (const [p, list] of Object.entries(by)) list.forEach((s, n) => {
+    const [x, y] = snXY(+p), off = list.length > 1 ? [[-13, -6], [13, -6], [-13, 12], [13, 12]][n] : [0, 0];
+    h += `<b class="snt${snk.jump === s ? ' jump' : ''}" style="left:${((x + off[0]) / 600) * 100}%;top:${((y + off[1]) / 600) * 100}%">${ludoPawnC(SNC[s], SND_[s], 'sp' + s)}</b>`;
+  });
+  $('alt').querySelector('.sntoks').innerHTML = h;
+  const cur = S.cur;
+  room.seats.forEach((st, i) => {
+    const el = $('alt').querySelector(`.lpan[data-corner="${SNCORN[(i - rot + 4) % 4]}"]`); if (!el) return;
+    el.style.visibility = st ? '' : 'hidden'; if (!st) return;
+    const isCur = cur === i && !e.over, pct = isCur && e.turn === i ? ringPct() : null, canRoll = isCur && i === mine && my;
+    const die = isCur ? `<button class="ldie${canRoll ? ' can' : ''}${Date.now() - (snk.rolledAt || 0) < 500 ? ' spin' : ''}" ${canRoll ? '' : 'disabled'}>${diceHtml(S.die || 6)}</button>` : '<div class="ldie off"></div>';
+    el.className = `lpan${isCur ? ' cur' : ''}${i === mine ? ' me' : ''}`; el.style.setProperty('--c', SNC[i]); el.style.setProperty('--d', SND_[i]);
+    const p = snk.shown[i];
+    el.innerHTML = `<div class="lpav">${avPic(st)}${pct != null ? '<span class="ring" data-ring="1"></span>' : ''}</div><div class="lpin"><div class="lpnm">${esc(st.name)}</div><div class="snpos">${p ? `<b>${p}</b> / 100` : 'على البداية'}</div></div>${die}`;
+  });
+  const who = cur >= 0 && room.seats[cur] ? room.seats[cur].name : '';
+  $('alt').querySelector('.lstat').innerHTML = e.over ? `<b>${esc(e.msg)}</b>` : my ? '<b>دورك!</b> اكبس عالزهر 🎲' : `<i class="ldot" style="background:${SNC[cur] || '#888'}"></i> ${e.msg ? esc(e.msg) : 'دور ' + esc(who)}`;
+}
+function ludoPawnC(c, d, id) { return `<svg viewBox="0 0 40 48"><defs><radialGradient id="${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${c}"/><stop offset="1" stop-color="${d}"/></radialGradient></defs><ellipse cx="20" cy="43" rx="15" ry="4.5" fill="rgba(0,0,0,.35)"/><path d="M8 41c0-7 5-10 7-14-4-2-6-5-6-9a11 11 0 0 1 22 0c0 4-2 7-6 9 2 4 7 7 7 14z" fill="url(#${id})" stroke="${d}" stroke-width="1.6"/><ellipse cx="16" cy="13" rx="3.5" ry="2.5" fill="#fff" opacity=".7"/></svg>`; }
+
 // ----- لودو: proper board -----
 const LCOL = ['#e53935', '#1e88e5', '#43a047', '#fbc02d'];
 const LDARK = ['#a31a17', '#0f5aa6', '#256d29', '#c99400'];
@@ -2674,6 +2782,7 @@ function renderLudo(e) {
     const steps = m.from < 0 ? [0] : Array.from({ length: m.to - m.from }, (_, i) => m.from + i + 1);
     let k = 0;
     lud.anim = setInterval(() => {
+      if (!room || !room.engine || !room.engine.ludo) { clearInterval(lud.anim); lud.anim = null; return; }
       lud.shown[m.s][m.k] = steps[k]; SND.play(k === steps.length - 1 ? 'move' : 'tick'); paintLudo(room.engine);
       if (++k >= steps.length) {
         clearInterval(lud.anim); lud.anim = null;
