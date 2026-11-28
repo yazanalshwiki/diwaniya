@@ -736,6 +736,11 @@ const server = Bun.serve({
       if (!u || !u.photo) return new Response('not found', { status: 404 });
       return new Response(Buffer.from(u.photo, 'base64'), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
     }
+    if (url.pathname === '/api/health') {
+      let pending = [];
+      if (sql) try { const h = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k)); pending = MIGS.filter(([t, c]) => !h.has(t + '.' + c)).map(([t, c]) => t + '.' + c); } catch {}
+      return json({ ok: true, db: !!sql, pending, rooms: rooms.size });
+    }
     if (url.pathname === '/api/design' && req.method === 'POST') {
       const p = verify((req.headers.get('authorization') || '').replace('Bearer ', ''));
       let u = p && (await getUser(p.id)); if (!u) return json({ error: 'unauthorized' }, 401);
