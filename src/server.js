@@ -51,6 +51,42 @@ const owns = (u, id) => CATALOG[id] === 0 || (u.items || []).includes(id);
 // ================== Storage ==================
 let sql = null;
 const mem = { users: new Map(), nextId: 1 };
+const MIGS = [
+    ['users', 'avatar', `text`],
+    ['users', 'email', `text`],
+    ['users', 'photo', `text`],
+    ['users', 'ph', `bigint not null default 0`],
+    ['users', 'items', `jsonb not null default '[]'`],
+    ['users', 'equip', `jsonb not null default '{}'`],
+    ['users', 'last_daily', `date`],
+    ['users', 'favs', `jsonb not null default '[]'`],
+    ['users', 'banned_until', `timestamptz`],
+    ['users', 'ban_reason', `text`],
+    ['users', 'design', `jsonb`],
+    ['users', 'design_block', `boolean not null default false`],
+    ['users', 'last_ip', `text`],
+    ['users', 'last_device', `text`],
+    ['users', 'last_seen', `timestamptz`],
+    ['admins', 'player_id', `int`]
+];
+async function migrate(force) {
+  const have = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k));
+  const miss = MIGS.filter(([t, c]) => !have.has(t + '.' + c));
+  for (const [t, c, d] of miss) {
+    const q = `set lock_timeout = '5s'; alter table ${t} add column if not exists ${c} ${d}`;
+    try { await sql.unsafe(q).simple(); console.log('added column', t, c); continue; } catch (e) { console.error('migration wait', t, c, e.message); }
+    try {
+      const bl = await sql.unsafe(`select distinct a.pid, a.state, a.application_name, a.backend_start, a.xact_start, left(a.query, 90) as q from pg_locks l join pg_stat_activity a on a.pid = l.pid where l.relation = '${t}'::regclass and a.pid <> pg_backend_pid()`);
+      console.log('lock holders', JSON.stringify(bl));
+      if (force) for (const x of bl) if (x.state !== 'active' || (x.xact_start && Date.now() - new Date(x.xact_start) > 30000)) { await sql`select pg_terminate_backend(${x.pid})`; console.log('terminated', x.pid); }
+    } catch (e) { console.error('lock check', e.message); }
+    try { await sql.unsafe(q).simple(); console.log('added column', t, c); } catch (e2) { console.error('migration failed', t, c, e2.message); }
+  }
+  if (!miss.length) return false;
+  const h2 = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k));
+  return MIGS.some(([t, c]) => !h2.has(t + '.' + c));
+}
+
 if (Bun.env.DATABASE_URL) {
   sql = new SQL(Bun.env.DATABASE_URL);
   console.log('DB init…');
@@ -82,35 +118,10 @@ if (Bun.env.DATABASE_URL) {
   await sql`create table if not exists bans (id serial primary key, kind text not null, value text not null, reason text, until timestamptz, created_at timestamptz not null default now())`;
   console.log('DB step 7');
 
-  const have = new Set((await sql`select table_name || '.' || column_name as k from information_schema.columns where table_schema = current_schema()`).map((x) => x.k));
-  for (const [t, c, d] of [
-    ['users', 'avatar', `text`],
-    ['users', 'email', `text`],
-    ['users', 'photo', `text`],
-    ['users', 'ph', `bigint not null default 0`],
-    ['users', 'items', `jsonb not null default '[]'`],
-    ['users', 'equip', `jsonb not null default '{}'`],
-    ['users', 'last_daily', `date`],
-    ['users', 'favs', `jsonb not null default '[]'`],
-    ['users', 'banned_until', `timestamptz`],
-    ['users', 'ban_reason', `text`],
-    ['users', 'design', `jsonb`],
-    ['users', 'design_block', `boolean not null default false`],
-    ['users', 'last_ip', `text`],
-    ['users', 'last_device', `text`],
-    ['users', 'last_seen', `timestamptz`],
-    ['admins', 'player_id', `int`]
-  ]) if (!have.has(t + '.' + c)) {
-    const q = `set lock_timeout = '6s'; alter table ${t} add column if not exists ${c} ${d}`;
-    try { await sql.unsafe(q).simple(); console.log('added column', t, c); }
-    catch (e) {
-      console.error('migration wait', t, c, e.message);
-      try { const k = await sql`select pg_terminate_backend(pid) as k from pg_stat_activity where datname = current_database() and pid <> pg_backend_pid() and state like 'idle in transaction%'`; console.log('cleared stuck sessions', k.length); } catch {}
-      try { await sql.unsafe(q).simple(); console.log('added column', t, c); } catch (e2) { console.error('migration failed', t, c, e2.message); }
-    }
-  }
+  await migrate(false);
   clearTimeout(wd); console.log('Postgres connected');
 } else console.log('No DATABASE_URL — using in-memory store');
+
 
 const pub = (u, self) => u && { id: u.id, username: u.username, points: u.points, games: u.games, wins: u.wins, avatar: u.avatar || null, ph: +u.ph || 0,
   ...(self ? { design: u.design || null, designBlocked: !!u.design_block, designPrice: DESIGN_PRICE, email: u.email || '', favs: u.favs || [], items: u.items || [], equip: u.equip || {}, catalog: CATALOG, dailyReady: !u.last_daily || String(u.last_daily instanceof Date ? u.last_daily.toISOString() : u.last_daily).slice(0, 10) !== new Date().toISOString().slice(0, 10) } : {}) };
@@ -1037,3 +1048,4 @@ const server = Bun.serve({
   },
 });
 console.log('Listening on', server.port);
+if (sql) (async function retryMig(n = 0) { try { if (await migrate(n > 0)) { if (n < 20) setTimeout(() => retryMig(n + 1), 20000); } } catch (e) { console.error('retryMig', e.message); } })();
