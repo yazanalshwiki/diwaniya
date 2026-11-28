@@ -846,6 +846,12 @@ button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,25
 .ysheet b.pot{color:#e0c27a;font-size:15px}.ysheet .utr.can{background:rgba(207,171,85,.1)!important;border-color:rgba(207,171,85,.4)!important;cursor:pointer}
 .pigt{width:100%;max-width:420px}.pigt .utr{display:grid!important;grid-template-columns:1fr 2fr auto;gap:10px;align-items:center;font-size:13px}.pigt .utr.cur{background:rgba(207,171,85,.1)!important}
 .pgb{position:relative;display:block;height:10px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;min-width:120px}.pgb i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}.pgb u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#cfab55 0 4px,#e9d08b 4px 8px);opacity:.9}
+
+.wopts{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding:12px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
+.worow{display:flex;flex-direction:column;gap:6px}.worow>span{font-size:12.5px;color:#9aa6bf;font-weight:600}
+.woseg{display:flex;gap:6px}.wopt{flex:1;font:inherit;font-size:13px;font-weight:600;padding:9px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfe4ee;cursor:pointer}
+.wopt.on{background:rgba(207,171,85,.16);border-color:rgba(207,171,85,.7);color:#f1dca6}.wopt:disabled{cursor:default;opacity:.85}.wopt:disabled:not(.on){opacity:.45}
+.wonote{font-size:11.5px;color:#e0c27a}
 </style>
 </head>
 <body>
@@ -1402,10 +1408,15 @@ function renderWaiting() {
   S.querySelectorAll('[data-sit]').forEach((b) => (b.onclick = () => sendWs({ t: 'sit', seat: +b.dataset.sit })));
   S.querySelectorAll('[data-bot]').forEach((b) => (b.onclick = () => sendWs({ t: 'addBot', seat: +b.dataset.bot })));
   S.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => sendWs({ t: 'kick', seat: +b.dataset.kick })));
-  const humans = room.seats.filter((s) => s && !s.bot).length;
-  $('wHostBox').innerHTML = room.isHost
-    ? `<button class="gold" style="width:100%" id="wStart">ابدأ اللعب${room.seats.some((s) => !s) ? (FLEX.includes(room.game) && room.seats.filter(Boolean).length >= 2 ? ` <small>(${room.seats.filter(Boolean).length} لاعبين — بدون بوتات)</small>` : ' <small>(الكراسي الفاضية بتصير بوتات)</small>') : ''}</button>`
-    : `<div class="empty">بانتظار صاحب الطاولة يبدأ… (${humans} لاعب)</div>`;
+  const humans = room.seats.filter((s) => s && !s.bot).length, seatedN = room.seats.filter(Boolean).length;
+  const flexG = FLEX.includes(room.game), sp = room.speed || 'normal', fill = room.fill || 'none';
+  const seg = (k, v, cur, lbl) => `<button class="wopt${cur === v ? ' on' : ''}" ${room.isHost ? `data-wo="${k}:${v}"` : 'disabled'}>${lbl}</button>`;
+  const opts = `<div class="wopts"><div class="worow"><span>سرعة اللعب</span><div class="woseg">${seg('speed', 'slow', sp, '🐢 بطيء')}${seg('speed', 'normal', sp, '⚖️ عادي')}${seg('speed', 'fast', sp, '⚡ سريع')}</div></div>${flexG ? `<div class="worow"><span>الكراسي الفاضية</span><div class="woseg">${seg('fill', 'none', fill, '👥 بس اللاعبين الجالسين')}${seg('fill', 'bots', fill, '🤖 كمّلها بوتات')}</div></div>${fill === 'none' && seatedN < 2 ? '<div class="wonote">بدها لاعبين على الأقل — إذا ضليت لحالك بتنضاف بوتات</div>' : ''}` : ''}</div>`;
+  const startNote = room.seats.some((s) => !s) ? (flexG && fill === 'none' && seatedN >= 2 ? ` <small>(${seatedN} لاعبين — بدون بوتات)</small>` : ' <small>(الكراسي الفاضية بتصير بوتات)</small>') : '';
+  $('wHostBox').innerHTML = opts + (room.isHost
+    ? `<button class="gold" style="width:100%" id="wStart">ابدأ اللعب${startNote}</button>`
+    : `<div class="empty">بانتظار صاحب الطاولة يبدأ… (${humans} لاعب)</div>`);
+  $('wHostBox').querySelectorAll('[data-wo]').forEach((b) => (b.onclick = () => { const [k, v] = b.dataset.wo.split(':'); sendWs({ t: 'opts', [k]: v }); }));
   if ($('wStart')) $('wStart').onclick = () => sendWs({ t: 'start' });
 }
 

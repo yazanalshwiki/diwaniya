@@ -16,14 +16,15 @@ export class Guess {
     this.winners = [];
     this.history = { length: 0 };
     this.t0 = Date.now();
-    this.endsAt = Date.now() + (kind === 'guess' ? PICK_MS : 1500);
+    this.endsAt = Date.now() + (kind === 'guess' ? PICK_MS * this.sp : 1500);
   }
-  get qms() { return this.cfg.ms || 15000; }
+  get sp() { return this.speed || 1; }
+  get qms() { return (this.cfg.ms || 15000) * this.sp; }
   get pending() {
     if (this.over) return null;
     let next = this.endsAt;
     if (this.phase === 'q') {
-      if (this.cfg.hints) for (let k = 1; k < 3; k++) { const t = this.t0 + k * HINT_MS; if (t > Date.now()) next = Math.min(next, t); }
+      if (this.cfg.hints) for (let k = 1; k < 3; k++) { const t = this.t0 + k * HINT_MS * this.sp; if (t > Date.now()) next = Math.min(next, t); }
       for (const b of this.botPlan || []) if (b && !this.ans[b.seat]) next = Math.min(next, b.at);
     }
     if (this.phase === 'pick' && this.chooser() < 0) next = Date.now();
@@ -58,7 +59,7 @@ export class Guess {
     if (humans.length && humans.every((i) => this.ans[i])) for (const b of this.botPlan || []) if (b && !this.ans[b.seat]) this.answer(b.seat, b.o);
   }
   start(cat) { this.cat = cat; this.qs = makeQuestions(this.kind, cat); this.nQ = this.qs.length; this.nextQ(); }
-  stage() { return this.cfg.hints ? Math.min(2, Math.floor((Date.now() - this.t0) / HINT_MS)) : 0; }
+  stage() { return this.cfg.hints ? Math.min(2, Math.floor((Date.now() - this.t0) / (HINT_MS * this.sp))) : 0; }
   nextQ() {
     if (this.qn >= this.nQ) return this.finish();
     this.q = this.qs[this.qn++];
@@ -72,7 +73,7 @@ export class Guess {
     this.botPlan = [0, 1, 2, 3].map((i) => {
       if (!this.bot(i) || this.isOutSeat(i)) return null;
       const at = this.t0 + 1800 + Math.random() * (this.qms - 4500);
-      const st = this.cfg.hints ? Math.min(2, Math.floor((at - this.t0) / HINT_MS)) : 1;
+      const st = this.cfg.hints ? Math.min(2, Math.floor((at - this.t0) / (HINT_MS * this.sp))) : 1;
       const right = this.q.wyr ? Math.random() < 0.5 : Math.random() < [0.45, 0.62, 0.75][st];
       const wrong = [...Array(n).keys()].filter((k) => k !== this.correct);
       const o = this.q.wyr ? (right ? 0 : 1) : right ? this.correct : wrong[Math.floor(Math.random() * wrong.length)];
@@ -96,7 +97,7 @@ export class Guess {
       this.ans.forEach((x, i) => { if (x) { x.ok = maj < 0 || x.o === maj; x.pts = x.ok ? 10 : 0; this.scores[i] += x.pts; } });
       this.counts = c;
     }
-    this.phase = 'reveal'; this.endsAt = Date.now() + REVEAL_MS;
+    this.phase = 'reveal'; this.endsAt = Date.now() + REVEAL_MS * this.sp;
   }
   tick() {
     const now = Date.now();

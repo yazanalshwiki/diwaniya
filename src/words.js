@@ -111,7 +111,7 @@ export class Words {
     for (const [i, b] of this.botPlan.entries()) if (b && !this.done[i]) { this.ans[i] = []; this.botFill(i, 0.45); }
     this.res = [0, 1, 2, 3].map(() => Array(5).fill(null));
     this.rescore();
-    this.phase = 'show'; this.endsAt = Date.now() + SHOW_MS;
+    this.phase = 'show'; this.endsAt = Date.now() + SHOW_MS * (this.speed || 1);
   }
   finish() {
     this.over = true; this.phase = 'over';

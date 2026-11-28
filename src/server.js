@@ -229,6 +229,7 @@ function newCode() {
 const COMM = makeCommunity({ sql, clients, send: (w, m) => send(w, m), getUser, frGet, isAdminPlayer: (u) => isAdminPlayer(u) });
 await COMM.init();
 const send = (ws, m) => { try { ws && ws.readyState === 1 && ws.send(JSON.stringify(m)); } catch {} };
+const SPEED = { slow: 1.8, normal: 1.35, fast: 1 };
 const FLEX_GAMES = new Set(['ludo', 'snakes', 'pig', 'yatzy', 'liar', 'memory', 'hilo', 'words', 'draw', 'guess', 'trivia', 'tf', 'flags', 'capitals', 'proverbs', 'dishes', 'scramble', 'math', 'wyr']);
 const humanSeats = (r) => r.seats.map((s, i) => [s, i]).filter(([s]) => s && !s.bot);
 const isConnected = (uid) => clients.has(uid);
@@ -244,7 +245,7 @@ function roomView(r, uid) {
   const eng = r.engine;
   return {
     code: r.code, game: r.game, gameName: GAME_NAMES[r.game], status: r.status, priv: r.priv,
-    hostId: r.host, isHost: r.host === uid, mySeat, vip: !!r.vip, turnMs: r.turnMs || TURN_MS,
+    hostId: r.host, isHost: r.host === uid, mySeat, vip: !!r.vip, turnMs: r.turnMs || TURN_MS, speed: r.speed || 'normal', fill: r.fill || 'none',
     seats: r.seats.map((s) => s && {
       name: s.name, bot: !!s.bot, uid: s.uid || null, av: s.av || null, ph: s.ph || 0,
       away: !s.bot && (s.left || !isConnected(s.uid)),
@@ -292,7 +293,7 @@ function schedule(r) {
   const eng = r.engine;
   if (!eng || eng.over || r.status !== 'playing') return;
   if (eng.pending) {
-    r.timer = setTimeout(() => { eng.tick(); afterChange(r); }, eng.pending.delay);
+    r.timer = setTimeout(() => { eng.tick(); afterChange(r); }, eng.pending.delay * (eng.endsAt ? 1 : SPEED[r.speed || 'normal']));
     return;
   }
   const seat = eng.turn;
@@ -300,7 +301,7 @@ function schedule(r) {
   const s = r.seats[seat];
   if (!s) { try { eng.turn = eng.next ? eng.next(seat) : seat; } catch {} r.timer = setTimeout(() => afterChange(r), 50); return; }
   let delay;
-  if (s.bot || s.left) delay = 650 + Math.random() * 600;
+  if (s.bot || s.left) delay = (750 + Math.random() * 700) * SPEED[r.speed || 'normal'];
   else if (!isConnected(s.uid)) delay = Math.max(300, (s.awaySince || Date.now()) + AWAY_MS - Date.now());
   else { const ms = r.turnMs || TURN_MS; delay = ms; r.deadline = Date.now() + ms; }
   r.timer = setTimeout(() => {
@@ -404,6 +405,12 @@ async function handle(ws, m) {
       broadcast(r);
       break;
     }
+    case 'opts': {
+      const r = rooms.get(userRoom.get(uid)); if (!r || r.host !== uid) return;
+      if (['slow', 'normal', 'fast'].includes(m.speed)) { r.speed = m.speed; if (r.engine) r.engine.speed = SPEED[m.speed]; }
+      if (['bots', 'none'].includes(m.fill) && r.status === 'waiting') r.fill = m.fill;
+      broadcast(r); return;
+    }
     case 'addBot': case 'kick': {
       if (!r || r.host !== uid || r.status !== 'waiting') throw new Error('بس صاحب الطاولة يقدر');
       const i = +m.seat;
@@ -424,7 +431,7 @@ async function handle(ws, m) {
       if (m.t === 'rematch' && r.status !== 'finished') throw new Error('اللعبة ما خلصت');
       // games that work with 2+ players don't get forced bots: empty chairs simply sit the game out
       const seated = r.seats.filter((x) => x && !x.left).length;
-      const flex = FLEX_GAMES.has(r.game) && seated >= 2;
+      const flex = FLEX_GAMES.has(r.game) && seated >= 2 && r.fill !== 'bots';
       for (let i = 0; i < r.seats.length; i++) {
         const s = r.seats[i];
         if (!s || s.left) {
@@ -435,6 +442,7 @@ async function handle(ws, m) {
       r.engine = createGame(r.game);
       r.engine.names = r.seats.map((x) => (x ? x.name : '')); r.engine.isHuman = (i) => !!r.seats[i] && !r.seats[i].bot; r.engine.isBot = (i) => !!r.seats[i] && controlledByBot(r, i);
       r.engine.isOut = (i) => !r.seats[i];
+      r.engine.speed = SPEED[r.speed || 'normal'];
       if (r.engine.init) r.engine.init();
       if (r.engine.setOut) r.engine.setOut();
       if (r.engine.turn >= 0 && !r.seats[r.engine.turn] && r.engine.next) r.engine.turn = r.engine.next(r.engine.turn);
