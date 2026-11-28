@@ -797,6 +797,11 @@ button.ghost{border-color:rgba(255,255,255,.14)!important;background:rgba(255,25
 .bnav button span{filter:grayscale(1) brightness(1.35);opacity:.75}.bnav button.on span{filter:grayscale(1) sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.05);opacity:1}
 .playbar .pbic,.playbar>div:first-child>span:first-child{filter:saturate(.7)}
 .bnav button span.bni{filter:none!important;opacity:1!important;font-size:0!important;display:block;width:23px;height:23px;margin:0 auto 2px}.bnav button span.bni svg{width:100%;height:100%;display:block}.bnav button.on span.bni{transform:none}
+
+.gexp{margin:6px auto 0;max-width:520px;font-size:13.5px;line-height:1.7;color:#d9dfeb;background:rgba(255,255,255,.05);border:1px solid rgba(207,171,85,.3);border-radius:12px;padding:8px 12px;animation:gfade .35s ease}
+@keyframes gfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.gopts.two .gopt{min-height:64px;font-size:18px}
+.gopt{transition:transform .12s,background .2s,border-color .2s}.gopt:active:not(:disabled){transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -2363,11 +2368,11 @@ function renderGuess(e) {
   } else if (e.phase === 'q' || e.phase === 'reveal') {
     const rv = e.phase === 'reveal';
     const top = e.hintMode
-      ? `<div class="gtitle">${e.kind === 'dishes' ? 'شو هالأكلة؟ 🍽️' : 'مين هو؟ 🤔'}</div><div class="ghints">${[0, 1, 2].map((k) => k < e.hints.length ? `<div class="gh${k === e.hints.length - 1 && !rv && k ? ' new' : ''}"><b>${k + 1}</b>${esc(e.hints[k])}</div>` : `<div class="gh lock"><b>${k + 1}</b>🔒 تلميح جاي…</div>`).join('')}</div>${!rv ? `<div class="gsub">جاوب هلق وخود <b>${[30, 20, 10][e.stage]}</b> نقطة</div>` : '<div class="gsub">&nbsp;</div>'}`
+      ? `<div class="gtitle">${e.kind === 'dishes' ? 'شو هالأكلة؟ 🍽️' : 'مين هو؟ 🤔'}</div><div class="ghints">${[0, 1, 2].map((k) => k < e.hints.length ? `<div class="gh${k === e.hints.length - 1 && !rv && k ? ' new' : ''}"><b>${k + 1}</b>${esc(e.hints[k])}</div>` : `<div class="gh lock"><b>${k + 1}</b>🔒 تلميح جاي…</div>`).join('')}</div>${!rv ? `<div class="gsub">جاوب هلق وخود <b>${[30, 20, 10][e.stage]}</b> نقطة — كل ما استنيت تلميح بتقلّ النقاط</div>` : '<div class="gsub">&nbsp;</div>'}`
       : `<div class="gprompt${e.big ? ' big' : ''}">${esc(e.prompt)}</div>`;
     const cnt = (k) => (rv && e.ans ? e.ans.filter((x) => x && x.o === k).length : 0);
     const opts = `<div class="gopts${e.opts.length === 2 ? ' two' : ''}">${e.opts.map((o, k) => { let c = ''; if (rv) c = e.wyr ? (e.counts && e.counts[k] >= e.counts[1 - k] ? 'ok' : 'dim') : k === e.correct ? 'ok' : e.my && e.my.o === k ? 'bad' : 'dim'; else if (e.my && e.my.o === k) c = 'pick'; return `<button class="gopt ${c}" data-go="${k}" ${rv || e.my || mine < 0 ? 'disabled' : ''}>${esc(o)}${rv && e.wyr ? `<small>${cnt(k)} 👤</small>` : ''}</button>`; }).join('')}</div>`;
-    const res = rv ? (e.wyr ? `<div class="gsub">${e.my ? (e.my.ok ? '👍 اخترت متل الأغلبية +10' : '🤷 اخترت عكس الأغلبية') : 'ما اخترت'}</div>` : `<div class="gans">✅ ${esc(e.opts[e.correct])}</div><div class="gsub">${e.my ? (e.my.ok ? `صح! +${e.my.pts}` : 'غلط') : 'ما جاوبت'}</div>`) : `<div class="gbar"><i data-cdbar="${e.qms}"></i></div>`;
+    const res = rv ? (e.wyr ? `<div class="gsub">${e.my ? (e.my.ok ? '👍 اخترت متل الأغلبية +10' : '🤷 اخترت عكس الأغلبية') : 'ما اخترت'}</div>` : `<div class="gans">✅ ${esc(e.opts[e.correct])}</div>${e.explain ? `<div class="gexp">💡 ${esc(e.explain)}</div>` : ''}<div class="gsub">${e.my ? (e.my.ok ? `صح! +${e.my.pts}` : 'غلط') : 'ما جاوبت'}</div>`) : `<div class="gbar"><i data-cdbar="${e.qms}"></i></div>`;
     body = `<div class="gq"><div class="ghead"><span class="gcat">${esc(e.catName)}</span><span>سؤال ${e.qn} من ${e.nQ}</span></div>${top}${opts}<div class="gfoot">${res}</div></div>`;
   } else if (e.phase === 'wait') body = `<div class="gq"><h3>جاهزين؟ اللعبة بتبلّش هلق…</h3></div>`;
   if (e.phase === 'q' && alt.gStage !== e.qn + ':' + e.stage) { if (alt.gStage) SND.play('tick'); alt.gStage = e.qn + ':' + e.stage; }

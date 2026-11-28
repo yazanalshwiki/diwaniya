@@ -1,7 +1,7 @@
 // Quiz family engine (خمّن المشهور، مسابقة، صح ولا غلط، أعلام، عواصم، أمثال، أكلات، رتّب الحروف، رياضيات، لو خيّروك)
 import { makeQuestions, QUIZ_KINDS, CELEB_CATS } from './quizdata.js';
 
-const HINT_MS = 6000, REVEAL_MS = 3500, PICK_MS = 15000;
+const HINT_MS = 5000, REVEAL_MS = 3000, PICK_MS = 10000;
 
 export class Guess {
   constructor(kind = 'guess') {
@@ -18,7 +18,7 @@ export class Guess {
     this.t0 = Date.now();
     this.endsAt = Date.now() + (kind === 'guess' ? PICK_MS : 1500);
   }
-  get qms() { return this.cfg.hints ? 20000 : this.cfg.ms || 15000; }
+  get qms() { return this.cfg.ms || 15000; }
   get pending() {
     if (this.over) return null;
     let next = this.endsAt;
@@ -45,10 +45,16 @@ export class Guess {
       const o = +a.o;
       if (!(o >= 0 && o < this.q.opts.length)) throw new Error('جواب غلط');
       this.answer(seat, o);
+      this.maybeFast();
       if (this.ans.every(Boolean)) this.reveal();
       return;
     }
     throw new Error('حركة غلط');
+  }
+  maybeFast() {
+    // all real players answered: don't keep them waiting for the bots
+    const humans = [0, 1, 2, 3].filter((i) => !this.bot(i));
+    if (humans.length && humans.every((i) => this.ans[i])) for (const b of this.botPlan || []) if (b && !this.ans[b.seat]) this.answer(b.seat, b.o);
   }
   start(cat) { this.cat = cat; this.qs = makeQuestions(this.kind, cat); this.nQ = this.qs.length; this.nextQ(); }
   stage() { return this.cfg.hints ? Math.min(2, Math.floor((Date.now() - this.t0) / HINT_MS)) : 0; }
@@ -64,7 +70,7 @@ export class Guess {
     const n = this.q.opts.length;
     this.botPlan = [0, 1, 2, 3].map((i) => {
       if (!this.bot(i)) return null;
-      const at = this.t0 + 2000 + Math.random() * (this.qms - 5000);
+      const at = this.t0 + 1800 + Math.random() * (this.qms - 4500);
       const st = this.cfg.hints ? Math.min(2, Math.floor((at - this.t0) / HINT_MS)) : 1;
       const right = this.q.wyr ? Math.random() < 0.5 : Math.random() < [0.45, 0.62, 0.75][st];
       const wrong = [...Array(n).keys()].filter((k) => k !== this.correct);
@@ -120,7 +126,7 @@ export class Guess {
       v.answered = this.ans.map((x) => !!x);
       v.my = seat >= 0 && this.ans[seat] ? this.ans[seat] : null;
       if (v.my && !rv) v.my = { o: v.my.o };
-      if (rv) { v.correct = this.correct; v.ans = this.ans; v.counts = this.counts; }
+      if (rv) { v.correct = this.correct; v.ans = this.ans; v.counts = this.counts; v.explain = q.x || null; }
     }
     return v;
   }
